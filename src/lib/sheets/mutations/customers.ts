@@ -1,4 +1,4 @@
-import type { UpdateCustomerInput, CreateBookingInput, Customer } from "../types";
+import type { UpdateCustomerInput, CreateBookingInput, CreateCustomerInput, Customer } from "../types";
 import { getCustomers } from "../customers";
 import { findRowIndex, updateRowCells, generateNextId, appendRow } from "./helpers";
 
@@ -7,6 +7,49 @@ import { findRowIndex, updateRowCells, generateNextId, appendRow } from "./helpe
 // G=Last Booking Date, H=Preferred Time Slot, I=Preferred Services,
 // J=Total Revenue, K=Subscription Status, L=Referral Source,
 // M=Referred Others, N=Complaint History, O=Notes
+
+/**
+ * Creates a new customer row manually (not from a booking).
+ * Initializes totalBookings and totalRevenue to 0.
+ */
+export async function createCustomer(input: CreateCustomerInput): Promise<Customer> {
+  const customerId = await generateNextId("Customers", "CST");
+  const today = new Date().toISOString().split("T")[0];
+  await appendRow("Customers", [
+    customerId,
+    input.customerName,
+    input.phoneNumber,
+    input.primaryArea ?? "",
+    today,           // E: First Booking Date
+    "0",             // F: Total Bookings
+    today,           // G: Last Booking Date
+    input.preferredTimeSlot ?? "",
+    input.preferredServices ?? "",
+    "0",             // J: Total Revenue
+    input.subscriptionStatus ?? "",
+    input.referralSource ?? "",
+    "",              // M: Referred Others
+    "",              // N: Complaint History
+    input.notes ?? "",
+  ]);
+  return {
+    customerId,
+    customerName: input.customerName,
+    phoneNumber: input.phoneNumber,
+    primaryArea: input.primaryArea ?? "",
+    firstBookingDate: today,
+    totalBookings: 0,
+    lastBookingDate: today,
+    preferredTimeSlot: input.preferredTimeSlot ?? "",
+    preferredServices: input.preferredServices ?? "",
+    totalRevenue: 0,
+    subscriptionStatus: input.subscriptionStatus ?? "",
+    referralSource: input.referralSource ?? "",
+    referredOthers: "",
+    complaintHistory: "",
+    notes: input.notes ?? "",
+  };
+}
 
 export async function updateCustomer(
   id: string,
