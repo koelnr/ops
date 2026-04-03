@@ -1,13 +1,11 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import type { WorkerDailyOps } from "@/lib/sheets/types"
 import { formatCurrency } from "@/lib/format"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 interface WorkerAggregate {
   workerName: string
@@ -18,6 +16,7 @@ interface WorkerAggregate {
   rewashCount: number
   avgRating: number
   payoutDue: number
+  payoutPaid: number
   onTimePercentage: number
 }
 
@@ -30,6 +29,7 @@ function aggregateWorkers(workers: WorkerDailyOps[]): WorkerAggregate[] {
     ratingSum: number
     ratingCount: number
     payoutDue: number
+    payoutPaid: number
     onTimePctSum: number
     onTimePctCount: number
   }>()
@@ -37,7 +37,7 @@ function aggregateWorkers(workers: WorkerDailyOps[]): WorkerAggregate[] {
   for (const w of workers) {
     const existing = map.get(w.workerName) ?? {
       assigned: 0, completed: 0, complaintCount: 0, rewashCount: 0,
-      ratingSum: 0, ratingCount: 0, payoutDue: 0,
+      ratingSum: 0, ratingCount: 0, payoutDue: 0, payoutPaid: 0,
       onTimePctSum: 0, onTimePctCount: 0,
     }
     map.set(w.workerName, {
@@ -48,6 +48,7 @@ function aggregateWorkers(workers: WorkerDailyOps[]): WorkerAggregate[] {
       ratingSum: existing.ratingSum + (w.avgRating > 0 ? w.avgRating : 0),
       ratingCount: existing.ratingCount + (w.avgRating > 0 ? 1 : 0),
       payoutDue: existing.payoutDue + w.payoutDue,
+      payoutPaid: existing.payoutPaid + w.payoutPaid,
       onTimePctSum: existing.onTimePctSum + (w.onTimePercentage > 0 ? w.onTimePercentage : 0),
       onTimePctCount: existing.onTimePctCount + (w.onTimePercentage > 0 ? 1 : 0),
     })
@@ -73,6 +74,7 @@ function aggregateWorkers(workers: WorkerDailyOps[]): WorkerAggregate[] {
       rewashCount: data.rewashCount,
       avgRating,
       payoutDue: data.payoutDue,
+      payoutPaid: data.payoutPaid,
       onTimePercentage,
     }
   }).sort((a, b) => b.completed - a.completed)
@@ -81,6 +83,23 @@ function aggregateWorkers(workers: WorkerDailyOps[]): WorkerAggregate[] {
 interface WorkersSummaryProps {
   workers: WorkerDailyOps[]
   complaints?: unknown[]
+}
+
+function StatChip({ label, value, highlight }: { label: string; value: string | number; highlight?: "green" | "yellow" | "red" }) {
+  const colorClass = highlight === "green"
+    ? "text-green-700 dark:text-green-400 font-medium"
+    : highlight === "yellow"
+    ? "text-yellow-700 dark:text-yellow-400"
+    : highlight === "red"
+    ? "text-red-700 dark:text-red-400"
+    : "text-foreground"
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={`text-sm tabular-nums font-medium ${colorClass}`}>{value}</span>
+    </div>
+  )
 }
 
 export function WorkersSummary({ workers }: WorkersSummaryProps) {
@@ -97,59 +116,54 @@ export function WorkersSummary({ workers }: WorkersSummaryProps) {
   }
 
   return (
-    <div className="rounded-md border overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Worker</TableHead>
-            <TableHead className="text-right">Assigned</TableHead>
-            <TableHead className="text-right">Completed</TableHead>
-            <TableHead className="text-right">Completion %</TableHead>
-            <TableHead className="text-right">On-Time %</TableHead>
-            <TableHead className="text-right">Avg Rating</TableHead>
-            <TableHead className="text-right">Complaints</TableHead>
-            <TableHead className="text-right">Rewashes</TableHead>
-            <TableHead className="text-right">Payout Due</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {aggregated.map((worker) => (
-            <TableRow key={worker.workerName}>
-              <TableCell className="font-medium text-sm">{worker.workerName}</TableCell>
-              <TableCell className="text-right tabular-nums">{worker.assigned}</TableCell>
-              <TableCell className="text-right tabular-nums">{worker.completed}</TableCell>
-              <TableCell className="text-right tabular-nums">
-                <span
-                  className={
-                    worker.completionPct >= 90
-                      ? "text-green-700 dark:text-green-400 font-medium"
-                      : worker.completionPct >= 70
-                      ? "text-yellow-700 dark:text-yellow-400"
-                      : "text-red-700 dark:text-red-400"
-                  }
-                >
-                  {worker.completionPct}%
-                </span>
-              </TableCell>
-              <TableCell className="text-right tabular-nums text-muted-foreground">
-                {worker.onTimePercentage > 0 ? `${worker.onTimePercentage}%` : "—"}
-              </TableCell>
-              <TableCell className="text-right tabular-nums text-muted-foreground">
-                {worker.avgRating > 0 ? worker.avgRating : "—"}
-              </TableCell>
-              <TableCell className="text-right tabular-nums text-muted-foreground">
-                {worker.complaintCount}
-              </TableCell>
-              <TableCell className="text-right tabular-nums text-muted-foreground">
-                {worker.rewashCount}
-              </TableCell>
-              <TableCell className="text-right tabular-nums text-muted-foreground text-sm">
-                {worker.payoutDue > 0 ? formatCurrency(worker.payoutDue) : "—"}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {aggregated.map((worker) => {
+        const completionHighlight = worker.completionPct >= 90 ? "green" : worker.completionPct >= 70 ? "yellow" : "red"
+        return (
+          <Card key={worker.workerName}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">{worker.workerName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+                <StatChip label="Assigned" value={worker.assigned} />
+                <StatChip label="Completed" value={worker.completed} />
+                <StatChip
+                  label="Completion"
+                  value={`${worker.completionPct}%`}
+                  highlight={completionHighlight}
+                />
+                <StatChip
+                  label="Avg Rating"
+                  value={worker.avgRating > 0 ? worker.avgRating : "—"}
+                />
+                <StatChip
+                  label="Complaints"
+                  value={worker.complaintCount}
+                />
+                <StatChip
+                  label="Rewashes"
+                  value={worker.rewashCount}
+                />
+                <StatChip
+                  label="Due (₹)"
+                  value={worker.payoutDue > 0 ? formatCurrency(worker.payoutDue) : "—"}
+                />
+                <StatChip
+                  label="Paid (₹)"
+                  value={worker.payoutPaid > 0 ? formatCurrency(worker.payoutPaid) : "—"}
+                />
+                {worker.onTimePercentage > 0 && (
+                  <StatChip
+                    label="On-Time"
+                    value={`${worker.onTimePercentage}%`}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }
