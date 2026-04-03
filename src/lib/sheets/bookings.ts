@@ -50,11 +50,15 @@ export async function getBookings(): Promise<Booking[]> {
       serviceStartTime: row["Service Start Time"] ?? "",
       serviceEndTime: row["Service End Time"] ?? "",
       completionStatus: row["Completion Status"] ?? "",
-      customerRating: row["Customer Rating"] ? parseNumber(row["Customer Rating"]) : undefined,
+      customerRating: row["Customer Rating"]
+        ? parseNumber(row["Customer Rating"])
+        : undefined,
       complaintFlag: row["Complaint Flag"] ?? "",
       repeatCustomer: row["Repeat Customer"] ?? "",
       notes: row["Notes"] ?? "",
-      durationMins: row["Duration (mins)"] ? parseNumber(row["Duration (mins)"]) : undefined,
+      durationMins: row["Duration (mins)"]
+        ? parseNumber(row["Duration (mins)"])
+        : undefined,
     });
 
     if (parsed.success) {
@@ -68,6 +72,7 @@ export async function getBookings(): Promise<Booking[]> {
     }
   }
 
+  console.info("[bookings]:", bookings);
   return bookings;
 }
 

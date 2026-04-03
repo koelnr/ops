@@ -29,6 +29,12 @@ export default async function HomePage() {
     getComplaints(),
   ]);
 
+  if (bookingsResult.status === "rejected") console.error("[page] bookings failed:", bookingsResult.reason);
+  if (paymentsResult.status === "rejected") console.error("[page] payments failed:", paymentsResult.reason);
+  if (workersResult.status === "rejected") console.error("[page] workers failed:", workersResult.reason);
+  if (leadsResult.status === "rejected") console.error("[page] leads failed:", leadsResult.reason);
+  if (complaintsResult.status === "rejected") console.error("[page] complaints failed:", complaintsResult.reason);
+
   const bookings =
     bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
   const payments =
