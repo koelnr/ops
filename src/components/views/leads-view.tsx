@@ -130,7 +130,8 @@ export function LeadsView({ leads }: LeadsViewProps) {
     const q = search.toLowerCase();
     return leads.filter((l) => {
       if (followUpFilter && l.followUpStatus !== followUpFilter) return false;
-      if (conversionFilter && l.conversionStatus !== conversionFilter) return false;
+      if (conversionFilter && l.conversionStatus !== conversionFilter)
+        return false;
       if (sourceFilter && l.leadSource !== sourceFilter) return false;
       if (q) {
         return (
@@ -144,7 +145,9 @@ export function LeadsView({ leads }: LeadsViewProps) {
     });
   }, [leads, search, followUpFilter, conversionFilter, sourceFilter]);
 
-  const pendingCount = leads.filter((l) => isLeadPending(l.followUpStatus)).length;
+  const pendingCount = leads.filter((l) =>
+    isLeadPending(l.followUpStatus),
+  ).length;
 
   function setField(key: keyof LeadFormData, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -162,7 +165,11 @@ export function LeadsView({ leads }: LeadsViewProps) {
     setFormOpen(true);
   }
 
-  async function handleUpdate(lead: Lead, body: Record<string, string>, successMsg: string) {
+  async function handleUpdate(
+    lead: Lead,
+    body: Record<string, string>,
+    successMsg: string,
+  ) {
     const result = await mutate(`/api/leads/${lead.leadId}`, body);
     if (result.ok) {
       toast.success(successMsg);
@@ -194,7 +201,9 @@ export function LeadsView({ leads }: LeadsViewProps) {
       setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? (editTarget ? "Failed to update" : "Failed to create"));
+      toast.error(
+        result.error ?? (editTarget ? "Failed to update" : "Failed to create"),
+      );
     }
   }
 
@@ -229,9 +238,24 @@ export function LeadsView({ leads }: LeadsViewProps) {
           placeholder="Search name, phone, area…"
           className="w-60"
         />
-        <FilterSelect value={followUpFilter} onChange={setFollowUpFilter} options={FOLLOW_UP_STATUS_OPTIONS} placeholder="Follow-up status" />
-        <FilterSelect value={conversionFilter} onChange={setConversionFilter} options={CONVERSION_STATUS_OPTIONS} placeholder="Conversion status" />
-        <FilterSelect value={sourceFilter} onChange={setSourceFilter} options={sourceOptions} placeholder="All sources" />
+        <FilterSelect
+          value={followUpFilter}
+          onChange={setFollowUpFilter}
+          options={FOLLOW_UP_STATUS_OPTIONS}
+          placeholder="Follow-up status"
+        />
+        <FilterSelect
+          value={conversionFilter}
+          onChange={setConversionFilter}
+          options={CONVERSION_STATUS_OPTIONS}
+          placeholder="Conversion status"
+        />
+        <FilterSelect
+          value={sourceFilter}
+          onChange={setSourceFilter}
+          options={sourceOptions}
+          placeholder="All sources"
+        />
         {filtered.length !== leads.length && (
           <span className="text-xs text-muted-foreground">
             {filtered.length} of {leads.length} shown
@@ -263,13 +287,25 @@ export function LeadsView({ leads }: LeadsViewProps) {
                 return (
                   <TableRow
                     key={lead.leadId || `${lead.leadDate}-${lead.prospectName}`}
-                    className={isRowPending ? "bg-yellow-50/50 dark:bg-yellow-900/10" : undefined}
+                    className={
+                      isRowPending
+                        ? "bg-yellow-50/50 dark:bg-yellow-900/10"
+                        : undefined
+                    }
                   >
-                    <TableCell className="font-medium text-sm">{lead.prospectName}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground font-mono">{lead.phoneNumber}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{lead.areaSociety || "—"}</TableCell>
+                    <TableCell className="font-medium text-sm">
+                      {lead.prospectName}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground font-mono">
+                      {lead.phoneNumber}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lead.areaSociety || "—"}
+                    </TableCell>
                     <TableCell className="text-sm">{lead.leadSource}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{lead.interestedService || "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lead.interestedService || "—"}
+                    </TableCell>
                     <TableCell>
                       {lead.followUpStatus ? (
                         <StatusBadge status={lead.followUpStatus} />
@@ -284,35 +320,65 @@ export function LeadsView({ leads }: LeadsViewProps) {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{formatDate(lead.leadDate)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(lead.leadDate)}
+                    </TableCell>
                     <TableCell className="max-w-50">
-                      <p className="text-xs text-muted-foreground truncate" title={lead.notes ?? undefined}>
+                      <p
+                        className="text-xs text-muted-foreground truncate"
+                        title={lead.notes ?? undefined}
+                      >
                         {lead.notes || "—"}
                       </p>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={isPending}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => openEdit(lead)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEdit(lead)}>
+                            Edit
+                          </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleUpdate(lead, { followUpStatus: "Contacted" }, `${lead.prospectName} marked as contacted`)}
+                            onSelect={() =>
+                              handleUpdate(
+                                lead,
+                                { followUpStatus: "Contacted" },
+                                `${lead.prospectName} marked as contacted`,
+                              )
+                            }
                           >
                             Mark Contacted
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleUpdate(lead, { conversionStatus: "Converted" }, `${lead.prospectName} marked as converted`)}
+                            onSelect={() =>
+                              handleUpdate(
+                                lead,
+                                { conversionStatus: "Converted" },
+                                `${lead.prospectName} marked as converted`,
+                              )
+                            }
                           >
                             Mark Converted
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleUpdate(lead, { followUpStatus: "Follow-Up Pending" }, `Follow-up set for ${lead.prospectName}`)}
+                            onSelect={() =>
+                              handleUpdate(
+                                lead,
+                                { followUpStatus: "Follow-Up Pending" },
+                                `Follow-up set for ${lead.prospectName}`,
+                              )
+                            }
                           >
                             Mark Follow-up Needed
                           </DropdownMenuItem>
@@ -336,84 +402,155 @@ export function LeadsView({ leads }: LeadsViewProps) {
 
       {/* Create / Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editTarget ? `Edit Lead — ${editTarget.prospectName}` : "New Lead"}</DialogTitle>
+            <DialogTitle>
+              {editTarget
+                ? `Edit Lead — ${editTarget.prospectName}`
+                : "New Lead"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Prospect Name *</Label>
-              <Input value={form.prospectName} onChange={(e) => setField("prospectName", e.target.value)} placeholder="Name" />
+              <Input
+                value={form.prospectName}
+                onChange={(e) => setField("prospectName", e.target.value)}
+                placeholder="Name"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Phone Number</Label>
-              <Input value={form.phoneNumber} onChange={(e) => setField("phoneNumber", e.target.value)} placeholder="Phone" />
+              <Input
+                value={form.phoneNumber}
+                onChange={(e) => setField("phoneNumber", e.target.value)}
+                placeholder="Phone"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Lead Date</Label>
-              <Input type="date" value={form.leadDate} onChange={(e) => setField("leadDate", e.target.value)} />
+              <Input
+                type="date"
+                value={form.leadDate}
+                onChange={(e) => setField("leadDate", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Lead Source</Label>
-              <Select value={form.leadSource} onChange={(e) => setField("leadSource", e.target.value)}>
-                {BOOKING_SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.leadSource}
+                onChange={(e) => setField("leadSource", e.target.value)}
+              >
+                {BOOKING_SOURCE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Area / Society</Label>
-              <Input value={form.areaSociety} onChange={(e) => setField("areaSociety", e.target.value)} placeholder="Society name" />
+              <Input
+                value={form.areaSociety}
+                onChange={(e) => setField("areaSociety", e.target.value)}
+                placeholder="Society name"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Interested Service</Label>
-              <Select value={form.interestedService} onChange={(e) => setField("interestedService", e.target.value)}>
+              <Select
+                value={form.interestedService}
+                onChange={(e) => setField("interestedService", e.target.value)}
+              >
                 <option value="">— select service —</option>
-                {SERVICE_PACKAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {SERVICE_PACKAGE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Follow-Up Status</Label>
-              <Select value={form.followUpStatus} onChange={(e) => setField("followUpStatus", e.target.value)}>
-                {FOLLOW_UP_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.followUpStatus}
+                onChange={(e) => setField("followUpStatus", e.target.value)}
+              >
+                {FOLLOW_UP_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Conversion Status</Label>
-              <Select value={form.conversionStatus} onChange={(e) => setField("conversionStatus", e.target.value)}>
-                {CONVERSION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.conversionStatus}
+                onChange={(e) => setField("conversionStatus", e.target.value)}
+              >
+                {CONVERSION_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             {form.conversionStatus === "Converted" && (
               <div className="col-span-2 space-y-1.5">
                 <Label>First Booking Date *</Label>
-                <Input type="date" value={form.firstBookingDate} onChange={(e) => setField("firstBookingDate", e.target.value)} />
+                <Input
+                  type="date"
+                  value={form.firstBookingDate}
+                  onChange={(e) => setField("firstBookingDate", e.target.value)}
+                />
               </div>
             )}
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Any notes…" rows={2} />
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setField("notes", e.target.value)}
+                placeholder="Any notes…"
+                rows={2}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : editTarget ? "Save Changes" : "Create Lead"}
+              {isSubmitting
+                ? "Saving…"
+                : editTarget
+                  ? "Save Changes"
+                  : "Create Lead"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete lead?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the lead for <span className="font-medium">{deleteTarget?.prospectName}</span>. This cannot be undone.
+              This will permanently remove the lead for{" "}
+              <span className="font-medium">{deleteTarget?.prospectName}</span>.
+              This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

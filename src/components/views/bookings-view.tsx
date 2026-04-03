@@ -157,7 +157,9 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
   const [deleteTarget, setDeleteTarget] = useState<Booking | null>(null);
 
   const workerNames = useMemo(() => {
-    return Array.from(new Set(workers.map((w) => w.workerName).filter(Boolean))).sort();
+    return Array.from(
+      new Set(workers.map((w) => w.workerName).filter(Boolean)),
+    ).sort();
   }, [workers]);
 
   const filtered = useMemo(() => {
@@ -195,7 +197,11 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
     setFormOpen(true);
   }
 
-  async function handleMutate(id: string, body: Record<string, unknown>, successMsg: string) {
+  async function handleMutate(
+    id: string,
+    body: Record<string, unknown>,
+    successMsg: string,
+  ) {
     const result = await mutate(`/api/bookings/${id}`, body);
     if (result.ok) {
       toast.success(successMsg);
@@ -245,7 +251,9 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
       setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? (editTarget ? "Failed to update" : "Failed to create"));
+      toast.error(
+        result.error ?? (editTarget ? "Failed to update" : "Failed to create"),
+      );
     }
   }
 
@@ -280,10 +288,30 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
           placeholder="Search ID, customer, phone, worker…"
           className="w-70"
         />
-        <FilterSelect value={status} onChange={setStatus} options={BOOKING_STATUS_OPTIONS} placeholder="All statuses" />
-        <FilterSelect value={vehicle} onChange={setVehicle} options={VEHICLE_TYPE_OPTIONS} placeholder="All vehicles" />
-        <FilterSelect value={pkg} onChange={setPkg} options={SERVICE_PACKAGE_OPTIONS} placeholder="All packages" />
-        <FilterSelect value={paymentStatus} onChange={setPaymentStatus} options={PAYMENT_STATUS_OPTIONS} placeholder="Payment status" />
+        <FilterSelect
+          value={status}
+          onChange={setStatus}
+          options={BOOKING_STATUS_OPTIONS}
+          placeholder="All statuses"
+        />
+        <FilterSelect
+          value={vehicle}
+          onChange={setVehicle}
+          options={VEHICLE_TYPE_OPTIONS}
+          placeholder="All vehicles"
+        />
+        <FilterSelect
+          value={pkg}
+          onChange={setPkg}
+          options={SERVICE_PACKAGE_OPTIONS}
+          placeholder="All packages"
+        />
+        <FilterSelect
+          value={paymentStatus}
+          onChange={setPaymentStatus}
+          options={PAYMENT_STATUS_OPTIONS}
+          placeholder="Payment status"
+        />
         {filtered.length !== bookings.length && (
           <span className="text-xs text-muted-foreground">
             {filtered.length} of {bookings.length} shown
@@ -314,30 +342,59 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
             <TableBody>
               {filtered.map((booking) => (
                 <TableRow key={booking.bookingId}>
-                  <TableCell className="font-mono text-xs">{booking.bookingId}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{formatDate(booking.serviceDate)}</TableCell>
-                  <TableCell>
-                    <div className="font-medium text-sm">{booking.customerName}</div>
-                    <div className="text-xs text-muted-foreground">{booking.phoneNumber}</div>
+                  <TableCell className="font-mono text-xs">
+                    {booking.bookingId}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{booking.carModel || "—"}</TableCell>
-                  <TableCell className="text-sm">{booking.timeSlot || "—"}</TableCell>
-                  <TableCell><span className="text-sm">{booking.servicePackage}</span></TableCell>
-                  <TableCell><span className="text-sm">{booking.vehicleType}</span></TableCell>
-                  <TableCell className="text-sm">{booking.assignedWorker || "—"}</TableCell>
-                  <TableCell><StatusBadge status={booking.bookingStatus} /></TableCell>
-                  <TableCell><StatusBadge status={booking.paymentStatus} /></TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(booking.serviceDate)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium text-sm">
+                      {booking.customerName}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {booking.phoneNumber}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {booking.carModel || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {booking.timeSlot || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">{booking.servicePackage}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">{booking.vehicleType}</span>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {booking.assignedWorker || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={booking.bookingStatus} />
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={booking.paymentStatus} />
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={isPending}
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => openEdit(booking)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => openEdit(booking)}>
+                          Edit
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={() => {
                             setAssignTarget(booking);
@@ -348,13 +405,32 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
                           Assign Worker
                         </DropdownMenuItem>
                         <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>Set Booking Status</DropdownMenuSubTrigger>
+                          <DropdownMenuSubTrigger>
+                            Set Booking Status
+                          </DropdownMenuSubTrigger>
                           <DropdownMenuSubContent>
-                            {(["New Inquiry","Confirmed","Assigned","In Progress","Completed","Cancelled","Rescheduled","Payment Pending"] as const).map((s) => (
+                            {(
+                              [
+                                "New Inquiry",
+                                "Confirmed",
+                                "Assigned",
+                                "In Progress",
+                                "Completed",
+                                "Cancelled",
+                                "Rescheduled",
+                                "Payment Pending",
+                              ] as const
+                            ).map((s) => (
                               <DropdownMenuItem
                                 key={s}
                                 disabled={booking.bookingStatus === s}
-                                onSelect={() => handleMutate(booking.bookingId, { bookingStatus: s }, `Status updated to ${s}`)}
+                                onSelect={() =>
+                                  handleMutate(
+                                    booking.bookingId,
+                                    { bookingStatus: s },
+                                    `Status updated to ${s}`,
+                                  )
+                                }
                               >
                                 {s}
                               </DropdownMenuItem>
@@ -362,13 +438,29 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
                           </DropdownMenuSubContent>
                         </DropdownMenuSub>
                         <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>Payment Status</DropdownMenuSubTrigger>
+                          <DropdownMenuSubTrigger>
+                            Payment Status
+                          </DropdownMenuSubTrigger>
                           <DropdownMenuSubContent>
-                            {(["Pending","Paid","Partially Paid","Failed","Refunded"] as const).map((s) => (
+                            {(
+                              [
+                                "Pending",
+                                "Paid",
+                                "Partially Paid",
+                                "Failed",
+                                "Refunded",
+                              ] as const
+                            ).map((s) => (
                               <DropdownMenuItem
                                 key={s}
                                 disabled={booking.paymentStatus === s}
-                                onSelect={() => handleMutate(booking.bookingId, { paymentStatus: s }, `Payment marked as ${s}`)}
+                                onSelect={() =>
+                                  handleMutate(
+                                    booking.bookingId,
+                                    { paymentStatus: s },
+                                    `Payment marked as ${s}`,
+                                  )
+                                }
                               >
                                 {s}
                               </DropdownMenuItem>
@@ -394,8 +486,10 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
 
       {/* Assign Worker Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Assign Worker</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Assign Worker</DialogTitle>
+          </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="worker-name">Worker Name</Label>
             {workerNames.length > 0 ? (
@@ -406,7 +500,9 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
               >
                 <option value="">— select worker —</option>
                 {workerNames.map((name) => (
-                  <option key={name} value={name}>{name}</option>
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
                 ))}
               </Select>
             ) : (
@@ -420,8 +516,16 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAssignWorker} disabled={isSubmitting || !workerName.trim()}>
+            <Button
+              variant="outline"
+              onClick={() => setAssignDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAssignWorker}
+              disabled={isSubmitting || !workerName.trim()}
+            >
               {isSubmitting ? "Saving…" : "Assign"}
             </Button>
           </DialogFooter>
@@ -430,129 +534,249 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
 
       {/* Create / Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editTarget ? `Edit Booking ${editTarget.bookingId}` : "New Booking"}</DialogTitle>
+            <DialogTitle>
+              {editTarget
+                ? `Edit Booking ${editTarget.bookingId}`
+                : "New Booking"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Customer Name *</Label>
-              <Input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} placeholder="Name" />
+              <Input
+                value={form.customerName}
+                onChange={(e) => setField("customerName", e.target.value)}
+                placeholder="Name"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Phone Number</Label>
-              <Input value={form.phoneNumber} onChange={(e) => setField("phoneNumber", e.target.value)} placeholder="Phone" />
+              <Input
+                value={form.phoneNumber}
+                onChange={(e) => setField("phoneNumber", e.target.value)}
+                placeholder="Phone"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Booking Date</Label>
-              <Input type="date" value={form.bookingDate} onChange={(e) => setField("bookingDate", e.target.value)} />
+              <Input
+                type="date"
+                value={form.bookingDate}
+                onChange={(e) => setField("bookingDate", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Service Date *</Label>
-              <Input type="date" value={form.serviceDate} onChange={(e) => setField("serviceDate", e.target.value)} />
+              <Input
+                type="date"
+                value={form.serviceDate}
+                onChange={(e) => setField("serviceDate", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Time Slot</Label>
-              <Select value={form.timeSlot} onChange={(e) => setField("timeSlot", e.target.value)}>
+              <Select
+                value={form.timeSlot}
+                onChange={(e) => setField("timeSlot", e.target.value)}
+              >
                 <option value="">— select slot —</option>
-                {TIME_SLOT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {TIME_SLOT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Car Model</Label>
-              <Input value={form.carModel} onChange={(e) => setField("carModel", e.target.value)} placeholder="e.g. Swift Dzire" />
+              <Input
+                value={form.carModel}
+                onChange={(e) => setField("carModel", e.target.value)}
+                placeholder="e.g. Swift Dzire"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Vehicle Type</Label>
-              <Select value={form.vehicleType} onChange={(e) => setField("vehicleType", e.target.value)}>
-                {VEHICLE_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.vehicleType}
+                onChange={(e) => setField("vehicleType", e.target.value)}
+              >
+                {VEHICLE_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Service Package</Label>
-              <Select value={form.servicePackage} onChange={(e) => setField("servicePackage", e.target.value)}>
-                {SERVICE_PACKAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.servicePackage}
+                onChange={(e) => setField("servicePackage", e.target.value)}
+              >
+                {SERVICE_PACKAGE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Add-Ons</Label>
-              <Input value={form.addOns} onChange={(e) => setField("addOns", e.target.value)} placeholder="e.g. Engine wash" />
+              <Input
+                value={form.addOns}
+                onChange={(e) => setField("addOns", e.target.value)}
+                placeholder="e.g. Engine wash"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Price (₹)</Label>
-              <Input type="number" value={form.price} onChange={(e) => setField("price", e.target.value)} placeholder="0" />
+              <Input
+                type="number"
+                value={form.price}
+                onChange={(e) => setField("price", e.target.value)}
+                placeholder="0"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Payment Status</Label>
-              <Select value={form.paymentStatus} onChange={(e) => setField("paymentStatus", e.target.value)}>
-                {PAYMENT_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.paymentStatus}
+                onChange={(e) => setField("paymentStatus", e.target.value)}
+              >
+                {PAYMENT_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Payment Mode</Label>
-              <Select value={form.paymentMode} onChange={(e) => setField("paymentMode", e.target.value)}>
-                {PAYMENT_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.paymentMode}
+                onChange={(e) => setField("paymentMode", e.target.value)}
+              >
+                {PAYMENT_MODE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Booking Status</Label>
-              <Select value={form.bookingStatus} onChange={(e) => setField("bookingStatus", e.target.value)}>
-                {BOOKING_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.bookingStatus}
+                onChange={(e) => setField("bookingStatus", e.target.value)}
+              >
+                {BOOKING_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Booking Source</Label>
-              <Select value={form.bookingSource} onChange={(e) => setField("bookingSource", e.target.value)}>
-                {BOOKING_SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.bookingSource}
+                onChange={(e) => setField("bookingSource", e.target.value)}
+              >
+                {BOOKING_SOURCE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Area / Society</Label>
-              <Input value={form.areaSociety} onChange={(e) => setField("areaSociety", e.target.value)} placeholder="Society name" />
+              <Input
+                value={form.areaSociety}
+                onChange={(e) => setField("areaSociety", e.target.value)}
+                placeholder="Society name"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Assigned Worker</Label>
               {workerNames.length > 0 ? (
-                <Select value={form.assignedWorker} onChange={(e) => setField("assignedWorker", e.target.value)}>
+                <Select
+                  value={form.assignedWorker}
+                  onChange={(e) => setField("assignedWorker", e.target.value)}
+                >
                   <option value="">— select worker —</option>
                   {workerNames.map((name) => (
-                    <option key={name} value={name}>{name}</option>
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
                   ))}
                 </Select>
               ) : (
-                <Input value={form.assignedWorker} onChange={(e) => setField("assignedWorker", e.target.value)} placeholder="Worker name" />
+                <Input
+                  value={form.assignedWorker}
+                  onChange={(e) => setField("assignedWorker", e.target.value)}
+                  placeholder="Worker name"
+                />
               )}
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Full Address</Label>
-              <Input value={form.fullAddress} onChange={(e) => setField("fullAddress", e.target.value)} placeholder="Full address" />
+              <Input
+                value={form.fullAddress}
+                onChange={(e) => setField("fullAddress", e.target.value)}
+                placeholder="Full address"
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Any notes…" rows={2} />
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setField("notes", e.target.value)}
+                placeholder="Any notes…"
+                rows={2}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : editTarget ? "Save Changes" : "Create Booking"}
+              {isSubmitting
+                ? "Saving…"
+                : editTarget
+                  ? "Save Changes"
+                  : "Create Booking"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete booking?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove booking <span className="font-mono font-medium">{deleteTarget?.bookingId}</span> for {deleteTarget?.customerName}. This cannot be undone.
+              This will permanently remove booking{" "}
+              <span className="font-mono font-medium">
+                {deleteTarget?.bookingId}
+              </span>{" "}
+              for {deleteTarget?.customerName}. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

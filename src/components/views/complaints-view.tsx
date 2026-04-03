@@ -123,7 +123,9 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
   const [deleteTarget, setDeleteTarget] = useState<Complaint | null>(null);
 
   const workerNames = useMemo(() => {
-    return Array.from(new Set(workers.map((w) => w.workerName).filter(Boolean))).sort();
+    return Array.from(
+      new Set(workers.map((w) => w.workerName).filter(Boolean)),
+    ).sort();
   }, [workers]);
 
   const filtered = useMemo(() => {
@@ -174,8 +176,15 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
     setFormOpen(true);
   }
 
-  async function handleUpdate(complaint: Complaint, body: Record<string, string>, successMsg: string) {
-    const result = await mutate(`/api/complaints/${complaint.complaintId}`, body);
+  async function handleUpdate(
+    complaint: Complaint,
+    body: Record<string, string>,
+    successMsg: string,
+  ) {
+    const result = await mutate(
+      `/api/complaints/${complaint.complaintId}`,
+      body,
+    );
     if (result.ok) {
       toast.success(successMsg);
       startTransition(() => router.refresh());
@@ -202,7 +211,9 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
       setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? (editTarget ? "Failed to update" : "Failed to create"));
+      toast.error(
+        result.error ?? (editTarget ? "Failed to update" : "Failed to create"),
+      );
     }
   }
 
@@ -237,8 +248,18 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
           placeholder="Search details, ID, customer, worker…"
           className="w-70"
         />
-        <FilterSelect value={statusFilter} onChange={setStatusFilter} options={RESOLUTION_STATUS_OPTIONS} placeholder="Resolution status" />
-        <FilterSelect value={typeFilter} onChange={setTypeFilter} options={COMPLAINT_TYPE_OPTIONS} placeholder="Complaint type" />
+        <FilterSelect
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={RESOLUTION_STATUS_OPTIONS}
+          placeholder="Resolution status"
+        />
+        <FilterSelect
+          value={typeFilter}
+          onChange={setTypeFilter}
+          options={COMPLAINT_TYPE_OPTIONS}
+          placeholder="Complaint type"
+        />
         {filtered.length !== complaints.length && (
           <span className="text-xs text-muted-foreground">
             {filtered.length} of {complaints.length} shown
@@ -271,16 +292,34 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
                 .sort((a, b) => b.date.localeCompare(a.date))
                 .map((complaint) => (
                   <TableRow key={complaint.complaintId}>
-                    <TableCell className="font-mono text-xs">{complaint.complaintId}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{complaint.customerName}</TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">{complaint.bookingId}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{complaint.workerAssigned || "—"}</TableCell>
-                    <TableCell className="text-sm">{complaint.complaintType || "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {complaint.complaintId}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {complaint.customerName}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {complaint.bookingId}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {complaint.workerAssigned || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {complaint.complaintType || "—"}
+                    </TableCell>
                     <TableCell className="max-w-60">
-                      <p className="text-sm truncate" title={complaint.complaintDetails}>{complaint.complaintDetails}</p>
+                      <p
+                        className="text-sm truncate"
+                        title={complaint.complaintDetails}
+                      >
+                        {complaint.complaintDetails}
+                      </p>
                     </TableCell>
                     <TableCell className="max-w-50">
-                      <p className="text-xs text-muted-foreground truncate" title={complaint.resolutionGiven}>
+                      <p
+                        className="text-xs text-muted-foreground truncate"
+                        title={complaint.resolutionGiven}
+                      >
                         {complaint.resolutionGiven || "—"}
                       </p>
                     </TableCell>
@@ -291,25 +330,48 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{formatDate(complaint.date)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(complaint.date)}
+                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={isPending}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => openEdit(complaint)}>Edit</DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleUpdate(complaint, { resolutionStatus: "Resolved" }, `Complaint ${complaint.complaintId} marked resolved`)}
+                            onSelect={() => openEdit(complaint)}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              handleUpdate(
+                                complaint,
+                                { resolutionStatus: "Resolved" },
+                                `Complaint ${complaint.complaintId} marked resolved`,
+                              )
+                            }
                           >
                             Mark Resolved
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleUpdate(complaint, { resolutionStatus: "Escalated" }, `Complaint ${complaint.complaintId} escalated`)}
+                            onSelect={() =>
+                              handleUpdate(
+                                complaint,
+                                { resolutionStatus: "Escalated" },
+                                `Complaint ${complaint.complaintId} escalated`,
+                              )
+                            }
                           >
                             Escalate
                           </DropdownMenuItem>
@@ -317,7 +379,10 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
                             onSelect={() =>
                               handleUpdate(
                                 complaint,
-                                { resolutionStatus: "Rewash Scheduled", refundOrRewash: "Rewash" },
+                                {
+                                  resolutionStatus: "Rewash Scheduled",
+                                  refundOrRewash: "Rewash",
+                                },
                                 `Rewash scheduled for ${complaint.complaintId}`,
                               )
                             }
@@ -343,92 +408,171 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
 
       {/* Create / Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editTarget ? `Edit Complaint ${editTarget.complaintId}` : "New Complaint"}</DialogTitle>
+            <DialogTitle>
+              {editTarget
+                ? `Edit Complaint ${editTarget.complaintId}`
+                : "New Complaint"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Customer Name *</Label>
-              <Input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} placeholder="Name" />
+              <Input
+                value={form.customerName}
+                onChange={(e) => setField("customerName", e.target.value)}
+                placeholder="Name"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Booking ID</Label>
-              <Input value={form.bookingId} onChange={(e) => setField("bookingId", e.target.value)} placeholder="BKG-001" />
+              <Input
+                value={form.bookingId}
+                onChange={(e) => setField("bookingId", e.target.value)}
+                placeholder="BKG-001"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Date</Label>
-              <Input type="date" value={form.date} onChange={(e) => setField("date", e.target.value)} />
+              <Input
+                type="date"
+                value={form.date}
+                onChange={(e) => setField("date", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Worker Assigned</Label>
-              <Select value={form.workerAssigned} onChange={(e) => setField("workerAssigned", e.target.value)}>
+              <Select
+                value={form.workerAssigned}
+                onChange={(e) => setField("workerAssigned", e.target.value)}
+              >
                 <option value="">— select worker —</option>
                 {workerNames.map((name) => (
-                  <option key={name} value={name}>{name}</option>
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
                 ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Complaint Type</Label>
-              <Select value={form.complaintType} onChange={(e) => setField("complaintType", e.target.value)}>
+              <Select
+                value={form.complaintType}
+                onChange={(e) => setField("complaintType", e.target.value)}
+              >
                 <option value="">— select type —</option>
-                {COMPLAINT_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {COMPLAINT_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Resolution Status</Label>
-              <Select value={form.resolutionStatus} onChange={(e) => setField("resolutionStatus", e.target.value)}>
-                {RESOLUTION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.resolutionStatus}
+                onChange={(e) => setField("resolutionStatus", e.target.value)}
+              >
+                {RESOLUTION_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Complaint Details *</Label>
-              <Textarea value={form.complaintDetails} onChange={(e) => setField("complaintDetails", e.target.value)} placeholder="Describe the complaint…" rows={2} />
+              <Textarea
+                value={form.complaintDetails}
+                onChange={(e) => setField("complaintDetails", e.target.value)}
+                placeholder="Describe the complaint…"
+                rows={2}
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Resolution Given</Label>
-              <Textarea value={form.resolutionGiven} onChange={(e) => setField("resolutionGiven", e.target.value)} placeholder="What was done to resolve…" rows={2} />
+              <Textarea
+                value={form.resolutionGiven}
+                onChange={(e) => setField("resolutionGiven", e.target.value)}
+                placeholder="What was done to resolve…"
+                rows={2}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Refund / Rewash</Label>
-              <Select value={form.refundOrRewash} onChange={(e) => setField("refundOrRewash", e.target.value)}>
-                {REFUND_REWASH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.refundOrRewash}
+                onChange={(e) => setField("refundOrRewash", e.target.value)}
+              >
+                {REFUND_REWASH_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Follow-Up Complete</Label>
-              <Select value={form.followUpComplete} onChange={(e) => setField("followUpComplete", e.target.value)}>
+              <Select
+                value={form.followUpComplete}
+                onChange={(e) => setField("followUpComplete", e.target.value)}
+              >
                 <option value="">— select —</option>
-                {YES_NO_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {YES_NO_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Root Cause</Label>
-              <Input value={form.rootCause} onChange={(e) => setField("rootCause", e.target.value)} placeholder="Root cause analysis…" />
+              <Input
+                value={form.rootCause}
+                onChange={(e) => setField("rootCause", e.target.value)}
+                placeholder="Root cause analysis…"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : editTarget ? "Save Changes" : "Create Complaint"}
+              {isSubmitting
+                ? "Saving…"
+                : editTarget
+                  ? "Save Changes"
+                  : "Create Complaint"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete complaint?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove complaint <span className="font-mono font-medium">{deleteTarget?.complaintId}</span> for {deleteTarget?.customerName}. This cannot be undone.
+              This will permanently remove complaint{" "}
+              <span className="font-mono font-medium">
+                {deleteTarget?.complaintId}
+              </span>{" "}
+              for {deleteTarget?.customerName}. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

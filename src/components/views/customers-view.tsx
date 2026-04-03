@@ -33,7 +33,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { BOOKING_SOURCE_OPTIONS, TIME_SLOT_OPTIONS, SUBSCRIPTION_STATUS_OPTIONS } from "@/lib/options";
+import {
+  BOOKING_SOURCE_OPTIONS,
+  TIME_SLOT_OPTIONS,
+  SUBSCRIPTION_STATUS_OPTIONS,
+} from "@/lib/options";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -72,15 +76,19 @@ export function CustomersView({ customers }: CustomersViewProps) {
   // Edit dialog
   const [editTarget, setEditTarget] = useState<Customer | null>(null);
   const [form, setForm] = useState<CustomerFormData>({
-    subscriptionStatus: "", preferredTimeSlot: "",
-    preferredServices: "", referralSource: "", notes: "",
+    subscriptionStatus: "",
+    preferredTimeSlot: "",
+    preferredServices: "",
+    referralSource: "",
+    notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return customers.filter((c) => {
-      if (subscriptionFilter && c.subscriptionStatus !== subscriptionFilter) return false;
+      if (subscriptionFilter && c.subscriptionStatus !== subscriptionFilter)
+        return false;
       if (q) {
         return (
           c.customerName.toLowerCase().includes(q) ||
@@ -105,7 +113,10 @@ export function CustomersView({ customers }: CustomersViewProps) {
   async function handleFormSubmit() {
     if (!editTarget) return;
     setIsSubmitting(true);
-    const result = await mutate(`/api/customers/${editTarget.customerId}`, form);
+    const result = await mutate(
+      `/api/customers/${editTarget.customerId}`,
+      form,
+    );
     setIsSubmitting(false);
     if (result.ok) {
       toast.success(`Customer ${editTarget.customerName} updated`);
@@ -164,28 +175,53 @@ export function CustomersView({ customers }: CustomersViewProps) {
             <TableBody>
               {filtered.map((customer) => (
                 <TableRow key={customer.customerId}>
-                  <TableCell className="font-mono text-xs">{customer.customerId}</TableCell>
-                  <TableCell className="font-medium text-sm">{customer.customerName}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground font-mono">{customer.phoneNumber}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{customer.primaryArea || "—"}</TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">{customer.totalBookings}</TableCell>
-                  <TableCell className="text-right tabular-nums text-sm font-medium">
-                    {customer.totalRevenue > 0 ? formatCurrency(customer.totalRevenue) : "—"}
+                  <TableCell className="font-mono text-xs">
+                    {customer.customerId}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{formatDate(customer.lastBookingDate)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{customer.subscriptionStatus || "—"}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{customer.preferredTimeSlot || "—"}</TableCell>
+                  <TableCell className="font-medium text-sm">
+                    {customer.customerName}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground font-mono">
+                    {customer.phoneNumber}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {customer.primaryArea || "—"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-sm">
+                    {customer.totalBookings}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-sm font-medium">
+                    {customer.totalRevenue > 0
+                      ? formatCurrency(customer.totalRevenue)
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(customer.lastBookingDate)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {customer.subscriptionStatus || "—"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {customer.preferredTimeSlot || "—"}
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={isPending}
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => openEdit(customer)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => openEdit(customer)}>
+                          Edit
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -197,44 +233,81 @@ export function CustomersView({ customers }: CustomersViewProps) {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog
+        open={!!editTarget}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+      >
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Edit Customer — {editTarget?.customerName}</DialogTitle>
+            <DialogTitle>
+              Edit Customer — {editTarget?.customerName}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Subscription Status</Label>
-              <Select value={form.subscriptionStatus} onChange={(e) => setField("subscriptionStatus", e.target.value)}>
+              <Select
+                value={form.subscriptionStatus}
+                onChange={(e) => setField("subscriptionStatus", e.target.value)}
+              >
                 <option value="">— select —</option>
-                {SUBSCRIPTION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {SUBSCRIPTION_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Preferred Time Slot</Label>
-              <Select value={form.preferredTimeSlot} onChange={(e) => setField("preferredTimeSlot", e.target.value)}>
+              <Select
+                value={form.preferredTimeSlot}
+                onChange={(e) => setField("preferredTimeSlot", e.target.value)}
+              >
                 <option value="">— select slot —</option>
-                {TIME_SLOT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {TIME_SLOT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Preferred Services</Label>
-              <Input value={form.preferredServices} onChange={(e) => setField("preferredServices", e.target.value)} placeholder="e.g. Exterior Wash" />
+              <Input
+                value={form.preferredServices}
+                onChange={(e) => setField("preferredServices", e.target.value)}
+                placeholder="e.g. Exterior Wash"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Referral Source</Label>
-              <Select value={form.referralSource} onChange={(e) => setField("referralSource", e.target.value)}>
+              <Select
+                value={form.referralSource}
+                onChange={(e) => setField("referralSource", e.target.value)}
+              >
                 <option value="">— select source —</option>
-                {BOOKING_SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {BOOKING_SOURCE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Notes…" rows={3} />
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setField("notes", e.target.value)}
+                placeholder="Notes…"
+                rows={3}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save Changes"}
             </Button>

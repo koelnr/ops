@@ -112,9 +112,14 @@ export function WorkersView({ workers }: WorkersViewProps) {
   // Edit dialog
   const [editTarget, setEditTarget] = useState<WorkerDailyOps | null>(null);
   const [form, setForm] = useState<WorkerFormData>({
-    payoutDue: "", payoutPaid: "", areaCovered: "",
-    avgRating: "", lateArrivalCount: "", rewashCount: "",
-    complaintCount: "", notes: "",
+    payoutDue: "",
+    payoutPaid: "",
+    areaCovered: "",
+    avgRating: "",
+    lateArrivalCount: "",
+    rewashCount: "",
+    complaintCount: "",
+    notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,7 +133,9 @@ export function WorkersView({ workers }: WorkersViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const dateOptions = useMemo(() => {
-    const dates = Array.from(new Set(workers.map((w) => w.date).filter(Boolean)))
+    const dates = Array.from(
+      new Set(workers.map((w) => w.date).filter(Boolean)),
+    )
       .sort()
       .reverse();
     return dates.map((d) => ({ label: d, value: d }));
@@ -141,7 +148,8 @@ export function WorkersView({ workers }: WorkersViewProps) {
   const filtered = useMemo(() => {
     return workers.filter((w) => {
       if (dateFilter && w.date !== dateFilter) return false;
-      if (search) return w.workerName.toLowerCase().includes(search.toLowerCase());
+      if (search)
+        return w.workerName.toLowerCase().includes(search.toLowerCase());
       return true;
     });
   }, [workers, search, dateFilter]);
@@ -280,36 +288,60 @@ export function WorkersView({ workers }: WorkersViewProps) {
               <TableBody>
                 {filtered.map((worker) => (
                   <TableRow key={worker.workerId}>
-                    <TableCell className="font-medium text-sm">{worker.workerName}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{worker.date}</TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">{worker.assignedBookings}</TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">{worker.completedBookings}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{worker.areaCovered || "—"}</TableCell>
+                    <TableCell className="font-medium text-sm">
+                      {worker.workerName}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {worker.date}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      {worker.assignedBookings}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      {worker.completedBookings}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {worker.areaCovered || "—"}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
                       {worker.avgRating > 0 ? worker.avgRating : "—"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
-                      {worker.payoutDue > 0 ? formatCurrency(worker.payoutDue) : "—"}
+                      {worker.payoutDue > 0
+                        ? formatCurrency(worker.payoutDue)
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                      {worker.payoutPaid > 0 ? formatCurrency(worker.payoutPaid) : "—"}
+                      {worker.payoutPaid > 0
+                        ? formatCurrency(worker.payoutPaid)
+                        : "—"}
                     </TableCell>
                     <TableCell className="max-w-40">
-                      <p className="text-xs text-muted-foreground truncate" title={worker.notes}>
+                      <p
+                        className="text-xs text-muted-foreground truncate"
+                        title={worker.notes}
+                      >
                         {worker.notes || "—"}
                       </p>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={isPending}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => openEdit(worker)}>Edit Record</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEdit(worker)}>
+                            Edit Record
+                          </DropdownMenuItem>
                           {isAdmin && (
                             <DropdownMenuItem
                               onSelect={() => setDeleteTarget(worker)}
@@ -330,8 +362,11 @@ export function WorkersView({ workers }: WorkersViewProps) {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog
+        open={!!editTarget}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+      >
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               Edit Record — {editTarget?.workerName} ({editTarget?.date})
@@ -340,39 +375,77 @@ export function WorkersView({ workers }: WorkersViewProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Payout Due (₹)</Label>
-              <Input type="number" value={form.payoutDue} onChange={(e) => setField("payoutDue", e.target.value)} />
+              <Input
+                type="number"
+                value={form.payoutDue}
+                onChange={(e) => setField("payoutDue", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Payout Paid (₹)</Label>
-              <Input type="number" value={form.payoutPaid} onChange={(e) => setField("payoutPaid", e.target.value)} />
+              <Input
+                type="number"
+                value={form.payoutPaid}
+                onChange={(e) => setField("payoutPaid", e.target.value)}
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Area Covered</Label>
-              <Input value={form.areaCovered} onChange={(e) => setField("areaCovered", e.target.value)} placeholder="Area / Society" />
+              <Input
+                value={form.areaCovered}
+                onChange={(e) => setField("areaCovered", e.target.value)}
+                placeholder="Area / Society"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Avg Rating</Label>
-              <Input type="number" step="0.1" min="0" max="5" value={form.avgRating} onChange={(e) => setField("avgRating", e.target.value)} />
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                value={form.avgRating}
+                onChange={(e) => setField("avgRating", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Late Arrivals</Label>
-              <Input type="number" value={form.lateArrivalCount} onChange={(e) => setField("lateArrivalCount", e.target.value)} />
+              <Input
+                type="number"
+                value={form.lateArrivalCount}
+                onChange={(e) => setField("lateArrivalCount", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Rewashes</Label>
-              <Input type="number" value={form.rewashCount} onChange={(e) => setField("rewashCount", e.target.value)} />
+              <Input
+                type="number"
+                value={form.rewashCount}
+                onChange={(e) => setField("rewashCount", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Complaints</Label>
-              <Input type="number" value={form.complaintCount} onChange={(e) => setField("complaintCount", e.target.value)} />
+              <Input
+                type="number"
+                value={form.complaintCount}
+                onChange={(e) => setField("complaintCount", e.target.value)}
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Notes…" rows={2} />
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setField("notes", e.target.value)}
+                placeholder="Notes…"
+                rows={2}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save Changes"}
             </Button>
@@ -381,8 +454,16 @@ export function WorkersView({ workers }: WorkersViewProps) {
       </Dialog>
 
       {/* Create Dialog — admin only */}
-      <Dialog open={showCreate} onOpenChange={(open) => { if (!open) { setShowCreate(false); setCreateForm(emptyCreateForm); } }}>
-        <DialogContent className="max-w-md">
+      <Dialog
+        open={showCreate}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowCreate(false);
+            setCreateForm(emptyCreateForm);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>New Worker Record</DialogTitle>
           </DialogHeader>
@@ -405,27 +486,63 @@ export function WorkersView({ workers }: WorkersViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Assigned Bookings</Label>
-              <Input type="number" min="0" value={createForm.assignedBookings} onChange={(e) => setCreateField("assignedBookings", e.target.value)} />
+              <Input
+                type="number"
+                min="0"
+                value={createForm.assignedBookings}
+                onChange={(e) =>
+                  setCreateField("assignedBookings", e.target.value)
+                }
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Completed Bookings</Label>
-              <Input type="number" min="0" value={createForm.completedBookings} onChange={(e) => setCreateField("completedBookings", e.target.value)} />
+              <Input
+                type="number"
+                min="0"
+                value={createForm.completedBookings}
+                onChange={(e) =>
+                  setCreateField("completedBookings", e.target.value)
+                }
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Area Covered</Label>
-              <Input value={createForm.areaCovered} onChange={(e) => setCreateField("areaCovered", e.target.value)} placeholder="Area / Society" />
+              <Input
+                value={createForm.areaCovered}
+                onChange={(e) => setCreateField("areaCovered", e.target.value)}
+                placeholder="Area / Society"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Payout Due (₹)</Label>
-              <Input type="number" min="0" value={createForm.payoutDue} onChange={(e) => setCreateField("payoutDue", e.target.value)} />
+              <Input
+                type="number"
+                min="0"
+                value={createForm.payoutDue}
+                onChange={(e) => setCreateField("payoutDue", e.target.value)}
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
-              <Textarea value={createForm.notes} onChange={(e) => setCreateField("notes", e.target.value)} placeholder="Notes…" rows={2} />
+              <Textarea
+                value={createForm.notes}
+                onChange={(e) => setCreateField("notes", e.target.value)}
+                placeholder="Notes…"
+                rows={2}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowCreate(false); setCreateForm(emptyCreateForm); }}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreate(false);
+                setCreateForm(emptyCreateForm);
+              }}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleCreate} disabled={isCreating}>
               {isCreating ? "Creating…" : "Create Record"}
             </Button>
@@ -434,14 +551,18 @@ export function WorkersView({ workers }: WorkersViewProps) {
       </Dialog>
 
       {/* Delete Confirmation — admin only */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Worker Record?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete the record for{" "}
               <strong>{deleteTarget?.workerName}</strong> on{" "}
-              <strong>{deleteTarget?.date}</strong>. This action cannot be undone.
+              <strong>{deleteTarget?.date}</strong>. This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

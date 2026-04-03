@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import type { Payment } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { PAYMENT_STATUS_OPTIONS, PAYMENT_MODE_OPTIONS, YES_NO_OPTIONS } from "@/lib/options";
+import {
+  PAYMENT_STATUS_OPTIONS,
+  PAYMENT_MODE_OPTIONS,
+  YES_NO_OPTIONS,
+} from "@/lib/options";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
@@ -138,7 +142,8 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
   }, [payments, search, status, mode]);
 
   const pendingCount = payments.filter(
-    (p) => p.paymentStatus === "Pending" || p.paymentStatus === "Partially Paid",
+    (p) =>
+      p.paymentStatus === "Pending" || p.paymentStatus === "Partially Paid",
   ).length;
 
   function setField(key: keyof PaymentFormData, value: string) {
@@ -158,7 +163,9 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
   }
 
   async function handleStatusUpdate(id: string, newStatus: string) {
-    const result = await mutate(`/api/payments/${id}`, { paymentStatus: newStatus });
+    const result = await mutate(`/api/payments/${id}`, {
+      paymentStatus: newStatus,
+    });
     if (result.ok) {
       toast.success(`Payment marked as ${newStatus}`);
       startTransition(() => router.refresh());
@@ -197,12 +204,19 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
       toast.error("Amount received cannot exceed amount due");
       return;
     }
-    const isPaid = form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid";
+    const isPaid =
+      form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid";
     if (isPaid && !form.paymentDate) {
-      toast.error("Payment date is required when payment is Paid or Partially Paid");
+      toast.error(
+        "Payment date is required when payment is Paid or Partially Paid",
+      );
       return;
     }
-    if (form.paymentMode === "UPI" && isPaid && !form.upiTransactionRef.trim()) {
+    if (
+      form.paymentMode === "UPI" &&
+      isPaid &&
+      !form.upiTransactionRef.trim()
+    ) {
       toast.error("UPI transaction reference is required for UPI payments");
       return;
     }
@@ -224,7 +238,9 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
       setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? (editTarget ? "Failed to update" : "Failed to create"));
+      toast.error(
+        result.error ?? (editTarget ? "Failed to update" : "Failed to create"),
+      );
     }
   }
 
@@ -264,8 +280,18 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
           placeholder="Search payment ID, booking ID, customer…"
           className="w-75"
         />
-        <FilterSelect value={status} onChange={setStatus} options={PAYMENT_STATUS_OPTIONS} placeholder="All statuses" />
-        <FilterSelect value={mode} onChange={setMode} options={PAYMENT_MODE_OPTIONS} placeholder="All modes" />
+        <FilterSelect
+          value={status}
+          onChange={setStatus}
+          options={PAYMENT_STATUS_OPTIONS}
+          placeholder="All statuses"
+        />
+        <FilterSelect
+          value={mode}
+          onChange={setMode}
+          options={PAYMENT_MODE_OPTIONS}
+          placeholder="All modes"
+        />
         {filtered.length !== payments.length && (
           <span className="text-xs text-muted-foreground">
             {filtered.length} of {payments.length} shown
@@ -295,41 +321,75 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
             <TableBody>
               {filtered.map((payment) => (
                 <TableRow key={payment.paymentId}>
-                  <TableCell className="font-mono text-xs">{payment.paymentId}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{payment.bookingId}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{payment.customerName}</TableCell>
-                  <TableCell className="text-right font-medium text-sm tabular-nums">{formatCurrency(payment.amountDue)}</TableCell>
-                  <TableCell className="text-right text-sm tabular-nums text-muted-foreground">{formatCurrency(payment.amountReceived)}</TableCell>
-                  <TableCell className="text-sm">{payment.paymentMode}</TableCell>
-                  <TableCell><StatusBadge status={payment.paymentStatus} /></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{formatDate(payment.paymentDate)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{payment.upiTransactionRef || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {payment.paymentId}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {payment.bookingId}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {payment.customerName}
+                  </TableCell>
+                  <TableCell className="text-right font-medium text-sm tabular-nums">
+                    {formatCurrency(payment.amountDue)}
+                  </TableCell>
+                  <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
+                    {formatCurrency(payment.amountReceived)}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {payment.paymentMode}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={payment.paymentStatus} />
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(payment.paymentDate)}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {payment.upiTransactionRef || "—"}
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={isPending}
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => openEdit(payment)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => openEdit(payment)}>
+                          Edit
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={payment.paymentStatus === "Paid"}
-                          onSelect={() => handleStatusUpdate(payment.paymentId, "Paid")}
+                          onSelect={() =>
+                            handleStatusUpdate(payment.paymentId, "Paid")
+                          }
                         >
                           Mark as Paid
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={payment.paymentStatus === "Partially Paid"}
-                          onSelect={() => handleStatusUpdate(payment.paymentId, "Partially Paid")}
+                          onSelect={() =>
+                            handleStatusUpdate(
+                              payment.paymentId,
+                              "Partially Paid",
+                            )
+                          }
                         >
                           Mark as Partially Paid
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={payment.paymentStatus === "Pending"}
-                          onSelect={() => handleStatusUpdate(payment.paymentId, "Pending")}
+                          onSelect={() =>
+                            handleStatusUpdate(payment.paymentId, "Pending")
+                          }
                         >
                           Mark as Pending
                         </DropdownMenuItem>
@@ -362,8 +422,10 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
 
       {/* UPI Ref Dialog */}
       <Dialog open={refDialogOpen} onOpenChange={setRefDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Update UPI Reference</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Update UPI Reference</DialogTitle>
+          </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="upi-ref">UPI Transaction Reference</Label>
             <Input
@@ -375,7 +437,9 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRefDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRefDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleUpdateRef} disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save"}
             </Button>
@@ -385,95 +449,179 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
 
       {/* Create / Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editTarget ? `Edit Payment ${editTarget.paymentId}` : "New Payment"}</DialogTitle>
+            <DialogTitle>
+              {editTarget
+                ? `Edit Payment ${editTarget.paymentId}`
+                : "New Payment"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Booking ID *</Label>
-              <Input value={form.bookingId} onChange={(e) => setField("bookingId", e.target.value)} placeholder="BKG-001" />
+              <Input
+                value={form.bookingId}
+                onChange={(e) => setField("bookingId", e.target.value)}
+                placeholder="BKG-001"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Customer Name *</Label>
-              <Input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} placeholder="Name" />
+              <Input
+                value={form.customerName}
+                onChange={(e) => setField("customerName", e.target.value)}
+                placeholder="Name"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Service Date</Label>
-              <Input type="date" value={form.serviceDate} onChange={(e) => setField("serviceDate", e.target.value)} />
+              <Input
+                type="date"
+                value={form.serviceDate}
+                onChange={(e) => setField("serviceDate", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>
                 Payment Date
-                {(form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid") && " *"}
+                {(form.paymentStatus === "Paid" ||
+                  form.paymentStatus === "Partially Paid") &&
+                  " *"}
               </Label>
-              <Input type="date" value={form.paymentDate} onChange={(e) => setField("paymentDate", e.target.value)} />
+              <Input
+                type="date"
+                value={form.paymentDate}
+                onChange={(e) => setField("paymentDate", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Amount Due (₹)</Label>
-              <Input type="number" value={form.amountDue} onChange={(e) => setField("amountDue", e.target.value)} placeholder="0" />
+              <Input
+                type="number"
+                value={form.amountDue}
+                onChange={(e) => setField("amountDue", e.target.value)}
+                placeholder="0"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Amount Received (₹)</Label>
-              <Input type="number" value={form.amountReceived} onChange={(e) => setField("amountReceived", e.target.value)} placeholder="0" />
+              <Input
+                type="number"
+                value={form.amountReceived}
+                onChange={(e) => setField("amountReceived", e.target.value)}
+                placeholder="0"
+              />
               {amountWarning && (
-                <p className="text-xs text-destructive">Cannot exceed amount due</p>
+                <p className="text-xs text-destructive">
+                  Cannot exceed amount due
+                </p>
               )}
             </div>
             <div className="space-y-1.5">
               <Label>Payment Status</Label>
-              <Select value={form.paymentStatus} onChange={(e) => setField("paymentStatus", e.target.value)}>
-                {PAYMENT_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.paymentStatus}
+                onChange={(e) => setField("paymentStatus", e.target.value)}
+              >
+                {PAYMENT_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Payment Mode</Label>
-              <Select value={form.paymentMode} onChange={(e) => setField("paymentMode", e.target.value)}>
-                {PAYMENT_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.paymentMode}
+                onChange={(e) => setField("paymentMode", e.target.value)}
+              >
+                {PAYMENT_MODE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             {form.paymentMode === "UPI" && (
               <div className="col-span-2 space-y-1.5">
                 <Label>
                   UPI Transaction Ref
-                  {(form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid") && " *"}
+                  {(form.paymentStatus === "Paid" ||
+                    form.paymentStatus === "Partially Paid") &&
+                    " *"}
                 </Label>
-                <Input value={form.upiTransactionRef} onChange={(e) => setField("upiTransactionRef", e.target.value)} placeholder="e.g. UPI-123456789" />
+                <Input
+                  value={form.upiTransactionRef}
+                  onChange={(e) =>
+                    setField("upiTransactionRef", e.target.value)
+                  }
+                  placeholder="e.g. UPI-123456789"
+                />
               </div>
             )}
             <div className="space-y-1.5">
               <Label>Follow-Up Required</Label>
-              <Select value={form.followUpRequired} onChange={(e) => setField("followUpRequired", e.target.value)}>
+              <Select
+                value={form.followUpRequired}
+                onChange={(e) => setField("followUpRequired", e.target.value)}
+              >
                 <option value="">— select —</option>
-                {YES_NO_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {YES_NO_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Any notes…" rows={2} />
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setField("notes", e.target.value)}
+                placeholder="Any notes…"
+                rows={2}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : editTarget ? "Save Changes" : "Create Payment"}
+              {isSubmitting
+                ? "Saving…"
+                : editTarget
+                  ? "Save Changes"
+                  : "Create Payment"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete payment?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove payment <span className="font-mono font-medium">{deleteTarget?.paymentId}</span> for {deleteTarget?.customerName}. This cannot be undone.
+              This will permanently remove payment{" "}
+              <span className="font-mono font-medium">
+                {deleteTarget?.paymentId}
+              </span>{" "}
+              for {deleteTarget?.customerName}. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
