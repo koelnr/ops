@@ -1,7 +1,12 @@
 import { getSheetsClient } from "./client";
 import { SPREADSHEET_ID, RANGES } from "./config";
-import { rowsToObjects, parseNumber, normalizeEmpty } from "./utils";
+import { rowsToObjects, parseNumber } from "./utils";
 import { WorkerDailyOpsSchema, type WorkerDailyOps } from "./types";
+
+// Workers column order: A=Worker Name, B=Date, C=Assigned Bookings,
+// D=Completed Bookings, E=First Job Time, F=Last Job Time, G=Area Covered,
+// H=Late Arrival Count, I=Complaint Count, J=Rewash Count, K=Avg Rating,
+// L=Payout Due, M=Payout Paid, N=On-Time %, O=Notes
 
 export async function getWorkers(): Promise<WorkerDailyOps[]> {
   const sheets = await getSheetsClient();
@@ -15,19 +20,31 @@ export async function getWorkers(): Promise<WorkerDailyOps[]> {
 
   for (const row of rows) {
     const parsed = WorkerDailyOpsSchema.safeParse({
-      id: row.id,
-      name: row.name,
-      date: row.date,
-      bookingsAssigned: parseNumber(row.bookingsAssigned),
-      bookingsCompleted: parseNumber(row.bookingsCompleted),
-      hoursWorked: parseNumber(row.hoursWorked),
-      notes: normalizeEmpty(row.notes),
+      workerName: row["Worker Name"] ?? "",
+      date: row["Date"] ?? "",
+      assignedBookings: parseNumber(row["Assigned Bookings"]),
+      completedBookings: parseNumber(row["Completed Bookings"]),
+      firstJobTime: row["First Job Time"] ?? "",
+      lastJobTime: row["Last Job Time"] ?? "",
+      areaCovered: row["Area Covered"] ?? "",
+      lateArrivalCount: parseNumber(row["Late Arrival Count"]),
+      complaintCount: parseNumber(row["Complaint Count"]),
+      rewashCount: parseNumber(row["Rewash Count"]),
+      avgRating: parseNumber(row["Avg Rating"]),
+      payoutDue: parseNumber(row["Payout Due"]),
+      payoutPaid: parseNumber(row["Payout Paid"]),
+      onTimePercentage: parseNumber(row["On-Time %"]),
+      notes: row["Notes"] ?? "",
     });
 
     if (parsed.success) {
       workers.push(parsed.data);
     } else {
-      console.warn("[sheets/workers] Invalid row skipped:", row.id, parsed.error.flatten());
+      console.warn(
+        "[sheets/workers] Invalid row skipped:",
+        row["Worker Name"],
+        parsed.error.flatten(),
+      );
     }
   }
 

@@ -3,6 +3,8 @@ import { SPREADSHEET_ID, RANGES } from "./config";
 import { rowsToObjects } from "./utils";
 import { DashboardMetricSchema, type DashboardMetric } from "./types";
 
+// DashboardMetrics column order: A=Metric, B=Today, C=This Week, D=This Month
+
 export async function getDashboardMetrics(): Promise<DashboardMetric[]> {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
@@ -15,16 +17,20 @@ export async function getDashboardMetrics(): Promise<DashboardMetric[]> {
 
   for (const row of rows) {
     const parsed = DashboardMetricSchema.safeParse({
-      key: row.key,
-      value: row.value,
-      label: row.label,
-      updatedAt: row.updatedAt,
+      metric: row["Metric"] ?? "",
+      today: row["Today"] ?? "",
+      thisWeek: row["This Week"] ?? "",
+      thisMonth: row["This Month"] ?? "",
     });
 
     if (parsed.success) {
       metrics.push(parsed.data);
     } else {
-      console.warn("[sheets/metrics] Invalid row skipped:", row.key, parsed.error.flatten());
+      console.warn(
+        "[sheets/metrics] Invalid row skipped:",
+        row["Metric"],
+        parsed.error.flatten(),
+      );
     }
   }
 
