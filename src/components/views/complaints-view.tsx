@@ -3,9 +3,15 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Complaint } from "@/lib/sheets/types";
+import type { Complaint, WorkerDailyOps } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
 import { formatDate } from "@/lib/format";
+import {
+  COMPLAINT_TYPE_OPTIONS,
+  RESOLUTION_STATUS_OPTIONS,
+  REFUND_REWASH_OPTIONS,
+  YES_NO_OPTIONS,
+} from "@/lib/options";
 import {
   Table,
   TableBody,
@@ -39,6 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -73,8 +80,8 @@ const emptyForm: ComplaintFormData = {
   complaintDetails: "",
   resolutionStatus: "Open",
   resolutionGiven: "",
-  refundOrRewash: "",
-  followUpComplete: "",
+  refundOrRewash: "None",
+  followUpComplete: "No",
   rootCause: "",
 };
 
@@ -88,17 +95,18 @@ function complaintToForm(c: Complaint): ComplaintFormData {
     complaintDetails: c.complaintDetails,
     resolutionStatus: c.resolutionStatus,
     resolutionGiven: c.resolutionGiven,
-    refundOrRewash: c.refundOrRewash,
-    followUpComplete: c.followUpComplete,
+    refundOrRewash: c.refundOrRewash || "None",
+    followUpComplete: c.followUpComplete || "No",
     rootCause: c.rootCause,
   };
 }
 
 interface ComplaintsViewProps {
   complaints: Complaint[];
+  workers: WorkerDailyOps[];
 }
 
-export function ComplaintsView({ complaints }: ComplaintsViewProps) {
+export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -114,17 +122,9 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<Complaint | null>(null);
 
-  const statusOptions = useMemo(() => {
-    return Array.from(new Set(complaints.map((c) => c.resolutionStatus).filter(Boolean)))
-      .sort()
-      .map((s) => ({ label: s, value: s }));
-  }, [complaints]);
-
-  const typeOptions = useMemo(() => {
-    return Array.from(new Set(complaints.map((c) => c.complaintType).filter(Boolean)))
-      .sort()
-      .map((s) => ({ label: s, value: s }));
-  }, [complaints]);
+  const workerNames = useMemo(() => {
+    return Array.from(new Set(workers.map((w) => w.workerName).filter(Boolean))).sort();
+  }, [workers]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -152,7 +152,14 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
   ).length;
 
   function setField(key: keyof ComplaintFormData, value: string) {
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm((f) => {
+      const next = { ...f, [key]: value };
+      // Auto-set refundOrRewash when scheduling a rewash
+      if (key === "resolutionStatus" && value === "Rewash Scheduled") {
+        next.refundOrRewash = "Rewash";
+      }
+      return next;
+    });
   }
 
   function openCreate() {
@@ -230,8 +237,8 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
           placeholder="Search details, ID, customer, worker…"
           className="w-70"
         />
-        <FilterSelect value={statusFilter} onChange={setStatusFilter} options={statusOptions} placeholder="Resolution status" />
-        <FilterSelect value={typeFilter} onChange={setTypeFilter} options={typeOptions} placeholder="Complaint type" />
+        <FilterSelect value={statusFilter} onChange={setStatusFilter} options={RESOLUTION_STATUS_OPTIONS} placeholder="Resolution status" />
+        <FilterSelect value={typeFilter} onChange={setTypeFilter} options={COMPLAINT_TYPE_OPTIONS} placeholder="Complaint type" />
         {filtered.length !== complaints.length && (
           <span className="text-xs text-muted-foreground">
             {filtered.length} of {complaints.length} shown
@@ -355,15 +362,25 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Worker Assigned</Label>
-              <Input value={form.workerAssigned} onChange={(e) => setField("workerAssigned", e.target.value)} placeholder="Worker name" />
+              <Select value={form.workerAssigned} onChange={(e) => setField("workerAssigned", e.target.value)}>
+                <option value="">— select worker —</option>
+                {workerNames.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Complaint Type</Label>
-              <Input value={form.complaintType} onChange={(e) => setField("complaintType", e.target.value)} placeholder="e.g. Service Quality" />
+              <Select value={form.complaintType} onChange={(e) => setField("complaintType", e.target.value)}>
+                <option value="">— select type —</option>
+                {COMPLAINT_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Resolution Status</Label>
-              <Input value={form.resolutionStatus} onChange={(e) => setField("resolutionStatus", e.target.value)} placeholder="e.g. Open" />
+              <Select value={form.resolutionStatus} onChange={(e) => setField("resolutionStatus", e.target.value)}>
+                {RESOLUTION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Complaint Details *</Label>
@@ -375,11 +392,16 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Refund / Rewash</Label>
-              <Input value={form.refundOrRewash} onChange={(e) => setField("refundOrRewash", e.target.value)} placeholder="Refund / Rewash / None" />
+              <Select value={form.refundOrRewash} onChange={(e) => setField("refundOrRewash", e.target.value)}>
+                {REFUND_REWASH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Follow-Up Complete</Label>
-              <Input value={form.followUpComplete} onChange={(e) => setField("followUpComplete", e.target.value)} placeholder="Yes / No" />
+              <Select value={form.followUpComplete} onChange={(e) => setField("followUpComplete", e.target.value)}>
+                <option value="">— select —</option>
+                {YES_NO_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Root Cause</Label>

@@ -3,9 +3,18 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Booking } from "@/lib/sheets/types";
+import type { Booking, WorkerDailyOps } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
 import { formatDate } from "@/lib/format";
+import {
+  BOOKING_STATUS_OPTIONS,
+  VEHICLE_TYPE_OPTIONS,
+  SERVICE_PACKAGE_OPTIONS,
+  PAYMENT_STATUS_OPTIONS,
+  PAYMENT_MODE_OPTIONS,
+  BOOKING_SOURCE_OPTIONS,
+  TIME_SLOT_OPTIONS,
+} from "@/lib/options";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
@@ -47,57 +56,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MoreHorizontal, Plus } from "lucide-react";
-
-const STATUS_OPTIONS = [
-  { label: "New Inquiry", value: "New Inquiry" },
-  { label: "Confirmed", value: "Confirmed" },
-  { label: "Assigned", value: "Assigned" },
-  { label: "In Progress", value: "In Progress" },
-  { label: "Completed", value: "Completed" },
-  { label: "Cancelled", value: "Cancelled" },
-  { label: "Rescheduled", value: "Rescheduled" },
-  { label: "Payment Pending", value: "Payment Pending" },
-];
-
-const VEHICLE_OPTIONS = [
-  { label: "Hatchback", value: "Hatchback" },
-  { label: "Sedan", value: "Sedan" },
-  { label: "SUV", value: "SUV" },
-  { label: "Luxury", value: "Luxury" },
-];
-
-const PACKAGE_OPTIONS = [
-  { label: "Exterior Wash", value: "Exterior Wash" },
-  { label: "Exterior + Interior Basic", value: "Exterior + Interior Basic" },
-  { label: "Monthly Plan", value: "Monthly Plan" },
-];
-
-const PAYMENT_STATUS_OPTIONS = [
-  { label: "Pending", value: "Pending" },
-  { label: "Paid", value: "Paid" },
-  { label: "Partially Paid", value: "Partially Paid" },
-  { label: "Failed", value: "Failed" },
-  { label: "Refunded", value: "Refunded" },
-];
-
-const PAYMENT_MODE_OPTIONS = [
-  { label: "UPI", value: "UPI" },
-  { label: "Cash", value: "Cash" },
-];
-
-const SOURCE_OPTIONS = [
-  { label: "WhatsApp", value: "WhatsApp" },
-  { label: "Referral", value: "Referral" },
-  { label: "Society Outreach", value: "Society Outreach" },
-  { label: "Flyer", value: "Flyer" },
-  { label: "Office Contact", value: "Office Contact" },
-  { label: "Instagram", value: "Instagram" },
-];
 
 type BookingFormData = {
   bookingDate: string;
@@ -166,9 +130,10 @@ function bookingToForm(b: Booking): BookingFormData {
 
 interface BookingsViewProps {
   bookings: Booking[];
+  workers: WorkerDailyOps[];
 }
 
-export function BookingsView({ bookings }: BookingsViewProps) {
+export function BookingsView({ bookings, workers }: BookingsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -190,6 +155,10 @@ export function BookingsView({ bookings }: BookingsViewProps) {
 
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<Booking | null>(null);
+
+  const workerNames = useMemo(() => {
+    return Array.from(new Set(workers.map((w) => w.workerName).filter(Boolean))).sort();
+  }, [workers]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -311,9 +280,9 @@ export function BookingsView({ bookings }: BookingsViewProps) {
           placeholder="Search ID, customer, phone, worker…"
           className="w-70"
         />
-        <FilterSelect value={status} onChange={setStatus} options={STATUS_OPTIONS} placeholder="All statuses" />
-        <FilterSelect value={vehicle} onChange={setVehicle} options={VEHICLE_OPTIONS} placeholder="All vehicles" />
-        <FilterSelect value={pkg} onChange={setPkg} options={PACKAGE_OPTIONS} placeholder="All packages" />
+        <FilterSelect value={status} onChange={setStatus} options={BOOKING_STATUS_OPTIONS} placeholder="All statuses" />
+        <FilterSelect value={vehicle} onChange={setVehicle} options={VEHICLE_TYPE_OPTIONS} placeholder="All vehicles" />
+        <FilterSelect value={pkg} onChange={setPkg} options={SERVICE_PACKAGE_OPTIONS} placeholder="All packages" />
         <FilterSelect value={paymentStatus} onChange={setPaymentStatus} options={PAYMENT_STATUS_OPTIONS} placeholder="Payment status" />
         {filtered.length !== bookings.length && (
           <span className="text-xs text-muted-foreground">
@@ -429,13 +398,26 @@ export function BookingsView({ bookings }: BookingsViewProps) {
           <DialogHeader><DialogTitle>Assign Worker</DialogTitle></DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="worker-name">Worker Name</Label>
-            <Input
-              id="worker-name"
-              value={workerName}
-              onChange={(e) => setWorkerName(e.target.value)}
-              placeholder="Enter worker name"
-              onKeyDown={(e) => e.key === "Enter" && handleAssignWorker()}
-            />
+            {workerNames.length > 0 ? (
+              <Select
+                id="worker-name"
+                value={workerName}
+                onChange={(e) => setWorkerName(e.target.value)}
+              >
+                <option value="">— select worker —</option>
+                {workerNames.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                id="worker-name"
+                value={workerName}
+                onChange={(e) => setWorkerName(e.target.value)}
+                placeholder="Enter worker name"
+                onKeyDown={(e) => e.key === "Enter" && handleAssignWorker()}
+              />
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
@@ -471,7 +453,10 @@ export function BookingsView({ bookings }: BookingsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Time Slot</Label>
-              <Input value={form.timeSlot} onChange={(e) => setField("timeSlot", e.target.value)} placeholder="e.g. 9:00 AM" />
+              <Select value={form.timeSlot} onChange={(e) => setField("timeSlot", e.target.value)}>
+                <option value="">— select slot —</option>
+                {TIME_SLOT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Car Model</Label>
@@ -479,23 +464,15 @@ export function BookingsView({ bookings }: BookingsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Vehicle Type</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.vehicleType}
-                onChange={(e) => setField("vehicleType", e.target.value)}
-              >
-                {VEHICLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select value={form.vehicleType} onChange={(e) => setField("vehicleType", e.target.value)}>
+                {VEHICLE_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Service Package</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.servicePackage}
-                onChange={(e) => setField("servicePackage", e.target.value)}
-              >
-                {PACKAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select value={form.servicePackage} onChange={(e) => setField("servicePackage", e.target.value)}>
+                {SERVICE_PACKAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Add-Ons</Label>
@@ -507,43 +484,27 @@ export function BookingsView({ bookings }: BookingsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Payment Status</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.paymentStatus}
-                onChange={(e) => setField("paymentStatus", e.target.value)}
-              >
+              <Select value={form.paymentStatus} onChange={(e) => setField("paymentStatus", e.target.value)}>
                 {PAYMENT_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Payment Mode</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.paymentMode}
-                onChange={(e) => setField("paymentMode", e.target.value)}
-              >
+              <Select value={form.paymentMode} onChange={(e) => setField("paymentMode", e.target.value)}>
                 {PAYMENT_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Booking Status</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.bookingStatus}
-                onChange={(e) => setField("bookingStatus", e.target.value)}
-              >
-                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select value={form.bookingStatus} onChange={(e) => setField("bookingStatus", e.target.value)}>
+                {BOOKING_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Booking Source</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.bookingSource}
-                onChange={(e) => setField("bookingSource", e.target.value)}
-              >
-                {SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select value={form.bookingSource} onChange={(e) => setField("bookingSource", e.target.value)}>
+                {BOOKING_SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Area / Society</Label>
@@ -551,7 +512,16 @@ export function BookingsView({ bookings }: BookingsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Assigned Worker</Label>
-              <Input value={form.assignedWorker} onChange={(e) => setField("assignedWorker", e.target.value)} placeholder="Worker name" />
+              {workerNames.length > 0 ? (
+                <Select value={form.assignedWorker} onChange={(e) => setField("assignedWorker", e.target.value)}>
+                  <option value="">— select worker —</option>
+                  {workerNames.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </Select>
+              ) : (
+                <Input value={form.assignedWorker} onChange={(e) => setField("assignedWorker", e.target.value)} placeholder="Worker name" />
+              )}
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Full Address</Label>
