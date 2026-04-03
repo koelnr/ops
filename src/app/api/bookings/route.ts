@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBookings, createBooking } from "@/lib/sheets/bookings";
 import { upsertCustomerFromBooking } from "@/lib/sheets/mutations/customers";
+import { createPayment } from "@/lib/sheets/mutations/payments";
 import { CreateBookingSchema } from "@/lib/sheets/types";
 
 export async function GET() {
@@ -32,6 +33,25 @@ export async function POST(req: NextRequest) {
       await upsertCustomerFromBooking(parsed.data);
     } catch (upsertErr) {
       console.error("[POST /api/bookings] Customer upsert failed:", upsertErr);
+    }
+
+    // Best-effort payment creation — does not fail booking creation on error
+    try {
+      await createPayment({
+        bookingId: booking.bookingId,
+        customerName: parsed.data.customerName,
+        serviceDate: parsed.data.serviceDate,
+        amountDue: parsed.data.price,
+        amountReceived: 0,
+        paymentStatus: "Pending",
+        paymentMode: parsed.data.paymentMode,
+        upiTransactionRef: "",
+        paymentDate: "",
+        followUpRequired: "Yes",
+        notes: "",
+      });
+    } catch (paymentErr) {
+      console.error("[POST /api/bookings] Payment creation failed:", paymentErr);
     }
 
     return NextResponse.json({ booking }, { status: 201 });
