@@ -9,8 +9,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const googleSansCode = Google_Sans_Code({
-  variable: "--font-google-sans-code",
   subsets: ["latin"],
+  variable: "--font-google-sans-code",
 });
 
 export const metadata: Metadata = {
