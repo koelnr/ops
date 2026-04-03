@@ -51,6 +51,36 @@ export const ComplaintFlag = z.enum(["Yes", "No"]);
 
 export const RepeatCustomer = z.enum(["Yes", "No"]);
 
+export const FollowUpStatus = z.enum([
+  "New",
+  "Contacted",
+  "Follow-Up Pending",
+  "Converted",
+  "Closed",
+]);
+
+export const ConversionStatus = z.enum(["Not Converted", "Converted", "Lost"]);
+
+export const ResolutionStatus = z.enum([
+  "Open",
+  "Monitoring",
+  "Resolved",
+  "Escalated",
+  "Rewash Scheduled",
+  "Closed",
+]);
+
+export const RefundOrRewash = z.enum(["None", "Refund", "Partial Refund", "Rewash"]);
+
+export const ComplaintType = z.enum([
+  "Service Quality",
+  "Late Arrival",
+  "Damage",
+  "Attitude",
+  "Incomplete Work",
+  "Other",
+]);
+
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 export const BookingSchema = z.object({
@@ -244,8 +274,8 @@ export const UpdatePaymentSchema = z
 
 export const UpdateLeadSchema = z
   .object({
-    followUpStatus: z.string().optional(),
-    conversionStatus: z.string().optional(),
+    followUpStatus: FollowUpStatus.or(z.string()).optional(),
+    conversionStatus: ConversionStatus.or(z.string()).optional(),
     notes: z.string().optional(),
     leadDate: z.string().optional(),
     leadSource: z.string().optional(),
@@ -261,35 +291,40 @@ export const UpdateLeadSchema = z
 
 export const UpdateComplaintSchema = z
   .object({
-    resolutionStatus: z.string().optional(),
+    resolutionStatus: ResolutionStatus.or(z.string()).optional(),
     resolutionGiven: z.string().optional(),
-    refundOrRewash: z.string().optional(),
+    refundOrRewash: RefundOrRewash.or(z.string()).optional(),
     followUpComplete: z.string().optional(),
     rootCause: z.string().optional(),
     bookingId: z.string().optional(),
     customerName: z.string().optional(),
     date: z.string().optional(),
     workerAssigned: z.string().optional(),
-    complaintType: z.string().optional(),
+    complaintType: ComplaintType.or(z.string()).optional(),
     complaintDetails: z.string().optional(),
   })
   .refine((d) => Object.values(d).some((v) => v !== undefined), {
     message: "At least one field must be provided",
   });
 
-export const CreatePaymentSchema = z.object({
-  bookingId: z.string(),
-  customerName: z.string(),
-  serviceDate: z.string(),
-  amountDue: z.coerce.number(),
-  amountReceived: z.coerce.number(),
-  paymentStatus: PaymentStatus,
-  paymentMode: PaymentMode,
-  upiTransactionRef: z.string().optional(),
-  paymentDate: z.string().optional(),
-  followUpRequired: z.string().optional(),
-  notes: z.string().optional(),
-});
+export const CreatePaymentSchema = z
+  .object({
+    bookingId: z.string(),
+    customerName: z.string(),
+    serviceDate: z.string(),
+    amountDue: z.coerce.number(),
+    amountReceived: z.coerce.number(),
+    paymentStatus: PaymentStatus,
+    paymentMode: PaymentMode,
+    upiTransactionRef: z.string().optional(),
+    paymentDate: z.string().optional(),
+    followUpRequired: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .refine((d) => d.amountReceived <= d.amountDue, {
+    message: "Amount received cannot exceed amount due",
+    path: ["amountReceived"],
+  });
 
 export const CreateLeadSchema = z.object({
   leadDate: z.string(),
@@ -298,8 +333,9 @@ export const CreateLeadSchema = z.object({
   phoneNumber: z.string(),
   areaSociety: z.string().optional(),
   interestedService: z.string().optional(),
-  followUpStatus: z.string(),
-  conversionStatus: z.string(),
+  followUpStatus: FollowUpStatus.or(z.string()),
+  conversionStatus: ConversionStatus.or(z.string()),
+  firstBookingDate: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -308,11 +344,11 @@ export const CreateComplaintSchema = z.object({
   customerName: z.string(),
   date: z.string(),
   workerAssigned: z.string().optional(),
-  complaintType: z.string(),
+  complaintType: ComplaintType.or(z.string()),
   complaintDetails: z.string(),
-  resolutionStatus: z.string(),
+  resolutionStatus: ResolutionStatus.or(z.string()),
   resolutionGiven: z.string().optional(),
-  refundOrRewash: z.string().optional(),
+  refundOrRewash: RefundOrRewash.or(z.string()).optional(),
   followUpComplete: z.string().optional(),
   rootCause: z.string().optional(),
 });
@@ -323,14 +359,21 @@ export const UpdateWorkerSchema = z
     payoutPaid: z.coerce.number().optional(),
     notes: z.string().optional(),
     areaCovered: z.string().optional(),
-    avgRating: z.coerce.number().optional(),
+    avgRating: z.coerce.number().min(0).max(5).optional(),
     lateArrivalCount: z.coerce.number().optional(),
     rewashCount: z.coerce.number().optional(),
     complaintCount: z.coerce.number().optional(),
   })
   .refine((d) => Object.values(d).some((v) => v !== undefined), {
     message: "At least one field must be provided",
-  });
+  })
+  .refine(
+    (d) =>
+      d.payoutPaid === undefined ||
+      d.payoutDue === undefined ||
+      d.payoutPaid <= d.payoutDue,
+    { message: "Payout paid cannot exceed payout due", path: ["payoutPaid"] },
+  );
 
 export const UpdateCustomerSchema = z
   .object({
