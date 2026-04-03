@@ -6,29 +6,14 @@ import { toast } from "sonner";
 import type { Lead } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
 import { isLeadPending } from "@/lib/lead-utils";
-import { formatDate } from "@/lib/format";
 import {
   BOOKING_SOURCE_OPTIONS,
   FOLLOW_UP_STATUS_OPTIONS,
   CONVERSION_STATUS_OPTIONS,
   SERVICE_PACKAGE_OPTIONS,
 } from "@/lib/options";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { getLeadColumns } from "./leads-columns";
 import {
   Dialog,
   DialogContent,
@@ -51,12 +36,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusBadge } from "@/components/dashboard/status-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
-import { EmptyState } from "@/components/shared/empty-state";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 type LeadFormData = {
   leadDate: string;
@@ -110,6 +93,13 @@ export function LeadsView({ leads }: LeadsViewProps) {
   const [followUpFilter, setFollowUpFilter] = useState("");
   const [conversionFilter, setConversionFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+
+  function resetFilters() {
+    setSearch("");
+    setFollowUpFilter("");
+    setConversionFilter("");
+    setSourceFilter("");
+  }
 
   // Create / Edit dialog
   const [formOpen, setFormOpen] = useState(false);
@@ -257,148 +247,43 @@ export function LeadsView({ leads }: LeadsViewProps) {
           placeholder="All sources"
         />
         {filtered.length !== leads.length && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {leads.length} shown
-          </span>
+          <>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {leads.length} shown
+            </span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
+              Clear filters
+            </Button>
+          </>
         )}
       </div>
-      {filtered.length === 0 ? (
-        <EmptyState message="No leads match your filters." />
-      ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Area</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Service Interest</TableHead>
-                <TableHead>Follow-Up</TableHead>
-                <TableHead>Conversion</TableHead>
-                <TableHead>Lead Date</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((lead) => {
-                const isRowPending = isLeadPending(lead.followUpStatus);
-                return (
-                  <TableRow
-                    key={lead.leadId || `${lead.leadDate}-${lead.prospectName}`}
-                    className={
-                      isRowPending
-                        ? "bg-yellow-50/50 dark:bg-yellow-900/10"
-                        : undefined
-                    }
-                  >
-                    <TableCell className="font-medium text-sm">
-                      {lead.prospectName}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground font-mono">
-                      {lead.phoneNumber}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {lead.areaSociety || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm">{lead.leadSource}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {lead.interestedService || "—"}
-                    </TableCell>
-                    <TableCell>
-                      {lead.followUpStatus ? (
-                        <StatusBadge status={lead.followUpStatus} />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {lead.conversionStatus ? (
-                        <StatusBadge status={lead.conversionStatus} />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(lead.leadDate)}
-                    </TableCell>
-                    <TableCell className="max-w-50">
-                      <p
-                        className="text-xs text-muted-foreground truncate"
-                        title={lead.notes ?? undefined}
-                      >
-                        {lead.notes || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            disabled={isPending}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => openEdit(lead)}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              handleUpdate(
-                                lead,
-                                { followUpStatus: "Contacted" },
-                                `${lead.prospectName} marked as contacted`,
-                              )
-                            }
-                          >
-                            Mark Contacted
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              handleUpdate(
-                                lead,
-                                { conversionStatus: "Converted" },
-                                `${lead.prospectName} marked as converted`,
-                              )
-                            }
-                          >
-                            Mark Converted
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              handleUpdate(
-                                lead,
-                                { followUpStatus: "Follow-Up Pending" },
-                                `Follow-up set for ${lead.prospectName}`,
-                              )
-                            }
-                          >
-                            Mark Follow-up Needed
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setDeleteTarget(lead)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={getLeadColumns({
+          onEdit: openEdit,
+          onMarkContacted: (lead) =>
+            handleUpdate(
+              lead,
+              { followUpStatus: "Contacted" },
+              `${lead.prospectName} marked as contacted`,
+            ),
+          onMarkConverted: (lead) =>
+            handleUpdate(
+              lead,
+              { conversionStatus: "Converted" },
+              `${lead.prospectName} marked as converted`,
+            ),
+          onMarkFollowUp: (lead) =>
+            handleUpdate(
+              lead,
+              { followUpStatus: "Follow-Up Pending" },
+              `Follow-up set for ${lead.prospectName}`,
+            ),
+          onDelete: setDeleteTarget,
+          isPending,
+        })}
+        data={filtered}
+        emptyMessage="No leads match your filters."
+      />
 
       {/* Create / Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -410,7 +295,7 @@ export function LeadsView({ leads }: LeadsViewProps) {
                 : "New Lead"}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Prospect Name *</Label>
               <Input

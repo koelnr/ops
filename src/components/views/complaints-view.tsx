@@ -5,29 +5,14 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Complaint, WorkerDailyOps } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
-import { formatDate } from "@/lib/format";
 import {
   COMPLAINT_TYPE_OPTIONS,
   RESOLUTION_STATUS_OPTIONS,
   REFUND_REWASH_OPTIONS,
   YES_NO_OPTIONS,
 } from "@/lib/options";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { getComplaintColumns } from "./complaints-columns";
 import {
   Dialog,
   DialogContent,
@@ -50,12 +35,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusBadge } from "@/components/dashboard/status-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
-import { EmptyState } from "@/components/shared/empty-state";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 type ComplaintFormData = {
   bookingId: string;
@@ -112,6 +95,12 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+
+  function resetFilters() {
+    setSearch("");
+    setStatusFilter("");
+    setTypeFilter("");
+  }
 
   // Create / Edit dialog
   const [formOpen, setFormOpen] = useState(false);
@@ -261,150 +250,44 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
           placeholder="Complaint type"
         />
         {filtered.length !== complaints.length && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {complaints.length} shown
-          </span>
+          <>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {complaints.length} shown
+            </span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
+              Clear filters
+            </Button>
+          </>
         )}
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState message="No complaints match your filters." />
-      ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-30">ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Booking</TableHead>
-                <TableHead>Worker</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Issue</TableHead>
-                <TableHead>Resolution</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered
-                .slice()
-                .sort((a, b) => b.date.localeCompare(a.date))
-                .map((complaint) => (
-                  <TableRow key={complaint.complaintId}>
-                    <TableCell className="font-mono text-xs">
-                      {complaint.complaintId}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {complaint.customerName}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {complaint.bookingId}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {complaint.workerAssigned || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {complaint.complaintType || "—"}
-                    </TableCell>
-                    <TableCell className="max-w-60">
-                      <p
-                        className="text-sm truncate"
-                        title={complaint.complaintDetails}
-                      >
-                        {complaint.complaintDetails}
-                      </p>
-                    </TableCell>
-                    <TableCell className="max-w-50">
-                      <p
-                        className="text-xs text-muted-foreground truncate"
-                        title={complaint.resolutionGiven}
-                      >
-                        {complaint.resolutionGiven || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      {complaint.resolutionStatus ? (
-                        <StatusBadge status={complaint.resolutionStatus} />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(complaint.date)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            disabled={isPending}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onSelect={() => openEdit(complaint)}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              handleUpdate(
-                                complaint,
-                                { resolutionStatus: "Resolved" },
-                                `Complaint ${complaint.complaintId} marked resolved`,
-                              )
-                            }
-                          >
-                            Mark Resolved
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              handleUpdate(
-                                complaint,
-                                { resolutionStatus: "Escalated" },
-                                `Complaint ${complaint.complaintId} escalated`,
-                              )
-                            }
-                          >
-                            Escalate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              handleUpdate(
-                                complaint,
-                                {
-                                  resolutionStatus: "Rewash Scheduled",
-                                  refundOrRewash: "Rewash",
-                                },
-                                `Rewash scheduled for ${complaint.complaintId}`,
-                              )
-                            }
-                          >
-                            Schedule Rewash
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setDeleteTarget(complaint)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={getComplaintColumns({
+          onEdit: openEdit,
+          onMarkResolved: (c) =>
+            handleUpdate(
+              c,
+              { resolutionStatus: "Resolved" },
+              `Complaint ${c.complaintId} marked resolved`,
+            ),
+          onEscalate: (c) =>
+            handleUpdate(
+              c,
+              { resolutionStatus: "Escalated" },
+              `Complaint ${c.complaintId} escalated`,
+            ),
+          onScheduleRewash: (c) =>
+            handleUpdate(
+              c,
+              { resolutionStatus: "Rewash Scheduled", refundOrRewash: "Rewash" },
+              `Rewash scheduled for ${c.complaintId}`,
+            ),
+          onDelete: setDeleteTarget,
+          isPending,
+        })}
+        data={[...filtered].sort((a, b) => b.date.localeCompare(a.date))}
+        emptyMessage="No complaints match your filters."
+      />
 
       {/* Create / Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -416,7 +299,7 @@ export function ComplaintsView({ complaints, workers }: ComplaintsViewProps) {
                 : "New Complaint"}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Customer Name *</Label>
               <Input

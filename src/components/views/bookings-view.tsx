@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Booking, WorkerDailyOps } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
-import { formatDate } from "@/lib/format";
 import {
   BOOKING_STATUS_OPTIONS,
   VEHICLE_TYPE_OPTIONS,
@@ -18,27 +17,8 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
-import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/dashboard/status-badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { getBookingColumns } from "./bookings-columns";
 import {
   Dialog,
   DialogContent,
@@ -61,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 type BookingFormData = {
   bookingDate: string;
@@ -141,6 +121,14 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
   const [vehicle, setVehicle] = useState("");
   const [pkg, setPkg] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
+
+  function resetFilters() {
+    setSearch("");
+    setStatus("");
+    setVehicle("");
+    setPkg("");
+    setPaymentStatus("");
+  }
 
   // Assign worker dialog
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -269,6 +257,21 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
     }
   }
 
+  const columns = getBookingColumns({
+    onEdit: openEdit,
+    onAssign: (booking) => {
+      setAssignTarget(booking);
+      setWorkerName(booking.assignedWorker);
+      setAssignDialogOpen(true);
+    },
+    onSetBookingStatus: (id, s) =>
+      handleMutate(id, { bookingStatus: s }, `Status updated to ${s}`),
+    onSetPaymentStatus: (id, s) =>
+      handleMutate(id, { paymentStatus: s }, `Payment marked as ${s}`),
+    onDelete: setDeleteTarget,
+    isPending,
+  });
+
   return (
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
@@ -313,176 +316,22 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
           placeholder="Payment status"
         />
         {filtered.length !== bookings.length && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {bookings.length} shown
-          </span>
+          <>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {bookings.length} shown
+            </span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
+              Clear filters
+            </Button>
+          </>
         )}
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState message="No bookings match your filters." />
-      ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-30">Booking ID</TableHead>
-                <TableHead>Service Date</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Car</TableHead>
-                <TableHead>Time Slot</TableHead>
-                <TableHead>Service</TableHead>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Assigned Worker</TableHead>
-                <TableHead>Booking Status</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((booking) => (
-                <TableRow key={booking.bookingId}>
-                  <TableCell className="font-mono text-xs">
-                    {booking.bookingId}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(booking.serviceDate)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium text-sm">
-                      {booking.customerName}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {booking.phoneNumber}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {booking.carModel || "—"}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {booking.timeSlot || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">{booking.servicePackage}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">{booking.vehicleType}</span>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {booking.assignedWorker || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={booking.bookingStatus} />
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={booking.paymentStatus} />
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={isPending}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => openEdit(booking)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            setAssignTarget(booking);
-                            setWorkerName(booking.assignedWorker);
-                            setAssignDialogOpen(true);
-                          }}
-                        >
-                          Assign Worker
-                        </DropdownMenuItem>
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            Set Booking Status
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            {(
-                              [
-                                "New Inquiry",
-                                "Confirmed",
-                                "Assigned",
-                                "In Progress",
-                                "Completed",
-                                "Cancelled",
-                                "Rescheduled",
-                                "Payment Pending",
-                              ] as const
-                            ).map((s) => (
-                              <DropdownMenuItem
-                                key={s}
-                                disabled={booking.bookingStatus === s}
-                                onSelect={() =>
-                                  handleMutate(
-                                    booking.bookingId,
-                                    { bookingStatus: s },
-                                    `Status updated to ${s}`,
-                                  )
-                                }
-                              >
-                                {s}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            Payment Status
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            {(
-                              [
-                                "Pending",
-                                "Paid",
-                                "Partially Paid",
-                                "Failed",
-                                "Refunded",
-                              ] as const
-                            ).map((s) => (
-                              <DropdownMenuItem
-                                key={s}
-                                disabled={booking.paymentStatus === s}
-                                onSelect={() =>
-                                  handleMutate(
-                                    booking.bookingId,
-                                    { paymentStatus: s },
-                                    `Payment marked as ${s}`,
-                                  )
-                                }
-                              >
-                                {s}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onSelect={() => setDeleteTarget(booking)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={filtered}
+        emptyMessage="No bookings match your filters."
+      />
 
       {/* Assign Worker Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
@@ -542,7 +391,7 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
                 : "New Booking"}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Customer Name *</Label>
               <Input
