@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBookings, createBooking } from "@/lib/sheets/bookings";
+import { upsertCustomerFromBooking } from "@/lib/sheets/mutations/customers";
 import { CreateBookingSchema } from "@/lib/sheets/types";
 
 export async function GET() {
@@ -25,6 +26,14 @@ export async function POST(req: NextRequest) {
     }
 
     const booking = await createBooking(parsed.data);
+
+    // Best-effort customer upsert — does not fail booking creation on sync error
+    try {
+      await upsertCustomerFromBooking(parsed.data);
+    } catch (upsertErr) {
+      console.error("[POST /api/bookings] Customer upsert failed:", upsertErr);
+    }
+
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/bookings]", err);
