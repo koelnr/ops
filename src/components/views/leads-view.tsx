@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Lead } from "@/lib/sheets/types"
 import { mutate } from "@/lib/mutate"
+import { isLeadPending } from "@/lib/lead-utils"
+import { formatDate } from "@/lib/format"
 import {
   Table,
   TableBody,
@@ -68,10 +70,7 @@ export function LeadsView({ leads }: LeadsViewProps) {
     })
   }, [leads, search, statusFilter, sourceFilter])
 
-  const pendingCount = leads.filter((l) => {
-    const s = l.status.toLowerCase()
-    return s.includes("pending") || s.includes("new") || s.includes("fresh") || s.includes("follow")
-  }).length
+  const pendingCount = leads.filter((l) => isLeadPending(l.status)).length
 
   async function handleStatusUpdate(lead: Lead, newStatus: string, successMsg: string) {
     const result = await mutate(`/api/leads/${lead.id}`, { status: newStatus })
@@ -133,12 +132,9 @@ export function LeadsView({ leads }: LeadsViewProps) {
             </TableHeader>
             <TableBody>
               {filtered.map((lead) => {
-                const isPending = (() => {
-                  const s = lead.status.toLowerCase()
-                  return s.includes("pending") || s.includes("new") || s.includes("fresh") || s.includes("follow")
-                })()
+                const isRowPending = isLeadPending(lead.status)
                 return (
-                  <TableRow key={lead.id} className={isPending ? "bg-yellow-50/50 dark:bg-yellow-900/10" : undefined}>
+                  <TableRow key={lead.id} className={isRowPending ? "bg-yellow-50/50 dark:bg-yellow-900/10" : undefined}>
                     <TableCell className="font-mono text-xs">{lead.id}</TableCell>
                     <TableCell className="font-medium text-sm">{lead.name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{lead.phone}</TableCell>
@@ -146,7 +142,7 @@ export function LeadsView({ leads }: LeadsViewProps) {
                     <TableCell>
                       <StatusBadge status={lead.status} />
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{lead.createdAt}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{formatDate(lead.createdAt)}</TableCell>
                     <TableCell className="max-w-[240px]">
                       <p className="text-xs text-muted-foreground truncate" title={lead.notes ?? undefined}>
                         {lead.notes ?? "—"}
@@ -155,7 +151,7 @@ export function LeadsView({ leads }: LeadsViewProps) {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending && false}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
