@@ -40,18 +40,16 @@ import { Input } from "@/components/ui/input";
 import { MoreHorizontal } from "lucide-react";
 
 const STATUS_OPTIONS = [
-  { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
-  { label: "Partial", value: "partial" },
-  { label: "Refunded", value: "refunded" },
+  { label: "Pending", value: "Pending" },
+  { label: "Paid", value: "Paid" },
+  { label: "Partially Paid", value: "Partially Paid" },
+  { label: "Failed", value: "Failed" },
+  { label: "Refunded", value: "Refunded" },
 ];
 
 const MODE_OPTIONS = [
-  { label: "Cash", value: "cash" },
-  { label: "UPI", value: "upi" },
-  { label: "Card", value: "card" },
-  { label: "Bank Transfer", value: "bank_transfer" },
-  { label: "Online", value: "online" },
+  { label: "UPI", value: "UPI" },
+  { label: "Cash", value: "Cash" },
 ];
 
 interface PaymentsViewProps {
@@ -65,22 +63,22 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
   const [status, setStatus] = useState("");
   const [mode, setMode] = useState("");
 
-  // Reference dialog state
+  // UPI ref dialog state
   const [refDialogOpen, setRefDialogOpen] = useState(false);
   const [refTarget, setRefTarget] = useState<Payment | null>(null);
-  const [reference, setReference] = useState("");
+  const [upiRef, setUpiRef] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return payments.filter((p) => {
-      if (status && p.status !== status) return false;
-      if (mode && p.mode !== mode) return false;
+      if (status && p.paymentStatus !== status) return false;
+      if (mode && p.paymentMode !== mode) return false;
       if (q) {
         return (
-          p.id.toLowerCase().includes(q) ||
+          p.paymentId.toLowerCase().includes(q) ||
           p.bookingId.toLowerCase().includes(q) ||
-          p.customerId.toLowerCase().includes(q)
+          p.customerName.toLowerCase().includes(q)
         );
       }
       return true;
@@ -88,17 +86,13 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
   }, [payments, search, status, mode]);
 
   const pendingCount = payments.filter(
-    (p) => p.status === "pending" || p.status === "partial",
+    (p) => p.paymentStatus === "Pending" || p.paymentStatus === "Partially Paid",
   ).length;
 
-  async function handleStatusUpdate(
-    id: string,
-    newStatus: string,
-    reference?: string,
-  ) {
-    const body: Record<string, unknown> = { status: newStatus };
-    if (reference) body.reference = reference;
-    const result = await mutate(`/api/payments/${id}`, body);
+  async function handleStatusUpdate(id: string, newStatus: string) {
+    const result = await mutate(`/api/payments/${id}`, {
+      paymentStatus: newStatus,
+    });
     if (result.ok) {
       toast.success(`Payment marked as ${newStatus}`);
       startTransition(() => router.refresh());
@@ -107,18 +101,18 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
     }
   }
 
-  async function handleUpdateReference() {
+  async function handleUpdateRef() {
     if (!refTarget) return;
     setIsSubmitting(true);
-    const result = await mutate(`/api/payments/${refTarget.id}`, {
-      status: refTarget.status,
-      reference: reference.trim(),
+    const result = await mutate(`/api/payments/${refTarget.paymentId}`, {
+      paymentStatus: refTarget.paymentStatus,
+      upiTransactionRef: upiRef.trim(),
     });
     setIsSubmitting(false);
     if (result.ok) {
-      toast.success("Reference updated");
+      toast.success("UPI reference updated");
       setRefDialogOpen(false);
-      setReference("");
+      setUpiRef("");
       setRefTarget(null);
       startTransition(() => router.refresh());
     } else {
@@ -136,8 +130,8 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search ID, booking ID, customer…"
-          className="w-70"
+          placeholder="Search payment ID, booking ID, customer…"
+          className="w-75"
         />
         <FilterSelect
           value={status}
@@ -168,40 +162,42 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
                 <TableHead className="w-30">Payment ID</TableHead>
                 <TableHead>Booking ID</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Amount Due</TableHead>
+                <TableHead className="text-right">Received</TableHead>
                 <TableHead>Mode</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Reference</TableHead>
+                <TableHead>Payment Date</TableHead>
+                <TableHead>UPI Ref</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((payment) => (
-                <TableRow key={payment.id}>
+                <TableRow key={payment.paymentId}>
                   <TableCell className="font-mono text-xs">
-                    {payment.id}
+                    {payment.paymentId}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {payment.bookingId}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {payment.customerId}
+                    {payment.customerName}
                   </TableCell>
-                  <TableCell className="text-right font-medium text-sm">
-                    {formatCurrency(payment.amount)}
+                  <TableCell className="text-right font-medium text-sm tabular-nums">
+                    {formatCurrency(payment.amountDue)}
                   </TableCell>
-                  <TableCell className="text-sm capitalize">
-                    {payment.mode.replace("_", " ")}
+                  <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
+                    {formatCurrency(payment.amountReceived)}
                   </TableCell>
+                  <TableCell className="text-sm">{payment.paymentMode}</TableCell>
                   <TableCell>
-                    <StatusBadge status={payment.status} />
+                    <StatusBadge status={payment.paymentStatus} />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(payment.date)}
+                    {formatDate(payment.paymentDate)}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {payment.reference ?? "—"}
+                    {payment.upiTransactionRef || "—"}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -219,25 +215,25 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          disabled={payment.status === "paid"}
+                          disabled={payment.paymentStatus === "Paid"}
                           onSelect={() =>
-                            handleStatusUpdate(payment.id, "paid")
+                            handleStatusUpdate(payment.paymentId, "Paid")
                           }
                         >
                           Mark as Paid
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          disabled={payment.status === "partial"}
+                          disabled={payment.paymentStatus === "Partially Paid"}
                           onSelect={() =>
-                            handleStatusUpdate(payment.id, "partial")
+                            handleStatusUpdate(payment.paymentId, "Partially Paid")
                           }
                         >
-                          Mark as Partial
+                          Mark as Partially Paid
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          disabled={payment.status === "pending"}
+                          disabled={payment.paymentStatus === "Pending"}
                           onSelect={() =>
-                            handleStatusUpdate(payment.id, "pending")
+                            handleStatusUpdate(payment.paymentId, "Pending")
                           }
                         >
                           Mark as Pending
@@ -246,11 +242,11 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
                         <DropdownMenuItem
                           onSelect={() => {
                             setRefTarget(payment);
-                            setReference(payment.reference ?? "");
+                            setUpiRef(payment.upiTransactionRef);
                             setRefDialogOpen(true);
                           }}
                         >
-                          Update Reference
+                          Update UPI Reference
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -265,23 +261,23 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
       <Dialog open={refDialogOpen} onOpenChange={setRefDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Update Reference</DialogTitle>
+            <DialogTitle>Update UPI Reference</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="reference">Reference / Transaction ID</Label>
+            <Label htmlFor="upi-ref">UPI Transaction Reference</Label>
             <Input
-              id="reference"
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
+              id="upi-ref"
+              value={upiRef}
+              onChange={(e) => setUpiRef(e.target.value)}
               placeholder="e.g. UPI-123456789"
-              onKeyDown={(e) => e.key === "Enter" && handleUpdateReference()}
+              onKeyDown={(e) => e.key === "Enter" && handleUpdateRef()}
             />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRefDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateReference} disabled={isSubmitting}>
+            <Button onClick={handleUpdateRef} disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>

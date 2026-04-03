@@ -30,13 +30,6 @@ import { FilterSelect } from "@/components/shared/filter-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MoreHorizontal } from "lucide-react";
 
-const FLAG_OPTIONS = [
-  { label: "Open", value: "open" },
-  { label: "Resolved", value: "resolved" },
-  { label: "Escalated", value: "escalated" },
-  { label: "Ignored", value: "ignored" },
-];
-
 interface ComplaintsViewProps {
   complaints: Complaint[];
 }
@@ -45,38 +38,56 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
-  const [flagFilter, setFlagFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+
+  const statusOptions = useMemo(() => {
+    return Array.from(
+      new Set(complaints.map((c) => c.resolutionStatus).filter(Boolean)),
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [complaints]);
+
+  const typeOptions = useMemo(() => {
+    return Array.from(
+      new Set(complaints.map((c) => c.complaintType).filter(Boolean)),
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [complaints]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return complaints.filter((c) => {
-      if (flagFilter && c.flag !== flagFilter) return false;
+      if (statusFilter && c.resolutionStatus !== statusFilter) return false;
+      if (typeFilter && c.complaintType !== typeFilter) return false;
       if (q) {
         return (
-          c.description.toLowerCase().includes(q) ||
-          c.id.toLowerCase().includes(q) ||
-          c.customerId.toLowerCase().includes(q) ||
-          c.bookingId.toLowerCase().includes(q)
+          c.complaintDetails.toLowerCase().includes(q) ||
+          c.complaintId.toLowerCase().includes(q) ||
+          c.customerName.toLowerCase().includes(q) ||
+          c.bookingId.toLowerCase().includes(q) ||
+          c.workerAssigned.toLowerCase().includes(q)
         );
       }
       return true;
     });
-  }, [complaints, search, flagFilter]);
+  }, [complaints, search, statusFilter, typeFilter]);
 
   const unresolvedCount = complaints.filter(
-    (c) => c.flag === "open" || c.flag === "escalated",
+    (c) =>
+      !c.resolutionStatus ||
+      c.resolutionStatus.toLowerCase().includes("open") ||
+      c.resolutionStatus.toLowerCase().includes("pending"),
   ).length;
 
-  async function handleFlagUpdate(
+  async function handleUpdate(
     complaint: Complaint,
-    flag: "open" | "resolved" | "escalated" | "ignored",
+    body: Record<string, string>,
     successMsg: string,
   ) {
-    const body: Record<string, unknown> = { flag };
-    if (flag === "resolved") {
-      body.resolvedAt = new Date().toISOString().split("T")[0];
-    }
-    const result = await mutate(`/api/complaints/${complaint.id}`, body);
+    const result = await mutate(`/api/complaints/${complaint.complaintId}`, body);
     if (result.ok) {
       toast.success(successMsg);
       startTransition(() => router.refresh());
@@ -95,14 +106,20 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search description, ID…"
-          className="w-65"
+          placeholder="Search details, ID, customer, worker…"
+          className="w-70"
         />
         <FilterSelect
-          value={flagFilter}
-          onChange={setFlagFilter}
-          options={FLAG_OPTIONS}
-          placeholder="All statuses"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={statusOptions}
+          placeholder="Resolution status"
+        />
+        <FilterSelect
+          value={typeFilter}
+          onChange={setTypeFilter}
+          options={typeOptions}
+          placeholder="Complaint type"
         />
         {filtered.length !== complaints.length && (
           <span className="text-xs text-muted-foreground">
@@ -121,44 +138,61 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
                 <TableHead className="w-30">ID</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Booking</TableHead>
+                <TableHead>Worker</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Issue</TableHead>
+                <TableHead>Resolution</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Resolved</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered
                 .slice()
-                .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+                .sort((a, b) => b.date.localeCompare(a.date))
                 .map((complaint) => (
-                  <TableRow key={complaint.id}>
+                  <TableRow key={complaint.complaintId}>
                     <TableCell className="font-mono text-xs">
-                      {complaint.id}
+                      {complaint.complaintId}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {complaint.customerId}
+                      {complaint.customerName}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {complaint.bookingId}
                     </TableCell>
-                    <TableCell className="max-w-70">
+                    <TableCell className="text-sm text-muted-foreground">
+                      {complaint.workerAssigned || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {complaint.complaintType || "—"}
+                    </TableCell>
+                    <TableCell className="max-w-60">
                       <p
                         className="text-sm truncate"
-                        title={complaint.description}
+                        title={complaint.complaintDetails}
                       >
-                        {complaint.description}
+                        {complaint.complaintDetails}
+                      </p>
+                    </TableCell>
+                    <TableCell className="max-w-50">
+                      <p
+                        className="text-xs text-muted-foreground truncate"
+                        title={complaint.resolutionGiven}
+                      >
+                        {complaint.resolutionGiven || "—"}
                       </p>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={complaint.flag} />
+                      {complaint.resolutionStatus ? (
+                        <StatusBadge status={complaint.resolutionStatus} />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(complaint.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(complaint.resolvedAt)}
+                      {formatDate(complaint.date)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -176,40 +210,40 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            disabled={complaint.flag === "resolved"}
                             onSelect={() =>
-                              handleFlagUpdate(
+                              handleUpdate(
                                 complaint,
-                                "resolved",
-                                `Complaint ${complaint.id} marked resolved`,
+                                { resolutionStatus: "Resolved" },
+                                `Complaint ${complaint.complaintId} marked resolved`,
                               )
                             }
                           >
                             Mark Resolved
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            disabled={complaint.flag === "escalated"}
                             onSelect={() =>
-                              handleFlagUpdate(
+                              handleUpdate(
                                 complaint,
-                                "escalated",
-                                `Complaint ${complaint.id} escalated`,
+                                { resolutionStatus: "Escalated" },
+                                `Complaint ${complaint.complaintId} escalated`,
                               )
                             }
                           >
                             Escalate
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            disabled={complaint.flag === "ignored"}
                             onSelect={() =>
-                              handleFlagUpdate(
+                              handleUpdate(
                                 complaint,
-                                "ignored",
-                                `Complaint ${complaint.id} ignored`,
+                                {
+                                  resolutionStatus: "Rewash Scheduled",
+                                  refundOrRewash: "Rewash",
+                                },
+                                `Rewash scheduled for ${complaint.complaintId}`,
                               )
                             }
                           >
-                            Ignore
+                            Schedule Rewash
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -43,34 +43,35 @@ import { Input } from "@/components/ui/input";
 import { MoreHorizontal } from "lucide-react";
 
 const STATUS_OPTIONS = [
-  { label: "Pending", value: "pending" },
-  { label: "Confirmed", value: "confirmed" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
+  { label: "New Inquiry", value: "New Inquiry" },
+  { label: "Confirmed", value: "Confirmed" },
+  { label: "Assigned", value: "Assigned" },
+  { label: "In Progress", value: "In Progress" },
+  { label: "Completed", value: "Completed" },
+  { label: "Cancelled", value: "Cancelled" },
+  { label: "Rescheduled", value: "Rescheduled" },
+  { label: "Payment Pending", value: "Payment Pending" },
 ];
 
 const VEHICLE_OPTIONS = [
-  { label: "Sedan", value: "sedan" },
-  { label: "SUV", value: "suv" },
-  { label: "Hatchback", value: "hatchback" },
-  { label: "Van", value: "van" },
-  { label: "Truck", value: "truck" },
-  { label: "Bike", value: "bike" },
+  { label: "Hatchback", value: "Hatchback" },
+  { label: "Sedan", value: "Sedan" },
+  { label: "SUV", value: "SUV" },
+  { label: "Luxury", value: "Luxury" },
 ];
 
 const PACKAGE_OPTIONS = [
-  { label: "Basic", value: "basic" },
-  { label: "Standard", value: "standard" },
-  { label: "Premium", value: "premium" },
-  { label: "Custom", value: "custom" },
+  { label: "Exterior Wash", value: "Exterior Wash" },
+  { label: "Exterior + Interior Basic", value: "Exterior + Interior Basic" },
+  { label: "Monthly Plan", value: "Monthly Plan" },
 ];
 
 const PAYMENT_STATUS_OPTIONS = [
-  { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
-  { label: "Partial", value: "partial" },
-  { label: "Refunded", value: "refunded" },
+  { label: "Pending", value: "Pending" },
+  { label: "Paid", value: "Paid" },
+  { label: "Partially Paid", value: "Partially Paid" },
+  { label: "Failed", value: "Failed" },
+  { label: "Refunded", value: "Refunded" },
 ];
 
 interface BookingsViewProps {
@@ -95,15 +96,16 @@ export function BookingsView({ bookings }: BookingsViewProps) {
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return bookings.filter((b) => {
-      if (status && b.status !== status) return false;
+      if (status && b.bookingStatus !== status) return false;
       if (vehicle && b.vehicleType !== vehicle) return false;
       if (pkg && b.servicePackage !== pkg) return false;
       if (paymentStatus && b.paymentStatus !== paymentStatus) return false;
       if (q) {
         return (
           b.customerName.toLowerCase().includes(q) ||
-          b.id.toLowerCase().includes(q) ||
-          (b.assignedWorker?.toLowerCase().includes(q) ?? false)
+          b.bookingId.toLowerCase().includes(q) ||
+          b.assignedWorker.toLowerCase().includes(q) ||
+          b.phoneNumber.toLowerCase().includes(q)
         );
       }
       return true;
@@ -127,12 +129,12 @@ export function BookingsView({ bookings }: BookingsViewProps) {
   async function handleAssignWorker() {
     if (!assignTarget || !workerName.trim()) return;
     setIsSubmitting(true);
-    const result = await mutate(`/api/bookings/${assignTarget.id}`, {
+    const result = await mutate(`/api/bookings/${assignTarget.bookingId}`, {
       assignedWorker: workerName.trim(),
     });
     setIsSubmitting(false);
     if (result.ok) {
-      toast.success(`Worker assigned to ${assignTarget.id}`);
+      toast.success(`Worker assigned to ${assignTarget.bookingId}`);
       setAssignDialogOpen(false);
       setWorkerName("");
       setAssignTarget(null);
@@ -152,8 +154,8 @@ export function BookingsView({ bookings }: BookingsViewProps) {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search ID, customer, worker…"
-          className="w-65"
+          placeholder="Search ID, customer, phone, worker…"
+          className="w-70"
         />
         <FilterSelect
           value={status}
@@ -194,52 +196,52 @@ export function BookingsView({ bookings }: BookingsViewProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-30">Booking ID</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Service Date</TableHead>
                 <TableHead>Customer</TableHead>
+                <TableHead>Car</TableHead>
                 <TableHead>Time Slot</TableHead>
                 <TableHead>Service</TableHead>
                 <TableHead>Vehicle</TableHead>
                 <TableHead>Assigned Worker</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Booking Status</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((booking) => (
-                <TableRow key={booking.id}>
+                <TableRow key={booking.bookingId}>
                   <TableCell className="font-mono text-xs">
-                    {booking.id}
+                    {booking.bookingId}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(booking.date)}
+                    {formatDate(booking.serviceDate)}
                   </TableCell>
                   <TableCell>
                     <div className="font-medium text-sm">
                       {booking.customerName}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {booking.customerId}
+                      {booking.phoneNumber}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">
-                    {booking.timeSlot ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <span className="capitalize text-sm">
-                      {booking.servicePackage}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="capitalize text-sm">
-                      {booking.vehicleType}
-                    </span>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {booking.carModel || "—"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {booking.assignedWorker ?? "—"}
+                    {booking.timeSlot || "—"}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={booking.status} />
+                    <span className="text-sm">{booking.servicePackage}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">{booking.vehicleType}</span>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {booking.assignedWorker || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={booking.bookingStatus} />
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={booking.paymentStatus} />
@@ -262,7 +264,7 @@ export function BookingsView({ bookings }: BookingsViewProps) {
                         <DropdownMenuItem
                           onSelect={() => {
                             setAssignTarget(booking);
-                            setWorkerName(booking.assignedWorker ?? "");
+                            setWorkerName(booking.assignedWorker);
                             setAssignDialogOpen(true);
                           }}
                         >
@@ -270,32 +272,33 @@ export function BookingsView({ bookings }: BookingsViewProps) {
                         </DropdownMenuItem>
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger>
-                            Set Status
+                            Set Booking Status
                           </DropdownMenuSubTrigger>
                           <DropdownMenuSubContent>
                             {(
                               [
-                                "pending",
-                                "confirmed",
-                                "in_progress",
-                                "completed",
-                                "cancelled",
+                                "New Inquiry",
+                                "Confirmed",
+                                "Assigned",
+                                "In Progress",
+                                "Completed",
+                                "Cancelled",
+                                "Rescheduled",
+                                "Payment Pending",
                               ] as const
                             ).map((s) => (
                               <DropdownMenuItem
                                 key={s}
-                                disabled={booking.status === s}
+                                disabled={booking.bookingStatus === s}
                                 onSelect={() =>
                                   handleMutate(
-                                    booking.id,
-                                    { status: s },
-                                    `Status updated to ${s.replace("_", " ")}`,
+                                    booking.bookingId,
+                                    { bookingStatus: s },
+                                    `Status updated to ${s}`,
                                   )
                                 }
                               >
-                                <span className="capitalize">
-                                  {s.replace("_", " ")}
-                                </span>
+                                {s}
                               </DropdownMenuItem>
                             ))}
                           </DropdownMenuSubContent>
@@ -307,10 +310,11 @@ export function BookingsView({ bookings }: BookingsViewProps) {
                           <DropdownMenuSubContent>
                             {(
                               [
-                                "pending",
-                                "paid",
-                                "partial",
-                                "refunded",
+                                "Pending",
+                                "Paid",
+                                "Partially Paid",
+                                "Failed",
+                                "Refunded",
                               ] as const
                             ).map((s) => (
                               <DropdownMenuItem
@@ -318,13 +322,13 @@ export function BookingsView({ bookings }: BookingsViewProps) {
                                 disabled={booking.paymentStatus === s}
                                 onSelect={() =>
                                   handleMutate(
-                                    booking.id,
+                                    booking.bookingId,
                                     { paymentStatus: s },
                                     `Payment marked as ${s}`,
                                   )
                                 }
                               >
-                                <span className="capitalize">{s}</span>
+                                {s}
                               </DropdownMenuItem>
                             ))}
                           </DropdownMenuSubContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Complaint, WorkerDailyOps } from "@/lib/sheets/types";
+import type { WorkerDailyOps } from "@/lib/sheets/types";
 import { WorkersSummary } from "@/components/dashboard/workers-summary";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
@@ -10,10 +10,9 @@ import { EmptyState } from "@/components/shared/empty-state";
 
 interface WorkersViewProps {
   workers: WorkerDailyOps[];
-  complaints: Complaint[];
 }
 
-export function WorkersView({ workers, complaints }: WorkersViewProps) {
+export function WorkersView({ workers }: WorkersViewProps) {
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
@@ -27,14 +26,14 @@ export function WorkersView({ workers, complaints }: WorkersViewProps) {
   }, [workers]);
 
   const workerNames = useMemo(() => {
-    return Array.from(new Set(workers.map((w) => w.name)));
+    return Array.from(new Set(workers.map((w) => w.workerName)));
   }, [workers]);
 
   const filtered = useMemo(() => {
     return workers.filter((w) => {
       if (dateFilter && w.date !== dateFilter) return false;
       if (search) {
-        return w.name.toLowerCase().includes(search.toLowerCase());
+        return w.workerName.toLowerCase().includes(search.toLowerCase());
       }
       return true;
     });
@@ -68,7 +67,7 @@ export function WorkersView({ workers, complaints }: WorkersViewProps) {
       {filtered.length === 0 ? (
         <EmptyState message="No worker records match your filters." />
       ) : (
-        <WorkersSummary workers={filtered} complaints={complaints} />
+        <WorkersSummary workers={filtered} />
       )}
     </div>
   );

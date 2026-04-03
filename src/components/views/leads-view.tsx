@@ -39,17 +39,28 @@ export function LeadsView({ leads }: LeadsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [followUpFilter, setFollowUpFilter] = useState("");
+  const [conversionFilter, setConversionFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
 
-  const statusOptions = useMemo(() => {
-    return Array.from(new Set(leads.map((l) => l.status).filter(Boolean)))
+  const followUpOptions = useMemo(() => {
+    return Array.from(
+      new Set(leads.map((l) => l.followUpStatus).filter(Boolean)),
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [leads]);
+
+  const conversionOptions = useMemo(() => {
+    return Array.from(
+      new Set(leads.map((l) => l.conversionStatus).filter(Boolean)),
+    )
       .sort()
       .map((s) => ({ label: s, value: s }));
   }, [leads]);
 
   const sourceOptions = useMemo(() => {
-    return Array.from(new Set(leads.map((l) => l.source).filter(Boolean)))
+    return Array.from(new Set(leads.map((l) => l.leadSource).filter(Boolean)))
       .sort()
       .map((s) => ({ label: s, value: s }));
   }, [leads]);
@@ -57,27 +68,34 @@ export function LeadsView({ leads }: LeadsViewProps) {
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return leads.filter((l) => {
-      if (statusFilter && l.status !== statusFilter) return false;
-      if (sourceFilter && l.source !== sourceFilter) return false;
+      if (followUpFilter && l.followUpStatus !== followUpFilter) return false;
+      if (conversionFilter && l.conversionStatus !== conversionFilter)
+        return false;
+      if (sourceFilter && l.leadSource !== sourceFilter) return false;
       if (q) {
         return (
-          l.name.toLowerCase().includes(q) ||
-          l.phone.toLowerCase().includes(q) ||
+          l.prospectName.toLowerCase().includes(q) ||
+          l.phoneNumber.toLowerCase().includes(q) ||
+          l.areaSociety.toLowerCase().includes(q) ||
           (l.notes?.toLowerCase().includes(q) ?? false)
         );
       }
       return true;
     });
-  }, [leads, search, statusFilter, sourceFilter]);
+  }, [leads, search, followUpFilter, conversionFilter, sourceFilter]);
 
-  const pendingCount = leads.filter((l) => isLeadPending(l.status)).length;
+  const pendingCount = leads.filter((l) => isLeadPending(l.followUpStatus)).length;
 
-  async function handleStatusUpdate(
+  async function handleUpdate(
     lead: Lead,
-    newStatus: string,
+    body: Record<string, string>,
     successMsg: string,
   ) {
-    const result = await mutate(`/api/leads/${lead.id}`, { status: newStatus });
+    // Leads use prospectName as lookup key (URL-encoded)
+    const result = await mutate(
+      `/api/leads/${encodeURIComponent(lead.prospectName)}`,
+      body,
+    );
     if (result.ok) {
       toast.success(successMsg);
       startTransition(() => router.refresh());
@@ -96,14 +114,20 @@ export function LeadsView({ leads }: LeadsViewProps) {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search name, phone…"
+          placeholder="Search name, phone, area…"
           className="w-60"
         />
         <FilterSelect
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={statusOptions}
-          placeholder="All statuses"
+          value={followUpFilter}
+          onChange={setFollowUpFilter}
+          options={followUpOptions}
+          placeholder="Follow-up status"
+        />
+        <FilterSelect
+          value={conversionFilter}
+          onChange={setConversionFilter}
+          options={conversionOptions}
+          placeholder="Conversion status"
         />
         <FilterSelect
           value={sourceFilter}
@@ -124,50 +148,66 @@ export function LeadsView({ leads }: LeadsViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-30">ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Phone</TableHead>
+                <TableHead>Area</TableHead>
                 <TableHead>Source</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>Service Interest</TableHead>
+                <TableHead>Follow-Up</TableHead>
+                <TableHead>Conversion</TableHead>
+                <TableHead>Lead Date</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((lead) => {
-                const isRowPending = isLeadPending(lead.status);
+                const isRowPending = isLeadPending(lead.followUpStatus);
                 return (
                   <TableRow
-                    key={lead.id}
+                    key={`${lead.leadDate}-${lead.prospectName}`}
                     className={
                       isRowPending
                         ? "bg-yellow-50/50 dark:bg-yellow-900/10"
                         : undefined
                     }
                   >
-                    <TableCell className="font-mono text-xs">
-                      {lead.id}
-                    </TableCell>
                     <TableCell className="font-medium text-sm">
-                      {lead.name}
+                      {lead.prospectName}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground font-mono">
+                      {lead.phoneNumber}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {lead.phone}
+                      {lead.areaSociety || "—"}
                     </TableCell>
-                    <TableCell className="text-sm">{lead.source}</TableCell>
+                    <TableCell className="text-sm">{lead.leadSource}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lead.interestedService || "—"}
+                    </TableCell>
                     <TableCell>
-                      <StatusBadge status={lead.status} />
+                      {lead.followUpStatus ? (
+                        <StatusBadge status={lead.followUpStatus} />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {lead.conversionStatus ? (
+                        <StatusBadge status={lead.conversionStatus} />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(lead.createdAt)}
+                      {formatDate(lead.leadDate)}
                     </TableCell>
-                    <TableCell className="max-w-60">
+                    <TableCell className="max-w-50">
                       <p
                         className="text-xs text-muted-foreground truncate"
                         title={lead.notes ?? undefined}
                       >
-                        {lead.notes ?? "—"}
+                        {lead.notes || "—"}
                       </p>
                     </TableCell>
                     <TableCell>
@@ -187,10 +227,10 @@ export function LeadsView({ leads }: LeadsViewProps) {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onSelect={() =>
-                              handleStatusUpdate(
+                              handleUpdate(
                                 lead,
-                                "contacted",
-                                `${lead.name} marked as contacted`,
+                                { followUpStatus: "Contacted" },
+                                `${lead.prospectName} marked as contacted`,
                               )
                             }
                           >
@@ -198,10 +238,10 @@ export function LeadsView({ leads }: LeadsViewProps) {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onSelect={() =>
-                              handleStatusUpdate(
+                              handleUpdate(
                                 lead,
-                                "converted",
-                                `${lead.name} marked as converted`,
+                                { conversionStatus: "Converted" },
+                                `${lead.prospectName} marked as converted`,
                               )
                             }
                           >
@@ -209,10 +249,10 @@ export function LeadsView({ leads }: LeadsViewProps) {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onSelect={() =>
-                              handleStatusUpdate(
+                              handleUpdate(
                                 lead,
-                                "follow_up",
-                                `Follow-up set for ${lead.name}`,
+                                { followUpStatus: "Follow-Up Pending" },
+                                `Follow-up set for ${lead.prospectName}`,
                               )
                             }
                           >
