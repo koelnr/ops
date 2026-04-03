@@ -5,7 +5,9 @@ let sheetsClient: ReturnType<typeof google.sheets> | null = null;
 export async function getSheetsClient() {
   if (sheetsClient) return sheetsClient;
 
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const rawKey = process.env.GOOGLE_PRIVATE_KEY ?? "";
+  // Strip accidental surrounding quotes, then convert literal \n to real newlines
+  const privateKey = rawKey.replace(/^["']|["']$/g, "").replace(/\\n/g, "\n");
 
   const auth = new google.auth.GoogleAuth({
     credentials: {
