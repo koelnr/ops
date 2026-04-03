@@ -1,6 +1,5 @@
 import { getBookings } from "@/lib/sheets/bookings";
 import { getComplaints } from "@/lib/sheets/complaints";
-import { getCustomers } from "@/lib/sheets/customers";
 import { getLeads } from "@/lib/sheets/leads";
 import { getPayments } from "@/lib/sheets/payments";
 import { getWorkers } from "@/lib/sheets/workers";
@@ -22,14 +21,12 @@ export default async function HomePage() {
     workersResult,
     leadsResult,
     complaintsResult,
-    customersResult,
   ] = await Promise.allSettled([
     getBookings(),
     getPayments(),
     getWorkers(),
     getLeads(),
     getComplaints(),
-    getCustomers(),
   ]);
 
   const bookings =
@@ -41,27 +38,40 @@ export default async function HomePage() {
   const leads = leadsResult.status === "fulfilled" ? leadsResult.value : [];
   const complaints =
     complaintsResult.status === "fulfilled" ? complaintsResult.value : [];
-  const customers =
-    customersResult.status === "fulfilled" ? customersResult.value : [];
 
-  // KPI derivations
+  // KPI derivations from source sheets
   const confirmedBookings = bookings.filter(
-    (b) => b.status === "confirmed",
-  ).length;
-  const completedJobs = bookings.filter((b) => b.status === "completed").length;
-  const revenueCollected = payments
-    .filter((p) => p.status === "paid")
-    .reduce((sum, p) => sum + p.amount, 0);
-  const pendingPaymentsAmount = payments
-    .filter((p) => p.status === "pending" || p.status === "partial")
-    .reduce((sum, p) => sum + p.amount, 0);
-  const repeatCustomers = customers.filter(
-    (c) => c.repeatCustomer === "yes",
+    (b) => b.bookingStatus === "Confirmed",
   ).length;
 
-  const todaysBookings = bookings.filter((b) => b.date === today);
+  const completedJobs = bookings.filter(
+    (b) =>
+      b.bookingStatus === "Completed" ||
+      b.completionStatus === "Completed Successfully",
+  ).length;
+
+  const revenueCollected = payments
+    .filter((p) => p.paymentStatus === "Paid")
+    .reduce((sum, p) => sum + p.amountReceived, 0);
+
+  const pendingPaymentsAmount = payments
+    .filter(
+      (p) =>
+        p.paymentStatus === "Pending" || p.paymentStatus === "Partially Paid",
+    )
+    .reduce((sum, p) => sum + (p.amountDue - p.amountReceived), 0);
+
+  // Repeat customers: distinct customerNames from bookings with repeatCustomer = "Yes"
+  const repeatCustomers = new Set(
+    bookings
+      .filter((b) => b.repeatCustomer === "Yes")
+      .map((b) => b.customerName),
+  ).size;
+
+  const todaysBookings = bookings.filter((b) => b.serviceDate === today);
   const pendingPayments = payments.filter(
-    (p) => p.status === "pending" || p.status === "partial",
+    (p) =>
+      p.paymentStatus === "Pending" || p.paymentStatus === "Partially Paid",
   );
 
   const dateLabel = new Date().toLocaleDateString("en-IN", {
@@ -137,7 +147,7 @@ export default async function HomePage() {
             title="Worker Performance"
             description="Aggregated across all recorded days"
           />
-          <WorkersSummary workers={workers} complaints={complaints} />
+          <WorkersSummary workers={workers} />
         </section>
 
         {/* Leads Funnel */}
