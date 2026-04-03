@@ -62,7 +62,7 @@ export default async function HomePage() {
   })
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-full bg-background">
       <div className="mx-auto max-w-[1400px] px-4 py-6 space-y-8">
 
         {/* Header */}
@@ -143,6 +143,6 @@ export default async function HomePage() {
         </section>
 
       </div>
-    </main>
+    </div>
   )
 }
