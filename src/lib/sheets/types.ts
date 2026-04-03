@@ -122,6 +122,31 @@ export const DashboardMetricSchema = z.object({
   updatedAt: z.string(),
 });
 
+// ─── Mutation Schemas ─────────────────────────────────────────────────────────
+
+export const UpdateBookingSchema = z.object({
+  status: BookingStatus.optional(),
+  assignedWorker: z.string().optional(),
+  paymentStatus: PaymentStatus.optional(),
+}).refine((d) => Object.values(d).some((v) => v !== undefined), {
+  message: "At least one field must be provided",
+});
+
+export const UpdatePaymentSchema = z.object({
+  status: PaymentStatus,
+  reference: z.string().optional(),
+});
+
+export const UpdateLeadSchema = z.object({
+  status: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+export const UpdateComplaintSchema = z.object({
+  flag: ComplaintFlag,
+  resolvedAt: z.string().optional(),
+});
+
 // ─── TypeScript Types ─────────────────────────────────────────────────────────
 
 export type Booking = z.infer<typeof BookingSchema>;
@@ -132,3 +157,7 @@ export type Payment = z.infer<typeof PaymentSchema>;
 export type Lead = z.infer<typeof LeadSchema>;
 export type Complaint = z.infer<typeof ComplaintSchema>;
 export type DashboardMetric = z.infer<typeof DashboardMetricSchema>;
+export type UpdateBookingInput = z.infer<typeof UpdateBookingSchema>;
+export type UpdatePaymentInput = z.infer<typeof UpdatePaymentSchema>;
+export type UpdateLeadInput = z.infer<typeof UpdateLeadSchema>;
+export type UpdateComplaintInput = z.infer<typeof UpdateComplaintSchema>;
