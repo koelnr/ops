@@ -9,6 +9,14 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/",
 }));
 
+vi.mock("@clerk/nextjs", () => ({
+  UserButton: () => <div data-testid="user-button" />,
+}));
+
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light", setTheme: vi.fn() }),
+}));
+
 beforeAll(() => {
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -61,5 +69,27 @@ describe("TopBar — sidebar trigger", () => {
     expect(sidebar).toHaveAttribute("data-state", "collapsed");
     await user.click(screen.getByRole("button", { name: /toggle sidebar/i }));
     expect(sidebar).toHaveAttribute("data-state", "expanded");
+  });
+});
+
+describe("TopBar — dark mode toggle", () => {
+  it("renders the dark mode toggle button", () => {
+    renderTopBar();
+    expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
+  });
+
+  it("clicking the dark mode toggle does not throw", async () => {
+    const user = userEvent.setup();
+    renderTopBar();
+    await user.click(screen.getByRole("button", { name: /toggle theme/i }));
+    // Toggle is still in the document after click
+    expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
+  });
+});
+
+describe("TopBar — user button", () => {
+  it("renders the Clerk user button", () => {
+    renderTopBar();
+    expect(screen.getByTestId("user-button")).toBeInTheDocument();
   });
 });

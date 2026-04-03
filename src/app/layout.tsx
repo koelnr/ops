@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -26,6 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         "h-full",
         "antialiased",
@@ -34,16 +36,18 @@ export default function RootLayout({
       )}
     >
       <body className="h-full flex">
-        <ClerkProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <div className="flex flex-1 flex-col h-full overflow-hidden">
-              <TopBar />
-              <main className="flex-1 overflow-y-auto">{children}</main>
-            </div>
-          </SidebarProvider>
-          <Toaster richColors position="bottom-right" />
-        </ClerkProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ClerkProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <div className="flex flex-1 flex-col h-full overflow-hidden">
+                <TopBar />
+                <main className="flex-1 overflow-y-auto">{children}</main>
+              </div>
+            </SidebarProvider>
+            <Toaster richColors position="bottom-right" />
+          </ClerkProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
