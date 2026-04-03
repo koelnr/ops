@@ -13,10 +13,16 @@ const { mockToastSuccess, mockToastError } = vi.hoisted(() => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: mockToastSuccess, error: mockToastError } }));
 
-vi.mock("@/lib/mutate", () => ({ mutate: vi.fn() }));
+vi.mock("@/lib/mutate", () => ({ mutate: vi.fn(), create: vi.fn(), remove: vi.fn() }));
+
+// Default: non-admin user
+vi.mock("@clerk/nextjs", () => ({
+  useUser: vi.fn(() => ({ user: { publicMetadata: { role: "member" } } })),
+}));
 
 import { WorkersView } from "@/components/views/workers-view";
 import * as mutateModule from "@/lib/mutate";
+import { useUser } from "@clerk/nextjs";
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -136,5 +142,115 @@ describe("WorkersView — edit dialog", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /cancel/i }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("WorkersView — admin actions", () => {
+  function asAdmin() {
+    vi.mocked(useUser).mockReturnValue({
+      user: { publicMetadata: { role: "admin" } },
+    } as ReturnType<typeof useUser>);
+  }
+
+  function asNonAdmin() {
+    vi.mocked(useUser).mockReturnValue({
+      user: { publicMetadata: { role: "member" } },
+    } as ReturnType<typeof useUser>);
+  }
+
+  it("shows New Record button for admin", () => {
+    asAdmin();
+    render(<WorkersView workers={mockWorkers} />);
+    expect(screen.getByRole("button", { name: /new record/i })).toBeInTheDocument();
+  });
+
+  it("hides New Record button for non-admin", () => {
+    asNonAdmin();
+    render(<WorkersView workers={mockWorkers} />);
+    expect(screen.queryByRole("button", { name: /new record/i })).not.toBeInTheDocument();
+  });
+
+  it("shows delete option in dropdown for admin", async () => {
+    asAdmin();
+    const user = userEvent.setup();
+    render(<WorkersView workers={mockWorkers} />);
+
+    const rajuRow = findWorkerTableRow("Raju");
+    await user.click(within(rajuRow!).getByRole("button"));
+    expect(screen.getByRole("menuitem", { name: /delete record/i })).toBeInTheDocument();
+  });
+
+  it("hides delete option in dropdown for non-admin", async () => {
+    asNonAdmin();
+    const user = userEvent.setup();
+    render(<WorkersView workers={mockWorkers} />);
+
+    const rajuRow = findWorkerTableRow("Raju");
+    await user.click(within(rajuRow!).getByRole("button"));
+    expect(screen.queryByRole("menuitem", { name: /delete record/i })).not.toBeInTheDocument();
+  });
+
+  it("opens create dialog when admin clicks New Record", async () => {
+    asAdmin();
+    const user = userEvent.setup();
+    render(<WorkersView workers={mockWorkers} />);
+    await user.click(screen.getByRole("button", { name: /new record/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("New Worker Record")).toBeInTheDocument();
+  });
+
+  it("calls create and shows success toast on valid create", async () => {
+    asAdmin();
+    vi.mocked(mutateModule.create).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<WorkersView workers={mockWorkers} />);
+
+    await user.click(screen.getByRole("button", { name: /new record/i }));
+
+    const dialog = screen.getByRole("dialog");
+    await user.type(within(dialog).getByPlaceholderText("e.g. Raju"), "Vikram");
+    // Date input is the first empty-value input after name is filled
+    const emptyInputs = within(dialog).getAllByDisplayValue("");
+    await user.type(emptyInputs[0], "2026-04-03");
+
+    await user.click(within(dialog).getByRole("button", { name: /create record/i }));
+
+    await waitFor(() => {
+      expect(mutateModule.create).toHaveBeenCalledWith(
+        "/api/workers",
+        expect.objectContaining({ workerName: "Vikram" }),
+      );
+      expect(mockToastSuccess).toHaveBeenCalledWith("Worker record created for Vikram");
+    });
+  });
+
+  it("shows delete confirmation dialog when admin clicks Delete Record", async () => {
+    asAdmin();
+    const user = userEvent.setup();
+    render(<WorkersView workers={mockWorkers} />);
+
+    const rajuRow = findWorkerTableRow("Raju");
+    await user.click(within(rajuRow!).getByRole("button"));
+    await user.click(screen.getByRole("menuitem", { name: /delete record/i }));
+
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(screen.getByText(/permanently delete/i)).toBeInTheDocument();
+  });
+
+  it("calls remove and shows success toast on delete confirmation", async () => {
+    asAdmin();
+    vi.mocked(mutateModule.remove).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<WorkersView workers={mockWorkers} />);
+
+    const rajuRow = findWorkerTableRow("Raju");
+    await user.click(within(rajuRow!).getByRole("button"));
+    await user.click(screen.getByRole("menuitem", { name: /delete record/i }));
+    await user.click(screen.getByRole("button", { name: /^delete$/i }));
+
+    await waitFor(() => {
+      expect(mutateModule.remove).toHaveBeenCalledWith("/api/workers/WRK-001");
+      expect(mockToastSuccess).toHaveBeenCalledWith("Worker record deleted for Raju");
+    });
   });
 });
