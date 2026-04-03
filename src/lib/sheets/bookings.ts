@@ -73,7 +73,6 @@ export async function getBookings(): Promise<Booking[]> {
     }
   }
 
-  console.info("[bookings]:", bookings);
   return bookings;
 }
 
