@@ -30,10 +30,7 @@ export function ComplaintsTable({
   }
 
   const sorted = [...complaints]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit);
 
   return (
@@ -42,8 +39,10 @@ export function ComplaintsTable({
         <TableHeader>
           <TableRow>
             <TableHead className="w-30">ID</TableHead>
-            <TableHead>Customer ID</TableHead>
+            <TableHead>Customer</TableHead>
             <TableHead>Booking ID</TableHead>
+            <TableHead>Worker</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Issue</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
@@ -51,26 +50,36 @@ export function ComplaintsTable({
         </TableHeader>
         <TableBody>
           {sorted.map((complaint) => (
-            <TableRow key={complaint.id}>
+            <TableRow key={complaint.complaintId}>
               <TableCell className="font-mono text-xs">
-                {complaint.id}
+                {complaint.complaintId}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {complaint.customerId}
+                {complaint.customerName}
               </TableCell>
               <TableCell className="font-mono text-xs">
                 {complaint.bookingId}
               </TableCell>
-              <TableCell className="max-w-70">
-                <p className="text-sm truncate" title={complaint.description}>
-                  {complaint.description}
+              <TableCell className="text-sm text-muted-foreground">
+                {complaint.workerAssigned || "—"}
+              </TableCell>
+              <TableCell className="text-sm">
+                {complaint.complaintType || "—"}
+              </TableCell>
+              <TableCell className="max-w-60">
+                <p className="text-sm truncate" title={complaint.complaintDetails}>
+                  {complaint.complaintDetails}
                 </p>
               </TableCell>
               <TableCell>
-                <StatusBadge status={complaint.flag} />
+                {complaint.resolutionStatus ? (
+                  <StatusBadge status={complaint.resolutionStatus} />
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {formatDate(complaint.createdAt)}
+                {formatDate(complaint.date)}
               </TableCell>
             </TableRow>
           ))}

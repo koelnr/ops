@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
 import type { Lead } from "@/lib/sheets/types"
-import { classifyLeadStatus } from "@/lib/lead-utils"
+import { classifyFollowUpStatus, classifyConversionStatus } from "@/lib/lead-utils"
 import { formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 
@@ -35,12 +35,12 @@ interface LeadsSummaryProps {
 
 export function LeadsSummary({ leads }: LeadsSummaryProps) {
   const total = leads.length
-  const contacted = leads.filter((l) => classifyLeadStatus(l.status) === "contacted").length
-  const converted = leads.filter((l) => classifyLeadStatus(l.status) === "converted").length
-  const pendingFollowUp = leads.filter((l) => classifyLeadStatus(l.status) === "pending").length
+  const contacted = leads.filter((l) => classifyFollowUpStatus(l.followUpStatus) === "contacted").length
+  const converted = leads.filter((l) => classifyConversionStatus(l.conversionStatus) === "converted").length
+  const pendingFollowUp = leads.filter((l) => classifyFollowUpStatus(l.followUpStatus) === "pending").length
 
   const recentLeads = [...leads]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => new Date(b.leadDate).getTime() - new Date(a.leadDate).getTime())
     .slice(0, 5)
 
   return (
@@ -60,20 +60,28 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
                 <TableHead>Name</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Source</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Follow-Up</TableHead>
+                <TableHead>Conversion</TableHead>
                 <TableHead>Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {recentLeads.map((lead) => (
-                <TableRow key={lead.id}>
-                  <TableCell className="font-medium text-sm">{lead.name}</TableCell>
-                  <TableCell className="text-sm font-mono">{lead.phone}</TableCell>
-                  <TableCell className="text-sm capitalize">{lead.source}</TableCell>
+                <TableRow key={`${lead.leadDate}-${lead.prospectName}`}>
+                  <TableCell className="font-medium text-sm">{lead.prospectName}</TableCell>
+                  <TableCell className="text-sm font-mono">{lead.phoneNumber}</TableCell>
+                  <TableCell className="text-sm">{lead.leadSource}</TableCell>
                   <TableCell>
-                    <StatusBadge status={lead.status} />
+                    <StatusBadge status={lead.followUpStatus} />
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{formatDate(lead.createdAt)}</TableCell>
+                  <TableCell>
+                    {lead.conversionStatus ? (
+                      <StatusBadge status={lead.conversionStatus} />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDate(lead.leadDate)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

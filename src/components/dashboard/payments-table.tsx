@@ -32,8 +32,9 @@ export function PaymentsTable({ payments }: PaymentsTableProps) {
           <TableRow>
             <TableHead className="w-30">Payment ID</TableHead>
             <TableHead>Booking ID</TableHead>
-            <TableHead>Customer ID</TableHead>
+            <TableHead>Customer</TableHead>
             <TableHead className="text-right">Amount Due</TableHead>
+            <TableHead className="text-right">Received</TableHead>
             <TableHead>Mode</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
@@ -41,27 +42,30 @@ export function PaymentsTable({ payments }: PaymentsTableProps) {
         </TableHeader>
         <TableBody>
           {payments.map((payment) => (
-            <TableRow key={payment.id}>
-              <TableCell className="font-mono text-xs">{payment.id}</TableCell>
+            <TableRow key={payment.paymentId}>
+              <TableCell className="font-mono text-xs">
+                {payment.paymentId}
+              </TableCell>
               <TableCell className="font-mono text-xs">
                 {payment.bookingId}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {payment.customerId}
+                {payment.customerName}
               </TableCell>
               <TableCell className="text-right font-medium tabular-nums">
-                {formatCurrency(payment.amount)}
+                {formatCurrency(payment.amountDue)}
+              </TableCell>
+              <TableCell className="text-right tabular-nums text-muted-foreground">
+                {formatCurrency(payment.amountReceived)}
               </TableCell>
               <TableCell>
-                <span className="capitalize text-sm">
-                  {payment.mode.replace(/_/g, " ")}
-                </span>
+                <span className="text-sm">{payment.paymentMode}</span>
               </TableCell>
               <TableCell>
-                <StatusBadge status={payment.status} />
+                <StatusBadge status={payment.paymentStatus} />
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {formatDate(payment.date)}
+                {formatDate(payment.paymentDate)}
               </TableCell>
             </TableRow>
           ))}

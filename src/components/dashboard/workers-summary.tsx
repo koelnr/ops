@@ -6,48 +6,85 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Complaint, WorkerDailyOps } from "@/lib/sheets/types"
+import type { WorkerDailyOps } from "@/lib/sheets/types"
+import { formatCurrency } from "@/lib/format"
 
 interface WorkerAggregate {
-  name: string
+  workerName: string
   assigned: number
   completed: number
   completionPct: number
   complaintCount: number
+  rewashCount: number
+  avgRating: number
+  payoutDue: number
+  onTimePercentage: number
 }
 
-function aggregateWorkers(workers: WorkerDailyOps[], complaints: Complaint[]): WorkerAggregate[] {
-  const map = new Map<string, { assigned: number; completed: number }>()
+function aggregateWorkers(workers: WorkerDailyOps[]): WorkerAggregate[] {
+  const map = new Map<string, {
+    assigned: number
+    completed: number
+    complaintCount: number
+    rewashCount: number
+    ratingSum: number
+    ratingCount: number
+    payoutDue: number
+    onTimePctSum: number
+    onTimePctCount: number
+  }>()
 
   for (const w of workers) {
-    const existing = map.get(w.name) ?? { assigned: 0, completed: 0 }
-    map.set(w.name, {
-      assigned: existing.assigned + w.bookingsAssigned,
-      completed: existing.completed + w.bookingsCompleted,
+    const existing = map.get(w.workerName) ?? {
+      assigned: 0, completed: 0, complaintCount: 0, rewashCount: 0,
+      ratingSum: 0, ratingCount: 0, payoutDue: 0,
+      onTimePctSum: 0, onTimePctCount: 0,
+    }
+    map.set(w.workerName, {
+      assigned: existing.assigned + w.assignedBookings,
+      completed: existing.completed + w.completedBookings,
+      complaintCount: existing.complaintCount + w.complaintCount,
+      rewashCount: existing.rewashCount + w.rewashCount,
+      ratingSum: existing.ratingSum + (w.avgRating > 0 ? w.avgRating : 0),
+      ratingCount: existing.ratingCount + (w.avgRating > 0 ? 1 : 0),
+      payoutDue: existing.payoutDue + w.payoutDue,
+      onTimePctSum: existing.onTimePctSum + (w.onTimePercentage > 0 ? w.onTimePercentage : 0),
+      onTimePctCount: existing.onTimePctCount + (w.onTimePercentage > 0 ? 1 : 0),
     })
   }
 
-  return Array.from(map.entries()).map(([name, data]) => {
+  return Array.from(map.entries()).map(([workerName, data]) => {
     const completionPct = data.assigned > 0
       ? Math.round((data.completed / data.assigned) * 100)
       : 0
+    const avgRating = data.ratingCount > 0
+      ? Math.round((data.ratingSum / data.ratingCount) * 10) / 10
+      : 0
+    const onTimePercentage = data.onTimePctCount > 0
+      ? Math.round(data.onTimePctSum / data.onTimePctCount)
+      : 0
 
-    // Count complaints linked via worker name on bookings (best-effort)
-    const complaintCount = complaints.filter(
-      (c) => c.description.toLowerCase().includes(name.toLowerCase())
-    ).length
-
-    return { name, ...data, completionPct, complaintCount }
+    return {
+      workerName,
+      assigned: data.assigned,
+      completed: data.completed,
+      completionPct,
+      complaintCount: data.complaintCount,
+      rewashCount: data.rewashCount,
+      avgRating,
+      payoutDue: data.payoutDue,
+      onTimePercentage,
+    }
   }).sort((a, b) => b.completed - a.completed)
 }
 
 interface WorkersSummaryProps {
   workers: WorkerDailyOps[]
-  complaints: Complaint[]
+  complaints?: unknown[]
 }
 
-export function WorkersSummary({ workers, complaints }: WorkersSummaryProps) {
-  const aggregated = aggregateWorkers(workers, complaints)
+export function WorkersSummary({ workers }: WorkersSummaryProps) {
+  const aggregated = aggregateWorkers(workers)
 
   if (aggregated.length === 0) {
     return (
@@ -68,14 +105,17 @@ export function WorkersSummary({ workers, complaints }: WorkersSummaryProps) {
             <TableHead className="text-right">Assigned</TableHead>
             <TableHead className="text-right">Completed</TableHead>
             <TableHead className="text-right">Completion %</TableHead>
+            <TableHead className="text-right">On-Time %</TableHead>
+            <TableHead className="text-right">Avg Rating</TableHead>
             <TableHead className="text-right">Complaints</TableHead>
+            <TableHead className="text-right">Rewashes</TableHead>
             <TableHead className="text-right">Payout Due</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {aggregated.map((worker) => (
-            <TableRow key={worker.name}>
-              <TableCell className="font-medium text-sm">{worker.name}</TableCell>
+            <TableRow key={worker.workerName}>
+              <TableCell className="font-medium text-sm">{worker.workerName}</TableCell>
               <TableCell className="text-right tabular-nums">{worker.assigned}</TableCell>
               <TableCell className="text-right tabular-nums">{worker.completed}</TableCell>
               <TableCell className="text-right tabular-nums">
@@ -92,9 +132,20 @@ export function WorkersSummary({ workers, complaints }: WorkersSummaryProps) {
                 </span>
               </TableCell>
               <TableCell className="text-right tabular-nums text-muted-foreground">
+                {worker.onTimePercentage > 0 ? `${worker.onTimePercentage}%` : "—"}
+              </TableCell>
+              <TableCell className="text-right tabular-nums text-muted-foreground">
+                {worker.avgRating > 0 ? worker.avgRating : "—"}
+              </TableCell>
+              <TableCell className="text-right tabular-nums text-muted-foreground">
                 {worker.complaintCount}
               </TableCell>
-              <TableCell className="text-right text-muted-foreground text-sm">—</TableCell>
+              <TableCell className="text-right tabular-nums text-muted-foreground">
+                {worker.rewashCount}
+              </TableCell>
+              <TableCell className="text-right tabular-nums text-muted-foreground text-sm">
+                {worker.payoutDue > 0 ? formatCurrency(worker.payoutDue) : "—"}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
