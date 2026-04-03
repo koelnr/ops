@@ -4,28 +4,12 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Customer } from "@/lib/sheets/types";
-import { mutate } from "@/lib/mutate";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { mutate, create } from "@/lib/mutate";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
-import { EmptyState } from "@/components/shared/empty-state";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { getCustomerColumns } from "./customers-columns";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreHorizontal } from "lucide-react";
+import { Plus } from "lucide-react";
 
 type CustomerFormData = {
   subscriptionStatus: string;
@@ -51,6 +35,28 @@ type CustomerFormData = {
   preferredServices: string;
   referralSource: string;
   notes: string;
+};
+
+type CreateCustomerFormData = {
+  customerName: string;
+  phoneNumber: string;
+  primaryArea: string;
+  preferredTimeSlot: string;
+  preferredServices: string;
+  subscriptionStatus: string;
+  referralSource: string;
+  notes: string;
+};
+
+const emptyCreateForm: CreateCustomerFormData = {
+  customerName: "",
+  phoneNumber: "",
+  primaryArea: "",
+  preferredTimeSlot: "",
+  preferredServices: "",
+  subscriptionStatus: "",
+  referralSource: "",
+  notes: "",
 };
 
 function customerToForm(c: Customer): CustomerFormData {
@@ -72,6 +78,16 @@ export function CustomersView({ customers }: CustomersViewProps) {
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [subscriptionFilter, setSubscriptionFilter] = useState("");
+
+  function resetFilters() {
+    setSearch("");
+    setSubscriptionFilter("");
+  }
+
+  // Create dialog
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateCustomerFormData>(emptyCreateForm);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Edit dialog
   const [editTarget, setEditTarget] = useState<Customer | null>(null);
@@ -105,9 +121,35 @@ export function CustomersView({ customers }: CustomersViewProps) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  function setCreateField(key: keyof CreateCustomerFormData, value: string) {
+    setCreateForm((f) => ({ ...f, [key]: value }));
+  }
+
   function openEdit(customer: Customer) {
     setEditTarget(customer);
     setForm(customerToForm(customer));
+  }
+
+  async function handleCreate() {
+    if (!createForm.customerName.trim()) {
+      toast.error("Customer name is required");
+      return;
+    }
+    if (!createForm.phoneNumber.trim()) {
+      toast.error("Phone number is required");
+      return;
+    }
+    setIsCreating(true);
+    const result = await create("/api/customers", createForm);
+    setIsCreating(false);
+    if (result.ok) {
+      toast.success("Customer created");
+      setShowCreate(false);
+      setCreateForm(emptyCreateForm);
+      startTransition(() => router.refresh());
+    } else {
+      toast.error(result.error ?? "Failed to create customer");
+    }
   }
 
   async function handleFormSubmit() {
@@ -127,18 +169,29 @@ export function CustomersView({ customers }: CustomersViewProps) {
     }
   }
 
+  const columns = getCustomerColumns({
+    onEdit: openEdit,
+    isPending,
+  });
+
   return (
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Customers"
         description={`${customers.length} customers`}
+        action={
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Create Customer
+          </Button>
+        }
       />
       <div className="flex flex-wrap items-center gap-2">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Search name, phone, area…"
-          className="w-60"
+          className="w-full sm:w-60"
         />
         <FilterSelect
           value={subscriptionFilter}
@@ -147,90 +200,118 @@ export function CustomersView({ customers }: CustomersViewProps) {
           placeholder="Subscription status"
         />
         {filtered.length !== customers.length && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {customers.length} shown
-          </span>
+          <>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {customers.length} shown
+            </span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
+              Clear filters
+            </Button>
+          </>
         )}
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState message="No customers match your filters." />
-      ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-28">Customer ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Area</TableHead>
-                <TableHead className="text-right">Bookings</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
-                <TableHead>Last Booking</TableHead>
-                <TableHead>Subscription</TableHead>
-                <TableHead>Preferred Slot</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((customer) => (
-                <TableRow key={customer.customerId}>
-                  <TableCell className="font-mono text-xs">
-                    {customer.customerId}
-                  </TableCell>
-                  <TableCell className="font-medium text-sm">
-                    {customer.customerName}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground font-mono">
-                    {customer.phoneNumber}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {customer.primaryArea || "—"}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">
-                    {customer.totalBookings}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-sm font-medium">
-                    {customer.totalRevenue > 0
-                      ? formatCurrency(customer.totalRevenue)
-                      : "—"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(customer.lastBookingDate)}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {customer.subscriptionStatus || "—"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {customer.preferredTimeSlot || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={isPending}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => openEdit(customer)}>
-                          Edit
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={filtered}
+        emptyMessage="No customers match your filters."
+      />
+
+      {/* Create Customer Dialog */}
+      <Dialog open={showCreate} onOpenChange={(open) => !open && setShowCreate(false)}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Customer</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Customer Name *</Label>
+              <Input
+                value={createForm.customerName}
+                onChange={(e) => setCreateField("customerName", e.target.value)}
+                placeholder="Full name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phone Number *</Label>
+              <Input
+                value={createForm.phoneNumber}
+                onChange={(e) => setCreateField("phoneNumber", e.target.value)}
+                placeholder="10-digit mobile number"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Area / Society</Label>
+              <Input
+                value={createForm.primaryArea}
+                onChange={(e) => setCreateField("primaryArea", e.target.value)}
+                placeholder="e.g. Sector 12"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Subscription Status</Label>
+              <Select
+                value={createForm.subscriptionStatus}
+                onChange={(e) => setCreateField("subscriptionStatus", e.target.value)}
+              >
+                <option value="">— select —</option>
+                {SUBSCRIPTION_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Preferred Time Slot</Label>
+              <Select
+                value={createForm.preferredTimeSlot}
+                onChange={(e) => setCreateField("preferredTimeSlot", e.target.value)}
+              >
+                <option value="">— select slot —</option>
+                {TIME_SLOT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Referral Source</Label>
+              <Select
+                value={createForm.referralSource}
+                onChange={(e) => setCreateField("referralSource", e.target.value)}
+              >
+                <option value="">— select source —</option>
+                {BOOKING_SOURCE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Preferred Services</Label>
+              <Input
+                value={createForm.preferredServices}
+                onChange={(e) => setCreateField("preferredServices", e.target.value)}
+                placeholder="e.g. Exterior Wash"
+              />
+            </div>
+            <div className="col-span-full space-y-1.5">
+              <Label>Notes</Label>
+              <Textarea
+                value={createForm.notes}
+                onChange={(e) => setCreateField("notes", e.target.value)}
+                placeholder="Notes…"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={isCreating}>
+              {isCreating ? "Creating…" : "Create Customer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog */}
       <Dialog
