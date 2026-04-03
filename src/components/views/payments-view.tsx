@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Payment } from "@/lib/sheets/types"
 import { mutate } from "@/lib/mutate"
+import { formatCurrency, formatDate } from "@/lib/format"
 import { PageHeader } from "@/components/shared/page-header"
 import { SearchInput } from "@/components/shared/search-input"
 import { FilterSelect } from "@/components/shared/filter-select"
@@ -52,10 +53,6 @@ const MODE_OPTIONS = [
   { label: "Bank Transfer", value: "bank_transfer" },
   { label: "Online", value: "online" },
 ]
-
-function formatAmount(amount: number) {
-  return `₹${amount.toLocaleString("en-IN")}`
-}
 
 interface PaymentsViewProps {
   payments: Payment[]
@@ -185,12 +182,12 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
                   <TableCell className="font-mono text-xs">{payment.id}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">{payment.bookingId}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{payment.customerId}</TableCell>
-                  <TableCell className="text-right font-medium text-sm">{formatAmount(payment.amount)}</TableCell>
+                  <TableCell className="text-right font-medium text-sm">{formatCurrency(payment.amount)}</TableCell>
                   <TableCell className="text-sm capitalize">{payment.mode.replace("_", " ")}</TableCell>
                   <TableCell>
                     <StatusBadge status={payment.status} />
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{payment.date}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDate(payment.date)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{payment.reference ?? "—"}</TableCell>
                   <TableCell>
                     <DropdownMenu>

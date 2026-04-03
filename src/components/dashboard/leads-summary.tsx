@@ -7,16 +7,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import type { Lead } from "@/lib/sheets/types"
-
-function classifyLeadStatus(status: string): "contacted" | "converted" | "pending" | "other" {
-  const s = status.toLowerCase()
-  if (s.includes("convert") || s === "closed" || s === "won") return "converted"
-  if (s.includes("contact") || s === "reached" || s === "called") return "contacted"
-  if (s === "pending" || s === "new" || s === "fresh" || s === "follow" || s.includes("follow")) return "pending"
-  return "other"
-}
+import { classifyLeadStatus } from "@/lib/lead-utils"
+import { formatDate } from "@/lib/format"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 
 interface FunnelStatProps {
   label: string
@@ -77,11 +71,9 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
                   <TableCell className="text-sm font-mono">{lead.phone}</TableCell>
                   <TableCell className="text-sm capitalize">{lead.source}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="capitalize text-xs">
-                      {lead.status}
-                    </Badge>
+                    <StatusBadge status={lead.status} />
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{lead.createdAt}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDate(lead.createdAt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Complaint } from "@/lib/sheets/types"
+import { formatDate } from "@/lib/format"
 import { StatusBadge } from "./status-badge"
 
 interface ComplaintsTableProps {
@@ -56,7 +57,7 @@ export function ComplaintsTable({ complaints, limit = 10 }: ComplaintsTableProps
               <TableCell>
                 <StatusBadge status={complaint.flag} />
               </TableCell>
-              <TableCell className="text-sm text-muted-foreground">{complaint.createdAt}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">{formatDate(complaint.createdAt)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

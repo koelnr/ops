@@ -4,6 +4,7 @@ import { getCustomers } from "@/lib/sheets/customers"
 import { getLeads } from "@/lib/sheets/leads"
 import { getPayments } from "@/lib/sheets/payments"
 import { getWorkers } from "@/lib/sheets/workers"
+import { formatCurrency } from "@/lib/format"
 import { BookingsTable } from "@/components/dashboard/bookings-table"
 import { ComplaintsTable } from "@/components/dashboard/complaints-table"
 import { KpiCard } from "@/components/dashboard/kpi-card"
@@ -85,12 +86,12 @@ export default async function HomePage() {
           <KpiCard label="Completed" value={completedJobs} sublabel="jobs" />
           <KpiCard
             label="Revenue"
-            value={`₹${revenueCollected.toLocaleString("en-IN")}`}
+            value={formatCurrency(revenueCollected)}
             sublabel="collected"
           />
           <KpiCard
             label="Pending"
-            value={`₹${pendingPaymentsAmount.toLocaleString("en-IN")}`}
+            value={formatCurrency(pendingPaymentsAmount)}
             sublabel="payments"
           />
           <KpiCard label="Complaints" value={complaints.length} />

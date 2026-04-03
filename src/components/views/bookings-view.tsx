@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Booking } from "@/lib/sheets/types"
 import { mutate } from "@/lib/mutate"
+import { formatDate } from "@/lib/format"
 import { PageHeader } from "@/components/shared/page-header"
 import { SearchInput } from "@/components/shared/search-input"
 import { FilterSelect } from "@/components/shared/filter-select"
@@ -204,7 +205,7 @@ export function BookingsView({ bookings }: BookingsViewProps) {
               {filtered.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-mono text-xs">{booking.id}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{booking.date ?? "—"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDate(booking.date)}</TableCell>
                   <TableCell>
                     <div className="font-medium text-sm">{booking.customerName}</div>
                     <div className="text-xs text-muted-foreground">{booking.customerId}</div>

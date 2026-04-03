@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Booking } from "@/lib/sheets/types"
+import { formatDate } from "@/lib/format"
 import { StatusBadge } from "./status-badge"
 
 interface BookingsTableProps {
@@ -45,7 +46,7 @@ export function BookingsTable({ bookings, showDate = false }: BookingsTableProps
           {bookings.map((booking) => (
             <TableRow key={booking.id}>
               <TableCell className="font-mono text-xs">{booking.id}</TableCell>
-              {showDate && <TableCell className="text-sm text-muted-foreground">{booking.date ?? "—"}</TableCell>}
+              {showDate && <TableCell className="text-sm text-muted-foreground">{formatDate(booking.date)}</TableCell>}
               <TableCell>
                 <div className="font-medium text-sm">{booking.customerName}</div>
                 <div className="text-xs text-muted-foreground">{booking.customerId}</div>

@@ -7,14 +7,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Payment } from "@/lib/sheets/types"
+import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "./status-badge"
 
 interface PaymentsTableProps {
   payments: Payment[]
-}
-
-function formatAmount(amount: number) {
-  return `₹${amount.toLocaleString("en-IN")}`
 }
 
 export function PaymentsTable({ payments }: PaymentsTableProps) {
@@ -49,7 +46,7 @@ export function PaymentsTable({ payments }: PaymentsTableProps) {
               <TableCell className="font-mono text-xs">{payment.bookingId}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{payment.customerId}</TableCell>
               <TableCell className="text-right font-medium tabular-nums">
-                {formatAmount(payment.amount)}
+                {formatCurrency(payment.amount)}
               </TableCell>
               <TableCell>
                 <span className="capitalize text-sm">{payment.mode.replace(/_/g, " ")}</span>
@@ -57,7 +54,7 @@ export function PaymentsTable({ payments }: PaymentsTableProps) {
               <TableCell>
                 <StatusBadge status={payment.status} />
               </TableCell>
-              <TableCell className="text-sm text-muted-foreground">{payment.date}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">{formatDate(payment.date)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

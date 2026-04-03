@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Complaint } from "@/lib/sheets/types"
 import { mutate } from "@/lib/mutate"
+import { formatDate } from "@/lib/format"
 import {
   Table,
   TableBody,
@@ -144,8 +145,8 @@ export function ComplaintsView({ complaints }: ComplaintsViewProps) {
                     <TableCell>
                       <StatusBadge status={complaint.flag} />
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{complaint.createdAt}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{complaint.resolvedAt ?? "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{formatDate(complaint.createdAt)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{formatDate(complaint.resolvedAt)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
