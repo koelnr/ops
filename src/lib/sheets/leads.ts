@@ -3,11 +3,11 @@ import { SPREADSHEET_ID, RANGES } from "./config";
 import { rowsToObjects } from "./utils";
 import { LeadSchema, type Lead } from "./types";
 
-// Leads column order: A=Lead Date, B=Lead Source, C=Prospect Name,
-// D=Phone Number, E=Area / Society, F=Interested Service,
-// G=Follow-Up Status, H=Conversion Status, I=First Booking Date, J=Notes
+// Leads column order: A=Lead ID, B=Lead Date, C=Lead Source, D=Prospect Name,
+// E=Phone Number, F=Area / Society, G=Interested Service,
+// H=Follow-Up Status, I=Conversion Status, J=First Booking Date, K=Notes
 //
-// No ID column — mutations look up rows by Prospect Name (column C)
+// Mutations look up rows by Prospect Name (column D)
 
 export async function getLeads(): Promise<Lead[]> {
   const sheets = await getSheetsClient();
@@ -21,6 +21,7 @@ export async function getLeads(): Promise<Lead[]> {
 
   for (const row of rows) {
     const parsed = LeadSchema.safeParse({
+      leadId: row["Lead ID"] ?? "",
       leadDate: row["Lead Date"] ?? "",
       leadSource: row["Lead Source"] ?? "",
       prospectName: row["Prospect Name"] ?? "",

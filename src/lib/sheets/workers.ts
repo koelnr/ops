@@ -3,10 +3,10 @@ import { SPREADSHEET_ID, RANGES } from "./config";
 import { rowsToObjects, parseNumber } from "./utils";
 import { WorkerDailyOpsSchema, type WorkerDailyOps } from "./types";
 
-// Workers column order: A=Worker Name, B=Date, C=Assigned Bookings,
-// D=Completed Bookings, E=First Job Time, F=Last Job Time, G=Area Covered,
-// H=Late Arrival Count, I=Complaint Count, J=Rewash Count, K=Avg Rating,
-// L=Payout Due, M=Payout Paid, N=On-Time %, O=Notes
+// Workers column order: A=Worker ID, B=Worker Name, C=Date, D=Assigned Bookings,
+// E=Completed Bookings, F=First Job Time, G=Last Job Time, H=Area Covered,
+// I=Late Arrival Count, J=Complaint Count, K=Rewash Count, L=Avg Rating,
+// M=Payout Due, N=Payout Paid, O=On-Time %, P=Notes
 
 export async function getWorkers(): Promise<WorkerDailyOps[]> {
   const sheets = await getSheetsClient();
@@ -20,6 +20,7 @@ export async function getWorkers(): Promise<WorkerDailyOps[]> {
 
   for (const row of rows) {
     const parsed = WorkerDailyOpsSchema.safeParse({
+      workerId: row["Worker ID"] ?? "",
       workerName: row["Worker Name"] ?? "",
       date: row["Date"] ?? "",
       assignedBookings: parseNumber(row["Assigned Bookings"]),
