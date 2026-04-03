@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { Payment } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { PAYMENT_STATUS_OPTIONS, PAYMENT_MODE_OPTIONS, YES_NO_OPTIONS } from "@/lib/options";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
@@ -44,24 +45,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MoreHorizontal, Plus } from "lucide-react";
-
-const STATUS_OPTIONS = [
-  { label: "Pending", value: "Pending" },
-  { label: "Paid", value: "Paid" },
-  { label: "Partially Paid", value: "Partially Paid" },
-  { label: "Failed", value: "Failed" },
-  { label: "Refunded", value: "Refunded" },
-];
-
-const MODE_OPTIONS = [
-  { label: "UPI", value: "UPI" },
-  { label: "Cash", value: "Cash" },
-];
 
 type PaymentFormData = {
   bookingId: string;
@@ -87,7 +76,7 @@ const emptyForm: PaymentFormData = {
   paymentMode: "UPI",
   upiTransactionRef: "",
   paymentDate: "",
-  followUpRequired: "",
+  followUpRequired: "No",
   notes: "",
 };
 
@@ -102,7 +91,7 @@ function paymentToForm(p: Payment): PaymentFormData {
     paymentMode: p.paymentMode,
     upiTransactionRef: p.upiTransactionRef,
     paymentDate: p.paymentDate,
-    followUpRequired: p.followUpRequired,
+    followUpRequired: p.followUpRequired || "No",
     notes: p.notes,
   };
 }
@@ -202,11 +191,26 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
       toast.error("Booking ID and customer name are required");
       return;
     }
+    const due = Number(form.amountDue) || 0;
+    const received = Number(form.amountReceived) || 0;
+    if (received > due) {
+      toast.error("Amount received cannot exceed amount due");
+      return;
+    }
+    const isPaid = form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid";
+    if (isPaid && !form.paymentDate) {
+      toast.error("Payment date is required when payment is Paid or Partially Paid");
+      return;
+    }
+    if (form.paymentMode === "UPI" && isPaid && !form.upiTransactionRef.trim()) {
+      toast.error("UPI transaction reference is required for UPI payments");
+      return;
+    }
     setIsSubmitting(true);
     const body = {
       ...form,
-      amountDue: Number(form.amountDue) || 0,
-      amountReceived: Number(form.amountReceived) || 0,
+      amountDue: due,
+      amountReceived: received,
     };
     let result;
     if (editTarget) {
@@ -236,6 +240,11 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
     }
   }
 
+  const amountWarning =
+    form.amountDue &&
+    form.amountReceived &&
+    Number(form.amountReceived) > Number(form.amountDue);
+
   return (
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
@@ -255,8 +264,8 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
           placeholder="Search payment ID, booking ID, customer…"
           className="w-75"
         />
-        <FilterSelect value={status} onChange={setStatus} options={STATUS_OPTIONS} placeholder="All statuses" />
-        <FilterSelect value={mode} onChange={setMode} options={MODE_OPTIONS} placeholder="All modes" />
+        <FilterSelect value={status} onChange={setStatus} options={PAYMENT_STATUS_OPTIONS} placeholder="All statuses" />
+        <FilterSelect value={mode} onChange={setMode} options={PAYMENT_MODE_OPTIONS} placeholder="All modes" />
         {filtered.length !== payments.length && (
           <span className="text-xs text-muted-foreground">
             {filtered.length} of {payments.length} shown
@@ -394,7 +403,10 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
               <Input type="date" value={form.serviceDate} onChange={(e) => setField("serviceDate", e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Payment Date</Label>
+              <Label>
+                Payment Date
+                {(form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid") && " *"}
+              </Label>
               <Input type="date" value={form.paymentDate} onChange={(e) => setField("paymentDate", e.target.value)} />
             </div>
             <div className="space-y-1.5">
@@ -404,34 +416,37 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
             <div className="space-y-1.5">
               <Label>Amount Received (₹)</Label>
               <Input type="number" value={form.amountReceived} onChange={(e) => setField("amountReceived", e.target.value)} placeholder="0" />
+              {amountWarning && (
+                <p className="text-xs text-destructive">Cannot exceed amount due</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Payment Status</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.paymentStatus}
-                onChange={(e) => setField("paymentStatus", e.target.value)}
-              >
-                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select value={form.paymentStatus} onChange={(e) => setField("paymentStatus", e.target.value)}>
+                {PAYMENT_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Payment Mode</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.paymentMode}
-                onChange={(e) => setField("paymentMode", e.target.value)}
-              >
-                {MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select value={form.paymentMode} onChange={(e) => setField("paymentMode", e.target.value)}>
+                {PAYMENT_MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
-            <div className="col-span-2 space-y-1.5">
-              <Label>UPI Transaction Ref</Label>
-              <Input value={form.upiTransactionRef} onChange={(e) => setField("upiTransactionRef", e.target.value)} placeholder="e.g. UPI-123456789" />
-            </div>
+            {form.paymentMode === "UPI" && (
+              <div className="col-span-2 space-y-1.5">
+                <Label>
+                  UPI Transaction Ref
+                  {(form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid") && " *"}
+                </Label>
+                <Input value={form.upiTransactionRef} onChange={(e) => setField("upiTransactionRef", e.target.value)} placeholder="e.g. UPI-123456789" />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Follow-Up Required</Label>
-              <Input value={form.followUpRequired} onChange={(e) => setField("followUpRequired", e.target.value)} placeholder="Yes / No" />
+              <Select value={form.followUpRequired} onChange={(e) => setField("followUpRequired", e.target.value)}>
+                <option value="">— select —</option>
+                {YES_NO_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>

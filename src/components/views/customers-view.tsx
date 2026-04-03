@@ -33,6 +33,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { BOOKING_SOURCE_OPTIONS, TIME_SLOT_OPTIONS, SUBSCRIPTION_STATUS_OPTIONS } from "@/lib/options";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -74,12 +76,6 @@ export function CustomersView({ customers }: CustomersViewProps) {
     preferredServices: "", referralSource: "", notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const subscriptionOptions = useMemo(() => {
-    return Array.from(new Set(customers.map((c) => c.subscriptionStatus).filter(Boolean)))
-      .sort()
-      .map((s) => ({ label: s, value: s }));
-  }, [customers]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -136,7 +132,7 @@ export function CustomersView({ customers }: CustomersViewProps) {
         <FilterSelect
           value={subscriptionFilter}
           onChange={setSubscriptionFilter}
-          options={subscriptionOptions}
+          options={SUBSCRIPTION_STATUS_OPTIONS}
           placeholder="Subscription status"
         />
         {filtered.length !== customers.length && (
@@ -209,11 +205,17 @@ export function CustomersView({ customers }: CustomersViewProps) {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Subscription Status</Label>
-              <Input value={form.subscriptionStatus} onChange={(e) => setField("subscriptionStatus", e.target.value)} placeholder="e.g. Active, None" />
+              <Select value={form.subscriptionStatus} onChange={(e) => setField("subscriptionStatus", e.target.value)}>
+                <option value="">— select —</option>
+                {SUBSCRIPTION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Preferred Time Slot</Label>
-              <Input value={form.preferredTimeSlot} onChange={(e) => setField("preferredTimeSlot", e.target.value)} placeholder="e.g. Morning" />
+              <Select value={form.preferredTimeSlot} onChange={(e) => setField("preferredTimeSlot", e.target.value)}>
+                <option value="">— select slot —</option>
+                {TIME_SLOT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Preferred Services</Label>
@@ -221,7 +223,10 @@ export function CustomersView({ customers }: CustomersViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Referral Source</Label>
-              <Input value={form.referralSource} onChange={(e) => setField("referralSource", e.target.value)} placeholder="e.g. WhatsApp" />
+              <Select value={form.referralSource} onChange={(e) => setField("referralSource", e.target.value)}>
+                <option value="">— select source —</option>
+                {BOOKING_SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Notes</Label>

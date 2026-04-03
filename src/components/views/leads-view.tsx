@@ -8,6 +8,12 @@ import { mutate, create, remove } from "@/lib/mutate";
 import { isLeadPending } from "@/lib/lead-utils";
 import { formatDate } from "@/lib/format";
 import {
+  BOOKING_SOURCE_OPTIONS,
+  FOLLOW_UP_STATUS_OPTIONS,
+  CONVERSION_STATUS_OPTIONS,
+  SERVICE_PACKAGE_OPTIONS,
+} from "@/lib/options";
+import {
   Table,
   TableBody,
   TableCell,
@@ -40,6 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -51,10 +58,6 @@ import { FilterSelect } from "@/components/shared/filter-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MoreHorizontal, Plus } from "lucide-react";
 
-const SOURCE_OPTIONS_STATIC = [
-  "WhatsApp", "Referral", "Society Outreach", "Flyer", "Office Contact", "Instagram",
-];
-
 type LeadFormData = {
   leadDate: string;
   leadSource: string;
@@ -64,6 +67,7 @@ type LeadFormData = {
   interestedService: string;
   followUpStatus: string;
   conversionStatus: string;
+  firstBookingDate: string;
   notes: string;
 };
 
@@ -76,6 +80,7 @@ const emptyForm: LeadFormData = {
   interestedService: "",
   followUpStatus: "New",
   conversionStatus: "Not Converted",
+  firstBookingDate: "",
   notes: "",
 };
 
@@ -89,6 +94,7 @@ function leadToForm(l: Lead): LeadFormData {
     interestedService: l.interestedService ?? "",
     followUpStatus: l.followUpStatus,
     conversionStatus: l.conversionStatus,
+    firstBookingDate: l.firstBookingDate ?? "",
     notes: l.notes ?? "",
   };
 }
@@ -113,18 +119,6 @@ export function LeadsView({ leads }: LeadsViewProps) {
 
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
-
-  const followUpOptions = useMemo(() => {
-    return Array.from(new Set(leads.map((l) => l.followUpStatus).filter(Boolean)))
-      .sort()
-      .map((s) => ({ label: s, value: s }));
-  }, [leads]);
-
-  const conversionOptions = useMemo(() => {
-    return Array.from(new Set(leads.map((l) => l.conversionStatus).filter(Boolean)))
-      .sort()
-      .map((s) => ({ label: s, value: s }));
-  }, [leads]);
 
   const sourceOptions = useMemo(() => {
     return Array.from(new Set(leads.map((l) => l.leadSource).filter(Boolean)))
@@ -183,6 +177,10 @@ export function LeadsView({ leads }: LeadsViewProps) {
       toast.error("Prospect name is required");
       return;
     }
+    if (form.conversionStatus === "Converted" && !form.firstBookingDate) {
+      toast.error("First booking date is required when lead is converted");
+      return;
+    }
     setIsSubmitting(true);
     let result;
     if (editTarget) {
@@ -231,8 +229,8 @@ export function LeadsView({ leads }: LeadsViewProps) {
           placeholder="Search name, phone, area…"
           className="w-60"
         />
-        <FilterSelect value={followUpFilter} onChange={setFollowUpFilter} options={followUpOptions} placeholder="Follow-up status" />
-        <FilterSelect value={conversionFilter} onChange={setConversionFilter} options={conversionOptions} placeholder="Conversion status" />
+        <FilterSelect value={followUpFilter} onChange={setFollowUpFilter} options={FOLLOW_UP_STATUS_OPTIONS} placeholder="Follow-up status" />
+        <FilterSelect value={conversionFilter} onChange={setConversionFilter} options={CONVERSION_STATUS_OPTIONS} placeholder="Conversion status" />
         <FilterSelect value={sourceFilter} onChange={setSourceFilter} options={sourceOptions} placeholder="All sources" />
         {filtered.length !== leads.length && (
           <span className="text-xs text-muted-foreground">
@@ -357,13 +355,9 @@ export function LeadsView({ leads }: LeadsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Lead Source</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                value={form.leadSource}
-                onChange={(e) => setField("leadSource", e.target.value)}
-              >
-                {SOURCE_OPTIONS_STATIC.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <Select value={form.leadSource} onChange={(e) => setField("leadSource", e.target.value)}>
+                {BOOKING_SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Area / Society</Label>
@@ -371,16 +365,29 @@ export function LeadsView({ leads }: LeadsViewProps) {
             </div>
             <div className="space-y-1.5">
               <Label>Interested Service</Label>
-              <Input value={form.interestedService} onChange={(e) => setField("interestedService", e.target.value)} placeholder="e.g. Exterior Wash" />
+              <Select value={form.interestedService} onChange={(e) => setField("interestedService", e.target.value)}>
+                <option value="">— select service —</option>
+                {SERVICE_PACKAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Follow-Up Status</Label>
-              <Input value={form.followUpStatus} onChange={(e) => setField("followUpStatus", e.target.value)} placeholder="e.g. New, Contacted" />
+              <Select value={form.followUpStatus} onChange={(e) => setField("followUpStatus", e.target.value)}>
+                {FOLLOW_UP_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Conversion Status</Label>
-              <Input value={form.conversionStatus} onChange={(e) => setField("conversionStatus", e.target.value)} placeholder="e.g. Not Converted" />
+              <Select value={form.conversionStatus} onChange={(e) => setField("conversionStatus", e.target.value)}>
+                {CONVERSION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
+            {form.conversionStatus === "Converted" && (
+              <div className="col-span-2 space-y-1.5">
+                <Label>First Booking Date *</Label>
+                <Input type="date" value={form.firstBookingDate} onChange={(e) => setField("firstBookingDate", e.target.value)} />
+              </div>
+            )}
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
               <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Any notes…" rows={2} />
