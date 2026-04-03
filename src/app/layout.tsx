@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
-import "./globals.css";
+import { Google_Sans_Code, Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/utils";
+import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({subsets:['latin'],variable:'--font-sans'});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const googleSansCode = Google_Sans_Code({
+  variable: "--font-google-sans-code",
   subsets: ["latin"],
 });
 
@@ -28,7 +26,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", spaceGrotesk.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        googleSansCode.variable,
+        "font-sans",
+        spaceGrotesk.variable,
+      )}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
