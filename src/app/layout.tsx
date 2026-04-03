@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { Sidebar } from "@/components/layout/sidebar";
+import { AppSidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -34,11 +35,13 @@ export default function RootLayout({
     >
       <body className="h-full flex">
         <ClerkProvider>
-          <Sidebar />
-          <div className="flex flex-1 flex-col ml-60 h-full overflow-hidden">
-            <TopBar />
-            <main className="flex-1 overflow-y-auto">{children}</main>
-          </div>
+          <SidebarProvider>
+            <AppSidebar />
+            <div className="flex flex-1 flex-col h-full overflow-hidden">
+              <TopBar />
+              <main className="flex-1 overflow-y-auto">{children}</main>
+            </div>
+          </SidebarProvider>
           <Toaster richColors position="bottom-right" />
         </ClerkProvider>
       </body>
