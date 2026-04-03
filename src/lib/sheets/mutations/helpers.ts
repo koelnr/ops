@@ -2,23 +2,26 @@ import { getSheetsClient } from "../client";
 import { SPREADSHEET_ID } from "../config";
 
 /**
- * Finds the 1-based sheet row number for the row whose first column (id) matches the given id.
+ * Finds the 1-based sheet row number for the row whose given column matches the value.
+ * Defaults to searching column A (for ID-based lookups).
+ * Pass a different column letter for sheets without an ID column (e.g. "C" for Prospect Name in Leads).
  * Returns null if not found.
  */
 export async function findRowIndex(
   sheetName: string,
-  id: string
+  value: string,
+  searchColumn = "A",
 ): Promise<number | null> {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:A`,
+    range: `${sheetName}!${searchColumn}:${searchColumn}`,
   });
 
   const values = (res.data.values as string[][] | undefined) ?? [];
   // Row 0 is the header; data starts at row 1 (0-indexed), sheet row 2 (1-based)
   for (let i = 1; i < values.length; i++) {
-    if (values[i]?.[0] === id) {
+    if (values[i]?.[0] === value) {
       return i + 1; // 1-based sheet row number
     }
   }

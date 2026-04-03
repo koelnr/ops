@@ -1,20 +1,30 @@
 import type { UpdateLeadInput } from "../types";
 import { findRowIndex, updateRowCells } from "./helpers";
 
-// Leads column map: A=id, B=name, C=phone, D=source,
-// E=status, F=createdAt, G=notes
+// Leads column map: A=Lead Date, B=Lead Source, C=Prospect Name,
+// D=Phone Number, E=Area / Society, F=Interested Service,
+// G=Follow-Up Status, H=Conversion Status, I=First Booking Date, J=Notes
+//
+// No ID column — lookup rows by Prospect Name (column C)
+// Mutable: G=Follow-Up Status, H=Conversion Status, J=Notes
 
 export async function updateLead(
-  id: string,
-  patch: UpdateLeadInput
+  prospectName: string,
+  patch: UpdateLeadInput,
 ): Promise<void> {
-  const row = await findRowIndex("Leads", id);
+  const row = await findRowIndex("Leads", prospectName, "C");
   if (row === null) {
-    throw new Error(`Lead not found: ${id}`);
+    throw new Error(`Lead not found: ${prospectName}`);
   }
 
-  const cells: [string, string][] = [["E", patch.status]];
-  if (patch.notes !== undefined) cells.push(["G", patch.notes]);
+  const cells: [string, string][] = [];
+  if (patch.followUpStatus !== undefined)
+    cells.push(["G", patch.followUpStatus]);
+  if (patch.conversionStatus !== undefined)
+    cells.push(["H", patch.conversionStatus]);
+  if (patch.notes !== undefined) cells.push(["J", patch.notes]);
 
-  await updateRowCells("Leads", row, cells);
+  if (cells.length > 0) {
+    await updateRowCells("Leads", row, cells);
+  }
 }
