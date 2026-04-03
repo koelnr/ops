@@ -10,10 +10,12 @@ export function rowsToObjects(rows: string[][]): Record<string, string>[] {
   );
 }
 
-/** Parses a string to a number, returning 0 for empty/NaN values. */
+/** Parses a string to a number, returning 0 for empty/NaN values.
+ *  Strips leading currency symbols (₹, $, £) and trailing % before parsing. */
 export function parseNumber(val: string | undefined): number {
   if (!val) return 0;
-  const n = Number(val);
+  const cleaned = val.replace(/^[₹$£]/, "").replace(/%$/, "").trim();
+  const n = Number(cleaned);
   return isNaN(n) ? 0 : n;
 }
 

@@ -1,150 +1,228 @@
 import { z } from "zod";
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
+// ─── Enums (exact values from Lists sheet) ────────────────────────────────────
 
 export const BookingStatus = z.enum([
-  "pending",
-  "confirmed",
-  "in_progress",
-  "completed",
-  "cancelled",
+  "New Inquiry",
+  "Confirmed",
+  "Assigned",
+  "In Progress",
+  "Completed",
+  "Cancelled",
+  "Rescheduled",
+  "Payment Pending",
 ]);
 
-export const PaymentStatus = z.enum(["pending", "paid", "partial", "refunded"]);
-
-export const ServicePackage = z.enum(["basic", "standard", "premium", "custom"]);
-
-export const VehicleType = z.enum([
-  "sedan",
-  "suv",
-  "hatchback",
-  "van",
-  "truck",
-  "bike",
+export const PaymentStatus = z.enum([
+  "Paid",
+  "Partially Paid",
+  "Pending",
+  "Failed",
+  "Refunded",
 ]);
 
-export const PaymentMode = z.enum([
-  "cash",
-  "upi",
-  "card",
-  "bank_transfer",
-  "online",
+export const CompletionStatus = z.enum([
+  "Completed Successfully",
+  "Completed with Issue",
+  "Rewash Needed",
+  "Not Completed",
 ]);
 
-export const ComplaintFlag = z.enum([
-  "open",
-  "resolved",
-  "escalated",
-  "ignored",
+export const VehicleType = z.enum(["Hatchback", "Sedan", "SUV", "Luxury"]);
+
+export const ServicePackage = z.enum([
+  "Exterior Wash",
+  "Exterior + Interior Basic",
+  "Monthly Plan",
 ]);
 
-export const RepeatCustomer = z.enum(["yes", "no"]);
+export const PaymentMode = z.enum(["UPI", "Cash"]);
+
+export const BookingSource = z.enum([
+  "WhatsApp",
+  "Referral",
+  "Society Outreach",
+  "Flyer",
+  "Office Contact",
+  "Instagram",
+]);
+
+export const ComplaintFlag = z.enum(["Yes", "No"]);
+
+export const RepeatCustomer = z.enum(["Yes", "No"]);
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 export const BookingSchema = z.object({
-  id: z.string(),
-  date: z.string(),
-  customerId: z.string(),
+  bookingId: z.string(),
+  bookingDate: z.string(),
+  serviceDate: z.string(),
+  timeSlot: z.string(),
   customerName: z.string(),
+  phoneNumber: z.string(),
+  areaSociety: z.string(),
+  fullAddress: z.string(),
+  carModel: z.string(),
   vehicleType: VehicleType,
   servicePackage: ServicePackage,
-  status: BookingStatus,
-  assignedWorker: z.string().optional(),
-  timeSlot: z.string().optional(),
-  amount: z.number(),
+  addOns: z.string(),
+  price: z.number(),
   paymentStatus: PaymentStatus,
-  notes: z.string().optional(),
+  paymentMode: PaymentMode,
+  assignedWorker: z.string(),
+  bookingSource: BookingSource,
+  bookingStatus: BookingStatus,
+  serviceStartTime: z.string(),
+  serviceEndTime: z.string(),
+  completionStatus: CompletionStatus.or(z.literal("")),
+  customerRating: z.number().optional(),
+  complaintFlag: ComplaintFlag.or(z.literal("")),
+  repeatCustomer: RepeatCustomer.or(z.literal("")),
+  notes: z.string(),
+  durationMins: z.number().optional(),
 });
 
-export const CreateBookingSchema = BookingSchema.omit({ id: true }).partial({
-  assignedWorker: true,
-  timeSlot: true,
-  notes: true,
+export const CreateBookingSchema = z.object({
+  bookingDate: z.string(),
+  serviceDate: z.string(),
+  timeSlot: z.string(),
+  customerName: z.string(),
+  phoneNumber: z.string(),
+  areaSociety: z.string(),
+  fullAddress: z.string(),
+  carModel: z.string(),
+  vehicleType: VehicleType,
+  servicePackage: ServicePackage,
+  addOns: z.string().optional(),
+  price: z.number(),
+  paymentStatus: PaymentStatus,
+  paymentMode: PaymentMode,
+  assignedWorker: z.string().optional(),
+  bookingSource: BookingSource,
+  bookingStatus: BookingStatus,
+  notes: z.string().optional(),
 });
 
 export const CustomerSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  phone: z.string(),
-  email: z.string().optional(),
-  address: z.string().optional(),
-  repeatCustomer: RepeatCustomer,
+  customerId: z.string(),
+  customerName: z.string(),
+  phoneNumber: z.string(),
+  primaryArea: z.string(),
+  firstBookingDate: z.string(),
   totalBookings: z.number(),
-  totalSpend: z.number(),
+  lastBookingDate: z.string(),
+  preferredTimeSlot: z.string(),
+  preferredServices: z.string(),
+  totalRevenue: z.number(),
+  subscriptionStatus: z.string(),
+  referralSource: z.string(),
+  referredOthers: z.string(),
+  complaintHistory: z.string(),
+  notes: z.string(),
 });
 
 export const WorkerDailyOpsSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  workerName: z.string(),
   date: z.string(),
-  bookingsAssigned: z.number(),
-  bookingsCompleted: z.number(),
-  hoursWorked: z.number(),
-  notes: z.string().optional(),
+  assignedBookings: z.number(),
+  completedBookings: z.number(),
+  firstJobTime: z.string(),
+  lastJobTime: z.string(),
+  areaCovered: z.string(),
+  lateArrivalCount: z.number(),
+  complaintCount: z.number(),
+  rewashCount: z.number(),
+  avgRating: z.number(),
+  payoutDue: z.number(),
+  payoutPaid: z.number(),
+  onTimePercentage: z.number(),
+  notes: z.string(),
 });
 
 export const PaymentSchema = z.object({
-  id: z.string(),
+  paymentId: z.string(),
   bookingId: z.string(),
-  customerId: z.string(),
-  amount: z.number(),
-  mode: PaymentMode,
-  status: PaymentStatus,
-  date: z.string(),
-  reference: z.string().optional(),
+  customerName: z.string(),
+  serviceDate: z.string(),
+  amountDue: z.number(),
+  amountReceived: z.number(),
+  paymentStatus: PaymentStatus,
+  paymentMode: PaymentMode,
+  upiTransactionRef: z.string(),
+  paymentDate: z.string(),
+  followUpRequired: z.string(),
+  notes: z.string(),
 });
 
 export const LeadSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  phone: z.string(),
-  source: z.string(),
-  status: z.string(),
-  createdAt: z.string(),
-  notes: z.string().optional(),
+  leadDate: z.string(),
+  leadSource: z.string(),
+  prospectName: z.string(),
+  phoneNumber: z.string(),
+  areaSociety: z.string(),
+  interestedService: z.string(),
+  followUpStatus: z.string(),
+  conversionStatus: z.string(),
+  firstBookingDate: z.string(),
+  notes: z.string(),
 });
 
 export const ComplaintSchema = z.object({
-  id: z.string(),
+  complaintId: z.string(),
   bookingId: z.string(),
-  customerId: z.string(),
-  description: z.string(),
-  flag: ComplaintFlag,
-  createdAt: z.string(),
-  resolvedAt: z.string().optional(),
+  customerName: z.string(),
+  date: z.string(),
+  workerAssigned: z.string(),
+  complaintType: z.string(),
+  complaintDetails: z.string(),
+  resolutionGiven: z.string(),
+  refundOrRewash: z.string(),
+  resolutionStatus: z.string(),
+  followUpComplete: z.string(),
+  rootCause: z.string(),
 });
 
 export const DashboardMetricSchema = z.object({
-  key: z.string(),
-  value: z.string(),
-  label: z.string(),
-  updatedAt: z.string(),
+  metric: z.string(),
+  today: z.string(),
+  thisWeek: z.string(),
+  thisMonth: z.string(),
 });
 
 // ─── Mutation Schemas ─────────────────────────────────────────────────────────
 
-export const UpdateBookingSchema = z.object({
-  status: BookingStatus.optional(),
-  assignedWorker: z.string().optional(),
-  paymentStatus: PaymentStatus.optional(),
-}).refine((d) => Object.values(d).some((v) => v !== undefined), {
-  message: "At least one field must be provided",
-});
+export const UpdateBookingSchema = z
+  .object({
+    bookingStatus: BookingStatus.optional(),
+    assignedWorker: z.string().optional(),
+    paymentStatus: PaymentStatus.optional(),
+    completionStatus: CompletionStatus.optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
 
 export const UpdatePaymentSchema = z.object({
-  status: PaymentStatus,
-  reference: z.string().optional(),
+  paymentStatus: PaymentStatus,
+  upiTransactionRef: z.string().optional(),
 });
 
-export const UpdateLeadSchema = z.object({
-  status: z.string().min(1),
-  notes: z.string().optional(),
-});
+export const UpdateLeadSchema = z
+  .object({
+    followUpStatus: z.string().optional(),
+    conversionStatus: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
 
 export const UpdateComplaintSchema = z.object({
-  flag: ComplaintFlag,
-  resolvedAt: z.string().optional(),
+  resolutionStatus: z.string(),
+  resolutionGiven: z.string().optional(),
+  refundOrRewash: z.string().optional(),
+  followUpComplete: z.string().optional(),
+  rootCause: z.string().optional(),
 });
 
 // ─── TypeScript Types ─────────────────────────────────────────────────────────
