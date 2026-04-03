@@ -8,6 +8,7 @@ import {
   CreditCard,
   LayoutDashboard,
   Megaphone,
+  UserRound,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/payments", label: "Payments", icon: CreditCard },
+  { href: "/customers", label: "Customers", icon: UserRound },
   { href: "/workers", label: "Workers", icon: Users },
   { href: "/leads", label: "Leads", icon: Megaphone },
   { href: "/complaints", label: "Complaints", icon: AlertTriangle },
