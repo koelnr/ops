@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 import { UpdateWorkerSchema } from "@/lib/sheets/types";
-import { updateWorker } from "@/lib/sheets/mutations/workers";
+import { updateWorker, deleteWorker } from "@/lib/sheets/mutations/workers";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     const body: unknown = await req.json();
@@ -27,5 +31,26 @@ export async function PATCH(
       return NextResponse.json({ error: message }, { status: 404 });
     }
     return NextResponse.json({ error: "Failed to update worker" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
+  try {
+    const { id } = await params;
+    await deleteWorker(id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete worker";
+    console.error("[DELETE /api/workers/[id]]", err);
+    if (message.includes("not found")) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Failed to delete worker record" }, { status: 500 });
   }
 }
