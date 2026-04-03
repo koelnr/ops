@@ -387,6 +387,24 @@ export const UpdateCustomerSchema = z
     message: "At least one field must be provided",
   });
 
+export const CreateWorkerSchema = z.object({
+  workerName: z.string().min(1, "Worker name is required"),
+  date: z.string().min(1, "Date is required"),
+  assignedBookings: z.coerce.number().int().min(0).optional(),
+  completedBookings: z.coerce.number().int().min(0).optional(),
+  firstJobTime: z.string().optional(),
+  lastJobTime: z.string().optional(),
+  areaCovered: z.string().optional(),
+  lateArrivalCount: z.coerce.number().int().min(0).optional(),
+  complaintCount: z.coerce.number().int().min(0).optional(),
+  rewashCount: z.coerce.number().int().min(0).optional(),
+  avgRating: z.coerce.number().min(0).max(5).optional(),
+  payoutDue: z.coerce.number().min(0).optional(),
+  payoutPaid: z.coerce.number().min(0).optional(),
+  onTimePercentage: z.coerce.number().min(0).max(100).optional(),
+  notes: z.string().optional(),
+});
+
 // ─── TypeScript Types ─────────────────────────────────────────────────────────
 
 export type Booking = z.infer<typeof BookingSchema>;
@@ -406,3 +424,4 @@ export type CreateLeadInput = z.infer<typeof CreateLeadSchema>;
 export type CreateComplaintInput = z.infer<typeof CreateComplaintSchema>;
 export type UpdateWorkerInput = z.infer<typeof UpdateWorkerSchema>;
 export type UpdateCustomerInput = z.infer<typeof UpdateCustomerSchema>;
+export type CreateWorkerInput = z.infer<typeof CreateWorkerSchema>;
