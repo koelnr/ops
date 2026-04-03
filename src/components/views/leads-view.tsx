@@ -1,7 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import type { Lead } from "@/lib/sheets/types"
+import { mutate } from "@/lib/mutate"
 import {
   Table,
   TableBody,
@@ -10,17 +13,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { PageHeader } from "@/components/shared/page-header"
 import { SearchInput } from "@/components/shared/search-input"
 import { FilterSelect } from "@/components/shared/filter-select"
 import { EmptyState } from "@/components/shared/empty-state"
+import { MoreHorizontal } from "lucide-react"
 
 interface LeadsViewProps {
   leads: Lead[]
 }
 
 export function LeadsView({ leads }: LeadsViewProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [sourceFilter, setSourceFilter] = useState("")
@@ -57,6 +72,16 @@ export function LeadsView({ leads }: LeadsViewProps) {
     const s = l.status.toLowerCase()
     return s.includes("pending") || s.includes("new") || s.includes("fresh") || s.includes("follow")
   }).length
+
+  async function handleStatusUpdate(lead: Lead, newStatus: string, successMsg: string) {
+    const result = await mutate(`/api/leads/${lead.id}`, { status: newStatus })
+    if (result.ok) {
+      toast.success(successMsg)
+      startTransition(() => router.refresh())
+    } else {
+      toast.error(result.error ?? "Failed to update lead")
+    }
+  }
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6 space-y-4">
@@ -103,6 +128,7 @@ export function LeadsView({ leads }: LeadsViewProps) {
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Notes</TableHead>
+                <TableHead className="w-[48px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -125,6 +151,34 @@ export function LeadsView({ leads }: LeadsViewProps) {
                       <p className="text-xs text-muted-foreground truncate" title={lead.notes ?? undefined}>
                         {lead.notes ?? "—"}
                       </p>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending && false}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => handleStatusUpdate(lead, "contacted", `${lead.name} marked as contacted`)}
+                          >
+                            Mark Contacted
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleStatusUpdate(lead, "converted", `${lead.name} marked as converted`)}
+                          >
+                            Mark Converted
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleStatusUpdate(lead, "follow_up", `Follow-up set for ${lead.name}`)}
+                          >
+                            Mark Follow-up Needed
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 )
