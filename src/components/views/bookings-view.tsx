@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useMemo, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import type { Booking } from "@/lib/sheets/types"
-import { mutate } from "@/lib/mutate"
-import { formatDate } from "@/lib/format"
-import { PageHeader } from "@/components/shared/page-header"
-import { SearchInput } from "@/components/shared/search-input"
-import { FilterSelect } from "@/components/shared/filter-select"
-import { EmptyState } from "@/components/shared/empty-state"
-import { StatusBadge } from "@/components/dashboard/status-badge"
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import type { Booking } from "@/lib/sheets/types";
+import { mutate } from "@/lib/mutate";
+import { formatDate } from "@/lib/format";
+import { PageHeader } from "@/components/shared/page-header";
+import { SearchInput } from "@/components/shared/search-input";
+import { FilterSelect } from "@/components/shared/filter-select";
+import { EmptyState } from "@/components/shared/empty-state";
+import { StatusBadge } from "@/components/dashboard/status-badge";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,18 +29,18 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { MoreHorizontal } from "lucide-react"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { MoreHorizontal } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { label: "Pending", value: "pending" },
@@ -48,7 +48,7 @@ const STATUS_OPTIONS = [
   { label: "In Progress", value: "in_progress" },
   { label: "Completed", value: "completed" },
   { label: "Cancelled", value: "cancelled" },
-]
+];
 
 const VEHICLE_OPTIONS = [
   { label: "Sedan", value: "sedan" },
@@ -57,89 +57,93 @@ const VEHICLE_OPTIONS = [
   { label: "Van", value: "van" },
   { label: "Truck", value: "truck" },
   { label: "Bike", value: "bike" },
-]
+];
 
 const PACKAGE_OPTIONS = [
   { label: "Basic", value: "basic" },
   { label: "Standard", value: "standard" },
   { label: "Premium", value: "premium" },
   { label: "Custom", value: "custom" },
-]
+];
 
 const PAYMENT_STATUS_OPTIONS = [
   { label: "Pending", value: "pending" },
   { label: "Paid", value: "paid" },
   { label: "Partial", value: "partial" },
   { label: "Refunded", value: "refunded" },
-]
+];
 
 interface BookingsViewProps {
-  bookings: Booking[]
+  bookings: Booking[];
 }
 
 export function BookingsView({ bookings }: BookingsViewProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [search, setSearch] = useState("")
-  const [status, setStatus] = useState("")
-  const [vehicle, setVehicle] = useState("")
-  const [pkg, setPkg] = useState("")
-  const [paymentStatus, setPaymentStatus] = useState("")
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [vehicle, setVehicle] = useState("");
+  const [pkg, setPkg] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("");
 
   // Assign worker dialog state
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
-  const [assignTarget, setAssignTarget] = useState<Booking | null>(null)
-  const [workerName, setWorkerName] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<Booking | null>(null);
+  const [workerName, setWorkerName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase()
+    const q = search.toLowerCase();
     return bookings.filter((b) => {
-      if (status && b.status !== status) return false
-      if (vehicle && b.vehicleType !== vehicle) return false
-      if (pkg && b.servicePackage !== pkg) return false
-      if (paymentStatus && b.paymentStatus !== paymentStatus) return false
+      if (status && b.status !== status) return false;
+      if (vehicle && b.vehicleType !== vehicle) return false;
+      if (pkg && b.servicePackage !== pkg) return false;
+      if (paymentStatus && b.paymentStatus !== paymentStatus) return false;
       if (q) {
         return (
           b.customerName.toLowerCase().includes(q) ||
           b.id.toLowerCase().includes(q) ||
           (b.assignedWorker?.toLowerCase().includes(q) ?? false)
-        )
+        );
       }
-      return true
-    })
-  }, [bookings, search, status, vehicle, pkg, paymentStatus])
+      return true;
+    });
+  }, [bookings, search, status, vehicle, pkg, paymentStatus]);
 
-  async function handleMutate(id: string, body: Record<string, unknown>, successMsg: string) {
-    const result = await mutate(`/api/bookings/${id}`, body)
+  async function handleMutate(
+    id: string,
+    body: Record<string, unknown>,
+    successMsg: string,
+  ) {
+    const result = await mutate(`/api/bookings/${id}`, body);
     if (result.ok) {
-      toast.success(successMsg)
-      startTransition(() => router.refresh())
+      toast.success(successMsg);
+      startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? "Failed to update booking")
+      toast.error(result.error ?? "Failed to update booking");
     }
   }
 
   async function handleAssignWorker() {
-    if (!assignTarget || !workerName.trim()) return
-    setIsSubmitting(true)
+    if (!assignTarget || !workerName.trim()) return;
+    setIsSubmitting(true);
     const result = await mutate(`/api/bookings/${assignTarget.id}`, {
       assignedWorker: workerName.trim(),
-    })
-    setIsSubmitting(false)
+    });
+    setIsSubmitting(false);
     if (result.ok) {
-      toast.success(`Worker assigned to ${assignTarget.id}`)
-      setAssignDialogOpen(false)
-      setWorkerName("")
-      setAssignTarget(null)
-      startTransition(() => router.refresh())
+      toast.success(`Worker assigned to ${assignTarget.id}`);
+      setAssignDialogOpen(false);
+      setWorkerName("");
+      setAssignTarget(null);
+      startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? "Failed to assign worker")
+      toast.error(result.error ?? "Failed to assign worker");
     }
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-6 space-y-4">
+    <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Bookings"
         description={`${bookings.length} total bookings`}
@@ -149,7 +153,7 @@ export function BookingsView({ bookings }: BookingsViewProps) {
           value={search}
           onChange={setSearch}
           placeholder="Search ID, customer, worker…"
-          className="w-[260px]"
+          className="w-65"
         />
         <FilterSelect
           value={status}
@@ -189,7 +193,7 @@ export function BookingsView({ bookings }: BookingsViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[120px]">Booking ID</TableHead>
+                <TableHead className="w-30">Booking ID</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Time Slot</TableHead>
@@ -198,26 +202,42 @@ export function BookingsView({ bookings }: BookingsViewProps) {
                 <TableHead>Assigned Worker</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Payment</TableHead>
-                <TableHead className="w-[48px]" />
+                <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((booking) => (
                 <TableRow key={booking.id}>
-                  <TableCell className="font-mono text-xs">{booking.id}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{formatDate(booking.date)}</TableCell>
-                  <TableCell>
-                    <div className="font-medium text-sm">{booking.customerName}</div>
-                    <div className="text-xs text-muted-foreground">{booking.customerId}</div>
+                  <TableCell className="font-mono text-xs">
+                    {booking.id}
                   </TableCell>
-                  <TableCell className="text-sm">{booking.timeSlot ?? "—"}</TableCell>
-                  <TableCell>
-                    <span className="capitalize text-sm">{booking.servicePackage}</span>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(booking.date)}
                   </TableCell>
                   <TableCell>
-                    <span className="capitalize text-sm">{booking.vehicleType}</span>
+                    <div className="font-medium text-sm">
+                      {booking.customerName}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {booking.customerId}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm">{booking.assignedWorker ?? "—"}</TableCell>
+                  <TableCell className="text-sm">
+                    {booking.timeSlot ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span className="capitalize text-sm">
+                      {booking.servicePackage}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="capitalize text-sm">
+                      {booking.vehicleType}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {booking.assignedWorker ?? "—"}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={booking.status} />
                   </TableCell>
@@ -227,7 +247,12 @@ export function BookingsView({ bookings }: BookingsViewProps) {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={isPending}
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -236,35 +261,68 @@ export function BookingsView({ bookings }: BookingsViewProps) {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onSelect={() => {
-                            setAssignTarget(booking)
-                            setWorkerName(booking.assignedWorker ?? "")
-                            setAssignDialogOpen(true)
+                            setAssignTarget(booking);
+                            setWorkerName(booking.assignedWorker ?? "");
+                            setAssignDialogOpen(true);
                           }}
                         >
                           Assign Worker
                         </DropdownMenuItem>
                         <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>Set Status</DropdownMenuSubTrigger>
+                          <DropdownMenuSubTrigger>
+                            Set Status
+                          </DropdownMenuSubTrigger>
                           <DropdownMenuSubContent>
-                            {(["pending", "confirmed", "in_progress", "completed", "cancelled"] as const).map((s) => (
+                            {(
+                              [
+                                "pending",
+                                "confirmed",
+                                "in_progress",
+                                "completed",
+                                "cancelled",
+                              ] as const
+                            ).map((s) => (
                               <DropdownMenuItem
                                 key={s}
                                 disabled={booking.status === s}
-                                onSelect={() => handleMutate(booking.id, { status: s }, `Status updated to ${s.replace("_", " ")}`)}
+                                onSelect={() =>
+                                  handleMutate(
+                                    booking.id,
+                                    { status: s },
+                                    `Status updated to ${s.replace("_", " ")}`,
+                                  )
+                                }
                               >
-                                <span className="capitalize">{s.replace("_", " ")}</span>
+                                <span className="capitalize">
+                                  {s.replace("_", " ")}
+                                </span>
                               </DropdownMenuItem>
                             ))}
                           </DropdownMenuSubContent>
                         </DropdownMenuSub>
                         <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>Payment Status</DropdownMenuSubTrigger>
+                          <DropdownMenuSubTrigger>
+                            Payment Status
+                          </DropdownMenuSubTrigger>
                           <DropdownMenuSubContent>
-                            {(["pending", "paid", "partial", "refunded"] as const).map((s) => (
+                            {(
+                              [
+                                "pending",
+                                "paid",
+                                "partial",
+                                "refunded",
+                              ] as const
+                            ).map((s) => (
                               <DropdownMenuItem
                                 key={s}
                                 disabled={booking.paymentStatus === s}
-                                onSelect={() => handleMutate(booking.id, { paymentStatus: s }, `Payment marked as ${s}`)}
+                                onSelect={() =>
+                                  handleMutate(
+                                    booking.id,
+                                    { paymentStatus: s },
+                                    `Payment marked as ${s}`,
+                                  )
+                                }
                               >
                                 <span className="capitalize">{s}</span>
                               </DropdownMenuItem>
@@ -297,15 +355,21 @@ export function BookingsView({ bookings }: BookingsViewProps) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setAssignDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleAssignWorker} disabled={isSubmitting || !workerName.trim()}>
+            <Button
+              onClick={handleAssignWorker}
+              disabled={isSubmitting || !workerName.trim()}
+            >
               {isSubmitting ? "Saving…" : "Assign"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

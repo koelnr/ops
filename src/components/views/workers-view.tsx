@@ -1,43 +1,47 @@
-"use client"
+"use client";
 
-import { useMemo, useState } from "react"
-import type { Complaint, WorkerDailyOps } from "@/lib/sheets/types"
-import { WorkersSummary } from "@/components/dashboard/workers-summary"
-import { PageHeader } from "@/components/shared/page-header"
-import { SearchInput } from "@/components/shared/search-input"
-import { FilterSelect } from "@/components/shared/filter-select"
-import { EmptyState } from "@/components/shared/empty-state"
+import { useMemo, useState } from "react";
+import type { Complaint, WorkerDailyOps } from "@/lib/sheets/types";
+import { WorkersSummary } from "@/components/dashboard/workers-summary";
+import { PageHeader } from "@/components/shared/page-header";
+import { SearchInput } from "@/components/shared/search-input";
+import { FilterSelect } from "@/components/shared/filter-select";
+import { EmptyState } from "@/components/shared/empty-state";
 
 interface WorkersViewProps {
-  workers: WorkerDailyOps[]
-  complaints: Complaint[]
+  workers: WorkerDailyOps[];
+  complaints: Complaint[];
 }
 
 export function WorkersView({ workers, complaints }: WorkersViewProps) {
-  const [search, setSearch] = useState("")
-  const [dateFilter, setDateFilter] = useState("")
+  const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   const dateOptions = useMemo(() => {
-    const dates = Array.from(new Set(workers.map((w) => w.date).filter(Boolean))).sort().reverse()
-    return dates.map((d) => ({ label: d, value: d }))
-  }, [workers])
+    const dates = Array.from(
+      new Set(workers.map((w) => w.date).filter(Boolean)),
+    )
+      .sort()
+      .reverse();
+    return dates.map((d) => ({ label: d, value: d }));
+  }, [workers]);
 
   const workerNames = useMemo(() => {
-    return Array.from(new Set(workers.map((w) => w.name)))
-  }, [workers])
+    return Array.from(new Set(workers.map((w) => w.name)));
+  }, [workers]);
 
   const filtered = useMemo(() => {
     return workers.filter((w) => {
-      if (dateFilter && w.date !== dateFilter) return false
+      if (dateFilter && w.date !== dateFilter) return false;
       if (search) {
-        return w.name.toLowerCase().includes(search.toLowerCase())
+        return w.name.toLowerCase().includes(search.toLowerCase());
       }
-      return true
-    })
-  }, [workers, search, dateFilter])
+      return true;
+    });
+  }, [workers, search, dateFilter]);
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-6 space-y-4">
+    <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Workers"
         description={`${workerNames.length} workers · ${workers.length} daily ops records`}
@@ -47,7 +51,7 @@ export function WorkersView({ workers, complaints }: WorkersViewProps) {
           value={search}
           onChange={setSearch}
           placeholder="Search worker name…"
-          className="w-[220px]"
+          className="w-55"
         />
         <FilterSelect
           value={dateFilter}
@@ -67,5 +71,5 @@ export function WorkersView({ workers, complaints }: WorkersViewProps) {
         <WorkersSummary workers={filtered} complaints={complaints} />
       )}
     </div>
-  )
+  );
 }

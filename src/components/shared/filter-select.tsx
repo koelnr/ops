@@ -1,22 +1,28 @@
-"use client"
+"use client";
 
-import { Select } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface FilterSelectProps {
-  value: string
-  onChange: (value: string) => void
-  options: { label: string; value: string }[]
-  placeholder?: string
-  className?: string
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  placeholder?: string;
+  className?: string;
 }
 
-export function FilterSelect({ value, onChange, options, placeholder = "All", className }: FilterSelectProps) {
+export function FilterSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "All",
+  className,
+}: FilterSelectProps) {
   return (
     <Select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={cn("w-[160px]", className)}
+      className={cn("w-40", className)}
     >
       <option value="">{placeholder}</option>
       {options.map((opt) => (
@@ -25,5 +31,5 @@ export function FilterSelect({ value, onChange, options, placeholder = "All", cl
         </option>
       ))}
     </Select>
-  )
+  );
 }

@@ -5,17 +5,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import type { Booking } from "@/lib/sheets/types"
-import { formatDate } from "@/lib/format"
-import { StatusBadge } from "./status-badge"
+} from "@/components/ui/table";
+import type { Booking } from "@/lib/sheets/types";
+import { formatDate } from "@/lib/format";
+import { StatusBadge } from "./status-badge";
 
 interface BookingsTableProps {
-  bookings: Booking[]
-  showDate?: boolean
+  bookings: Booking[];
+  showDate?: boolean;
 }
 
-export function BookingsTable({ bookings, showDate = false }: BookingsTableProps) {
+export function BookingsTable({
+  bookings,
+  showDate = false,
+}: BookingsTableProps) {
   if (bookings.length === 0) {
     return (
       <div className="rounded-md border">
@@ -23,7 +26,7 @@ export function BookingsTable({ bookings, showDate = false }: BookingsTableProps
           No bookings scheduled for today.
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -31,7 +34,7 @@ export function BookingsTable({ bookings, showDate = false }: BookingsTableProps
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px]">Booking ID</TableHead>
+            <TableHead className="w-30">Booking ID</TableHead>
             {showDate && <TableHead>Date</TableHead>}
             <TableHead>Customer</TableHead>
             <TableHead>Time Slot</TableHead>
@@ -46,19 +49,35 @@ export function BookingsTable({ bookings, showDate = false }: BookingsTableProps
           {bookings.map((booking) => (
             <TableRow key={booking.id}>
               <TableCell className="font-mono text-xs">{booking.id}</TableCell>
-              {showDate && <TableCell className="text-sm text-muted-foreground">{formatDate(booking.date)}</TableCell>}
+              {showDate && (
+                <TableCell className="text-sm text-muted-foreground">
+                  {formatDate(booking.date)}
+                </TableCell>
+              )}
               <TableCell>
-                <div className="font-medium text-sm">{booking.customerName}</div>
-                <div className="text-xs text-muted-foreground">{booking.customerId}</div>
+                <div className="font-medium text-sm">
+                  {booking.customerName}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {booking.customerId}
+                </div>
               </TableCell>
-              <TableCell className="text-sm">{booking.timeSlot ?? "—"}</TableCell>
+              <TableCell className="text-sm">
+                {booking.timeSlot ?? "—"}
+              </TableCell>
               <TableCell>
-                <span className="capitalize text-sm">{booking.servicePackage}</span>
+                <span className="capitalize text-sm">
+                  {booking.servicePackage}
+                </span>
               </TableCell>
               <TableCell>
-                <span className="capitalize text-sm">{booking.vehicleType}</span>
+                <span className="capitalize text-sm">
+                  {booking.vehicleType}
+                </span>
               </TableCell>
-              <TableCell className="text-sm">{booking.assignedWorker ?? "—"}</TableCell>
+              <TableCell className="text-sm">
+                {booking.assignedWorker ?? "—"}
+              </TableCell>
               <TableCell>
                 <StatusBadge status={booking.status} />
               </TableCell>
@@ -70,5 +89,5 @@ export function BookingsTable({ bookings, showDate = false }: BookingsTableProps
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

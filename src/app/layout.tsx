@@ -38,15 +38,13 @@ export default function RootLayout({
       )}
     >
       <body className="h-full flex">
-          <Sidebar />
-          <div className="flex flex-1 flex-col ml-[240px] h-full overflow-hidden">
-            <TopBar />
-            <main className="flex-1 overflow-y-auto">
-              {children}
-            </main>
-          </div>
-          <Toaster richColors position="bottom-right" />
-        </body>
+        <Sidebar />
+        <div className="flex flex-1 flex-col ml-60 h-full overflow-hidden">
+          <TopBar />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
+        <Toaster richColors position="bottom-right" />
+      </body>
     </html>
   );
 }

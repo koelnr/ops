@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useMemo, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import type { Lead } from "@/lib/sheets/types"
-import { mutate } from "@/lib/mutate"
-import { isLeadPending } from "@/lib/lead-utils"
-import { formatDate } from "@/lib/format"
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import type { Lead } from "@/lib/sheets/types";
+import { mutate } from "@/lib/mutate";
+import { isLeadPending } from "@/lib/lead-utils";
+import { formatDate } from "@/lib/format";
 import {
   Table,
   TableBody,
@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,68 +22,72 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { StatusBadge } from "@/components/dashboard/status-badge"
-import { PageHeader } from "@/components/shared/page-header"
-import { SearchInput } from "@/components/shared/search-input"
-import { FilterSelect } from "@/components/shared/filter-select"
-import { EmptyState } from "@/components/shared/empty-state"
-import { MoreHorizontal } from "lucide-react"
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import { PageHeader } from "@/components/shared/page-header";
+import { SearchInput } from "@/components/shared/search-input";
+import { FilterSelect } from "@/components/shared/filter-select";
+import { EmptyState } from "@/components/shared/empty-state";
+import { MoreHorizontal } from "lucide-react";
 
 interface LeadsViewProps {
-  leads: Lead[]
+  leads: Lead[];
 }
 
 export function LeadsView({ leads }: LeadsViewProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState("")
-  const [sourceFilter, setSourceFilter] = useState("")
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("");
 
   const statusOptions = useMemo(() => {
     return Array.from(new Set(leads.map((l) => l.status).filter(Boolean)))
       .sort()
-      .map((s) => ({ label: s, value: s }))
-  }, [leads])
+      .map((s) => ({ label: s, value: s }));
+  }, [leads]);
 
   const sourceOptions = useMemo(() => {
     return Array.from(new Set(leads.map((l) => l.source).filter(Boolean)))
       .sort()
-      .map((s) => ({ label: s, value: s }))
-  }, [leads])
+      .map((s) => ({ label: s, value: s }));
+  }, [leads]);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase()
+    const q = search.toLowerCase();
     return leads.filter((l) => {
-      if (statusFilter && l.status !== statusFilter) return false
-      if (sourceFilter && l.source !== sourceFilter) return false
+      if (statusFilter && l.status !== statusFilter) return false;
+      if (sourceFilter && l.source !== sourceFilter) return false;
       if (q) {
         return (
           l.name.toLowerCase().includes(q) ||
           l.phone.toLowerCase().includes(q) ||
           (l.notes?.toLowerCase().includes(q) ?? false)
-        )
+        );
       }
-      return true
-    })
-  }, [leads, search, statusFilter, sourceFilter])
+      return true;
+    });
+  }, [leads, search, statusFilter, sourceFilter]);
 
-  const pendingCount = leads.filter((l) => isLeadPending(l.status)).length
+  const pendingCount = leads.filter((l) => isLeadPending(l.status)).length;
 
-  async function handleStatusUpdate(lead: Lead, newStatus: string, successMsg: string) {
-    const result = await mutate(`/api/leads/${lead.id}`, { status: newStatus })
+  async function handleStatusUpdate(
+    lead: Lead,
+    newStatus: string,
+    successMsg: string,
+  ) {
+    const result = await mutate(`/api/leads/${lead.id}`, { status: newStatus });
     if (result.ok) {
-      toast.success(successMsg)
-      startTransition(() => router.refresh())
+      toast.success(successMsg);
+      startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? "Failed to update lead")
+      toast.error(result.error ?? "Failed to update lead");
     }
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-6 space-y-4">
+    <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Leads"
         description={`${leads.length} total · ${pendingCount} pending follow-up`}
@@ -93,7 +97,7 @@ export function LeadsView({ leads }: LeadsViewProps) {
           value={search}
           onChange={setSearch}
           placeholder="Search name, phone…"
-          className="w-[240px]"
+          className="w-60"
         />
         <FilterSelect
           value={statusFilter}
@@ -120,38 +124,61 @@ export function LeadsView({ leads }: LeadsViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[120px]">ID</TableHead>
+                <TableHead className="w-30">ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Notes</TableHead>
-                <TableHead className="w-[48px]" />
+                <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((lead) => {
-                const isRowPending = isLeadPending(lead.status)
+                const isRowPending = isLeadPending(lead.status);
                 return (
-                  <TableRow key={lead.id} className={isRowPending ? "bg-yellow-50/50 dark:bg-yellow-900/10" : undefined}>
-                    <TableCell className="font-mono text-xs">{lead.id}</TableCell>
-                    <TableCell className="font-medium text-sm">{lead.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{lead.phone}</TableCell>
+                  <TableRow
+                    key={lead.id}
+                    className={
+                      isRowPending
+                        ? "bg-yellow-50/50 dark:bg-yellow-900/10"
+                        : undefined
+                    }
+                  >
+                    <TableCell className="font-mono text-xs">
+                      {lead.id}
+                    </TableCell>
+                    <TableCell className="font-medium text-sm">
+                      {lead.name}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lead.phone}
+                    </TableCell>
                     <TableCell className="text-sm">{lead.source}</TableCell>
                     <TableCell>
                       <StatusBadge status={lead.status} />
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{formatDate(lead.createdAt)}</TableCell>
-                    <TableCell className="max-w-[240px]">
-                      <p className="text-xs text-muted-foreground truncate" title={lead.notes ?? undefined}>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(lead.createdAt)}
+                    </TableCell>
+                    <TableCell className="max-w-60">
+                      <p
+                        className="text-xs text-muted-foreground truncate"
+                        title={lead.notes ?? undefined}
+                      >
                         {lead.notes ?? "—"}
                       </p>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isPending}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={isPending}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -159,17 +186,35 @@ export function LeadsView({ leads }: LeadsViewProps) {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onSelect={() => handleStatusUpdate(lead, "contacted", `${lead.name} marked as contacted`)}
+                            onSelect={() =>
+                              handleStatusUpdate(
+                                lead,
+                                "contacted",
+                                `${lead.name} marked as contacted`,
+                              )
+                            }
                           >
                             Mark Contacted
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleStatusUpdate(lead, "converted", `${lead.name} marked as converted`)}
+                            onSelect={() =>
+                              handleStatusUpdate(
+                                lead,
+                                "converted",
+                                `${lead.name} marked as converted`,
+                              )
+                            }
                           >
                             Mark Converted
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleStatusUpdate(lead, "follow_up", `Follow-up set for ${lead.name}`)}
+                            onSelect={() =>
+                              handleStatusUpdate(
+                                lead,
+                                "follow_up",
+                                `Follow-up set for ${lead.name}`,
+                              )
+                            }
                           >
                             Mark Follow-up Needed
                           </DropdownMenuItem>
@@ -177,12 +222,12 @@ export function LeadsView({ leads }: LeadsViewProps) {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
         </div>
       )}
     </div>
-  )
+  );
 }

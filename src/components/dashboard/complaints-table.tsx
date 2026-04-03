@@ -5,17 +5,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import type { Complaint } from "@/lib/sheets/types"
-import { formatDate } from "@/lib/format"
-import { StatusBadge } from "./status-badge"
+} from "@/components/ui/table";
+import type { Complaint } from "@/lib/sheets/types";
+import { formatDate } from "@/lib/format";
+import { StatusBadge } from "./status-badge";
 
 interface ComplaintsTableProps {
-  complaints: Complaint[]
-  limit?: number
+  complaints: Complaint[];
+  limit?: number;
 }
 
-export function ComplaintsTable({ complaints, limit = 10 }: ComplaintsTableProps) {
+export function ComplaintsTable({
+  complaints,
+  limit = 10,
+}: ComplaintsTableProps) {
   if (complaints.length === 0) {
     return (
       <div className="rounded-md border">
@@ -23,19 +26,22 @@ export function ComplaintsTable({ complaints, limit = 10 }: ComplaintsTableProps
           No complaints on record.
         </div>
       </div>
-    )
+    );
   }
 
   const sorted = [...complaints]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, limit)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .slice(0, limit);
 
   return (
     <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px]">ID</TableHead>
+            <TableHead className="w-30">ID</TableHead>
             <TableHead>Customer ID</TableHead>
             <TableHead>Booking ID</TableHead>
             <TableHead>Issue</TableHead>
@@ -46,10 +52,16 @@ export function ComplaintsTable({ complaints, limit = 10 }: ComplaintsTableProps
         <TableBody>
           {sorted.map((complaint) => (
             <TableRow key={complaint.id}>
-              <TableCell className="font-mono text-xs">{complaint.id}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">{complaint.customerId}</TableCell>
-              <TableCell className="font-mono text-xs">{complaint.bookingId}</TableCell>
-              <TableCell className="max-w-[280px]">
+              <TableCell className="font-mono text-xs">
+                {complaint.id}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {complaint.customerId}
+              </TableCell>
+              <TableCell className="font-mono text-xs">
+                {complaint.bookingId}
+              </TableCell>
+              <TableCell className="max-w-70">
                 <p className="text-sm truncate" title={complaint.description}>
                   {complaint.description}
                 </p>
@@ -57,11 +69,13 @@ export function ComplaintsTable({ complaints, limit = 10 }: ComplaintsTableProps
               <TableCell>
                 <StatusBadge status={complaint.flag} />
               </TableCell>
-              <TableCell className="text-sm text-muted-foreground">{formatDate(complaint.createdAt)}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {formatDate(complaint.createdAt)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }
