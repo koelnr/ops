@@ -1,17 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  AlertTriangle,
-  CalendarDays,
-  CreditCard,
-  LayoutDashboard,
-  Megaphone,
-  UserRound,
-  Users,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +10,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import {
+  AlertTriangle,
+  CalendarDays,
+  CreditCard,
+  LayoutDashboard,
+  Megaphone,
+  UserRound,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
