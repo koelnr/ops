@@ -2,9 +2,10 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import type { WorkerDailyOps } from "@/lib/sheets/types";
-import { mutate } from "@/lib/mutate";
+import { mutate, create, remove } from "@/lib/mutate";
 import { formatCurrency } from "@/lib/format";
 import { WorkersSummary } from "@/components/dashboard/workers-summary";
 import { PageHeader } from "@/components/shared/page-header";
@@ -34,11 +35,21 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Plus } from "lucide-react";
 
 type WorkerFormData = {
   payoutDue: string;
@@ -49,6 +60,26 @@ type WorkerFormData = {
   rewashCount: string;
   complaintCount: string;
   notes: string;
+};
+
+type CreateFormData = {
+  workerName: string;
+  date: string;
+  assignedBookings: string;
+  completedBookings: string;
+  areaCovered: string;
+  payoutDue: string;
+  notes: string;
+};
+
+const emptyCreateForm: CreateFormData = {
+  workerName: "",
+  date: "",
+  assignedBookings: "0",
+  completedBookings: "0",
+  areaCovered: "",
+  payoutDue: "0",
+  notes: "",
 };
 
 function workerToForm(w: WorkerDailyOps): WorkerFormData {
@@ -74,6 +105,10 @@ export function WorkersView({ workers }: WorkersViewProps) {
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
+  // Clerk user — used for UI gating only; server enforces admin on all writes
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
+
   // Edit dialog
   const [editTarget, setEditTarget] = useState<WorkerDailyOps | null>(null);
   const [form, setForm] = useState<WorkerFormData>({
@@ -82,6 +117,15 @@ export function WorkersView({ workers }: WorkersViewProps) {
     complaintCount: "", notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Create dialog
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateFormData>(emptyCreateForm);
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<WorkerDailyOps | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const dateOptions = useMemo(() => {
     const dates = Array.from(new Set(workers.map((w) => w.date).filter(Boolean)))
@@ -104,6 +148,10 @@ export function WorkersView({ workers }: WorkersViewProps) {
 
   function setField(key: keyof WorkerFormData, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function setCreateField(key: keyof CreateFormData, value: string) {
+    setCreateForm((f) => ({ ...f, [key]: value }));
   }
 
   function openEdit(worker: WorkerDailyOps) {
@@ -134,11 +182,59 @@ export function WorkersView({ workers }: WorkersViewProps) {
     }
   }
 
+  async function handleCreate() {
+    if (!createForm.workerName || !createForm.date) {
+      toast.error("Worker name and date are required");
+      return;
+    }
+    setIsCreating(true);
+    const result = await create("/api/workers", {
+      workerName: createForm.workerName,
+      date: createForm.date,
+      assignedBookings: Number(createForm.assignedBookings) || 0,
+      completedBookings: Number(createForm.completedBookings) || 0,
+      areaCovered: createForm.areaCovered,
+      payoutDue: Number(createForm.payoutDue) || 0,
+      notes: createForm.notes,
+    });
+    setIsCreating(false);
+    if (result.ok) {
+      toast.success(`Worker record created for ${createForm.workerName}`);
+      setShowCreate(false);
+      setCreateForm(emptyCreateForm);
+      startTransition(() => router.refresh());
+    } else {
+      toast.error(result.error ?? "Failed to create worker record");
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const result = await remove(`/api/workers/${deleteTarget.workerId}`);
+    setIsDeleting(false);
+    if (result.ok) {
+      toast.success(`Worker record deleted for ${deleteTarget.workerName}`);
+      setDeleteTarget(null);
+      startTransition(() => router.refresh());
+    } else {
+      toast.error(result.error ?? "Failed to delete worker record");
+    }
+  }
+
   return (
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Workers"
         description={`${workerNames.length} workers · ${workers.length} daily ops records`}
+        action={
+          isAdmin ? (
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Record
+            </Button>
+          ) : undefined
+        }
       />
       <div className="flex flex-wrap items-center gap-2">
         <SearchInput
@@ -214,6 +310,14 @@ export function WorkersView({ workers }: WorkersViewProps) {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onSelect={() => openEdit(worker)}>Edit Record</DropdownMenuItem>
+                          {isAdmin && (
+                            <DropdownMenuItem
+                              onSelect={() => setDeleteTarget(worker)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              Delete Record
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -275,6 +379,79 @@ export function WorkersView({ workers }: WorkersViewProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Dialog — admin only */}
+      <Dialog open={showCreate} onOpenChange={(open) => { if (!open) { setShowCreate(false); setCreateForm(emptyCreateForm); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Worker Record</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 space-y-1.5">
+              <Label>Worker Name *</Label>
+              <Input
+                value={createForm.workerName}
+                onChange={(e) => setCreateField("workerName", e.target.value)}
+                placeholder="e.g. Raju"
+              />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label>Date *</Label>
+              <Input
+                type="date"
+                value={createForm.date}
+                onChange={(e) => setCreateField("date", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Assigned Bookings</Label>
+              <Input type="number" min="0" value={createForm.assignedBookings} onChange={(e) => setCreateField("assignedBookings", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Completed Bookings</Label>
+              <Input type="number" min="0" value={createForm.completedBookings} onChange={(e) => setCreateField("completedBookings", e.target.value)} />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label>Area Covered</Label>
+              <Input value={createForm.areaCovered} onChange={(e) => setCreateField("areaCovered", e.target.value)} placeholder="Area / Society" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Payout Due (₹)</Label>
+              <Input type="number" min="0" value={createForm.payoutDue} onChange={(e) => setCreateField("payoutDue", e.target.value)} />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label>Notes</Label>
+              <Textarea value={createForm.notes} onChange={(e) => setCreateField("notes", e.target.value)} placeholder="Notes…" rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowCreate(false); setCreateForm(emptyCreateForm); }}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={isCreating}>
+              {isCreating ? "Creating…" : "Create Record"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation — admin only */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Worker Record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the record for{" "}
+              <strong>{deleteTarget?.workerName}</strong> on{" "}
+              <strong>{deleteTarget?.date}</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
