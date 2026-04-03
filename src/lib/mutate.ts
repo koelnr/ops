@@ -1,20 +1,17 @@
-/**
- * Thin fetch wrapper for PATCH mutations.
- * Returns { ok: true } on success, { ok: false, error: string } on failure.
- */
-export async function mutate(
+type MutateResult = { ok: boolean; error?: string };
+
+async function request(
   url: string,
-  body: Record<string, unknown>,
-): Promise<{ ok: boolean; error?: string }> {
+  method: string,
+  body?: Record<string, unknown>,
+): Promise<MutateResult> {
   try {
     const res = await fetch(url, {
-      method: "PATCH",
+      method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-
     if (res.ok) return { ok: true };
-
     const data = await res.json().catch(() => ({}));
     return {
       ok: false,
@@ -23,4 +20,25 @@ export async function mutate(
   } catch {
     return { ok: false, error: "Network error. Please try again." };
   }
+}
+
+/** PATCH — update existing record */
+export function mutate(
+  url: string,
+  body: Record<string, unknown>,
+): Promise<MutateResult> {
+  return request(url, "PATCH", body);
+}
+
+/** POST — create new record */
+export function create(
+  url: string,
+  body: Record<string, unknown>,
+): Promise<MutateResult> {
+  return request(url, "POST", body);
+}
+
+/** DELETE — remove record */
+export function remove(url: string): Promise<MutateResult> {
+  return request(url, "DELETE");
 }
