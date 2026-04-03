@@ -11,10 +11,10 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
 });
 
-const googleSansCode = Google_Sans_Code({
-  subsets: ["latin"],
-  variable: "--font-google-sans-code",
-});
+// const googleSansCode = Google_Sans_Code({
+//   subsets: ["latin"],
+//   variable: "--font-google-sans-code",
+// });
 
 export const metadata: Metadata = {
   title: "Ops Dashboard",
@@ -32,7 +32,7 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        googleSansCode.variable,
+        // googleSansCode.variable,
         "font-sans",
         spaceGrotesk.variable,
       )}
