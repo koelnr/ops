@@ -3,6 +3,7 @@ import { Google_Sans_Code, Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -44,6 +45,7 @@ export default function RootLayout({
               {children}
             </main>
           </div>
+          <Toaster richColors position="bottom-right" />
         </body>
     </html>
   );
