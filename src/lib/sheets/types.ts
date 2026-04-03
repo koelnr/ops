@@ -122,6 +122,7 @@ export const CustomerSchema = z.object({
 });
 
 export const WorkerDailyOpsSchema = z.object({
+  workerId: z.string(),
   workerName: z.string(),
   date: z.string(),
   assignedBookings: z.number(),
@@ -155,6 +156,7 @@ export const PaymentSchema = z.object({
 });
 
 export const LeadSchema = z.object({
+  leadId: z.string(),
   leadDate: z.string(),
   leadSource: z.string(),
   prospectName: z.string(),
