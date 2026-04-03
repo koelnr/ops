@@ -4,8 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Payment } from "@/lib/sheets/types";
-import { mutate, create, remove } from "@/lib/mutate";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { mutate, remove } from "@/lib/mutate";
 import {
   PAYMENT_STATUS_OPTIONS,
   PAYMENT_MODE_OPTIONS,
@@ -14,24 +13,8 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
-import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/dashboard/status-badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { getPaymentColumns } from "./payments-columns";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +37,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreHorizontal, Plus } from "lucide-react";
 
 type PaymentFormData = {
   bookingId: string;
@@ -85,6 +67,7 @@ const emptyForm: PaymentFormData = {
 };
 
 function paymentToForm(p: Payment): PaymentFormData {
+  const today = new Date().toISOString().split("T")[0];
   return {
     bookingId: p.bookingId,
     customerName: p.customerName,
@@ -94,7 +77,8 @@ function paymentToForm(p: Payment): PaymentFormData {
     paymentStatus: p.paymentStatus,
     paymentMode: p.paymentMode,
     upiTransactionRef: p.upiTransactionRef,
-    paymentDate: p.paymentDate,
+    // Default to today if paymentDate is empty
+    paymentDate: p.paymentDate || today,
     followUpRequired: p.followUpRequired || "No",
     notes: p.notes,
   };
@@ -110,6 +94,12 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [mode, setMode] = useState("");
+
+  function resetFilters() {
+    setSearch("");
+    setStatus("");
+    setMode("");
+  }
 
   // UPI ref dialog
   const [refDialogOpen, setRefDialogOpen] = useState(false);
@@ -150,12 +140,6 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function openCreate() {
-    setEditTarget(null);
-    setForm(emptyForm);
-    setFormOpen(true);
-  }
-
   function openEdit(payment: Payment) {
     setEditTarget(payment);
     setForm(paymentToForm(payment));
@@ -194,19 +178,21 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
   }
 
   async function handleFormSubmit() {
-    if (!form.bookingId.trim() || !form.customerName.trim()) {
-      toast.error("Booking ID and customer name are required");
-      return;
-    }
+    if (!editTarget) return;
     const due = Number(form.amountDue) || 0;
     const received = Number(form.amountReceived) || 0;
     if (received > due) {
       toast.error("Amount received cannot exceed amount due");
       return;
     }
-    const isPaid =
+    // Block "Paid" if amounts don't match
+    if (form.paymentStatus === "Paid" && received !== due) {
+      toast.error("Amount received must equal amount due to mark as Paid");
+      return;
+    }
+    const isSettled =
       form.paymentStatus === "Paid" || form.paymentStatus === "Partially Paid";
-    if (isPaid && !form.paymentDate) {
+    if (isSettled && !form.paymentDate) {
       toast.error(
         "Payment date is required when payment is Paid or Partially Paid",
       );
@@ -214,7 +200,7 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
     }
     if (
       form.paymentMode === "UPI" &&
-      isPaid &&
+      isSettled &&
       !form.upiTransactionRef.trim()
     ) {
       toast.error("UPI transaction reference is required for UPI payments");
@@ -226,21 +212,14 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
       amountDue: due,
       amountReceived: received,
     };
-    let result;
-    if (editTarget) {
-      result = await mutate(`/api/payments/${editTarget.paymentId}`, body);
-    } else {
-      result = await create("/api/payments", body);
-    }
+    const result = await mutate(`/api/payments/${editTarget.paymentId}`, body);
     setIsSubmitting(false);
     if (result.ok) {
-      toast.success(editTarget ? "Payment updated" : "Payment created");
+      toast.success("Payment updated");
       setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(
-        result.error ?? (editTarget ? "Failed to update" : "Failed to create"),
-      );
+      toast.error(result.error ?? "Failed to update payment");
     }
   }
 
@@ -261,24 +240,30 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
     form.amountReceived &&
     Number(form.amountReceived) > Number(form.amountDue);
 
+  const columns = getPaymentColumns({
+    onEdit: openEdit,
+    onStatusUpdate: handleStatusUpdate,
+    onUpdateRef: (payment) => {
+      setRefTarget(payment);
+      setUpiRef(payment.upiTransactionRef);
+      setRefDialogOpen(true);
+    },
+    onDelete: setDeleteTarget,
+    isPending,
+  });
+
   return (
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Payments"
         description={`${payments.length} total · ${pendingCount} pending or partial`}
-        action={
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-1" />
-            New Payment
-          </Button>
-        }
       />
       <div className="flex flex-wrap items-center gap-2">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Search payment ID, booking ID, customer…"
-          className="w-75"
+          className="w-full sm:w-75"
         />
         <FilterSelect
           value={status}
@@ -293,132 +278,22 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
           placeholder="All modes"
         />
         {filtered.length !== payments.length && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {payments.length} shown
-          </span>
+          <>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {payments.length} shown
+            </span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
+              Clear filters
+            </Button>
+          </>
         )}
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState message="No payments match your filters." />
-      ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-30">Payment ID</TableHead>
-                <TableHead>Booking ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead className="text-right">Amount Due</TableHead>
-                <TableHead className="text-right">Received</TableHead>
-                <TableHead>Mode</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment Date</TableHead>
-                <TableHead>UPI Ref</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((payment) => (
-                <TableRow key={payment.paymentId}>
-                  <TableCell className="font-mono text-xs">
-                    {payment.paymentId}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {payment.bookingId}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {payment.customerName}
-                  </TableCell>
-                  <TableCell className="text-right font-medium text-sm tabular-nums">
-                    {formatCurrency(payment.amountDue)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
-                    {formatCurrency(payment.amountReceived)}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {payment.paymentMode}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={payment.paymentStatus} />
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(payment.paymentDate)}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {payment.upiTransactionRef || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={isPending}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => openEdit(payment)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={payment.paymentStatus === "Paid"}
-                          onSelect={() =>
-                            handleStatusUpdate(payment.paymentId, "Paid")
-                          }
-                        >
-                          Mark as Paid
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={payment.paymentStatus === "Partially Paid"}
-                          onSelect={() =>
-                            handleStatusUpdate(
-                              payment.paymentId,
-                              "Partially Paid",
-                            )
-                          }
-                        >
-                          Mark as Partially Paid
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={payment.paymentStatus === "Pending"}
-                          onSelect={() =>
-                            handleStatusUpdate(payment.paymentId, "Pending")
-                          }
-                        >
-                          Mark as Pending
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            setRefTarget(payment);
-                            setUpiRef(payment.upiTransactionRef);
-                            setRefDialogOpen(true);
-                          }}
-                        >
-                          Update UPI Reference
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onSelect={() => setDeleteTarget(payment)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={filtered}
+        emptyMessage="No payments match your filters."
+      />
 
       {/* UPI Ref Dialog */}
       <Dialog open={refDialogOpen} onOpenChange={setRefDialogOpen}>
@@ -447,31 +322,33 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Create / Edit Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editTarget
-                ? `Edit Payment ${editTarget.paymentId}`
-                : "New Payment"}
+              {editTarget ? `Edit Payment ${editTarget.paymentId}` : "Payment"}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Booking ID *</Label>
+              <Label>Booking ID</Label>
               <Input
                 value={form.bookingId}
-                onChange={(e) => setField("bookingId", e.target.value)}
-                placeholder="BKG-001"
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed opacity-60"
+                aria-label="Booking ID (read only)"
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Customer Name *</Label>
+              <Label>Customer Name</Label>
               <Input
                 value={form.customerName}
-                onChange={(e) => setField("customerName", e.target.value)}
-                placeholder="Name"
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed opacity-60"
+                aria-label="Customer Name (read only)"
               />
             </div>
             <div className="space-y-1.5">
@@ -479,7 +356,10 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
               <Input
                 type="date"
                 value={form.serviceDate}
-                onChange={(e) => setField("serviceDate", e.target.value)}
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed opacity-60"
+                aria-label="Service Date (read only)"
               />
             </div>
             <div className="space-y-1.5">
@@ -500,8 +380,10 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
               <Input
                 type="number"
                 value={form.amountDue}
-                onChange={(e) => setField("amountDue", e.target.value)}
-                placeholder="0"
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed opacity-60"
+                aria-label="Amount Due (read only)"
               />
             </div>
             <div className="space-y-1.5">
@@ -525,11 +407,24 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
                 onChange={(e) => setField("paymentStatus", e.target.value)}
               >
                 {PAYMENT_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
+                  <option
+                    key={o.value}
+                    value={o.value}
+                    disabled={
+                      o.value === "Paid" &&
+                      Number(form.amountReceived) !== Number(form.amountDue)
+                    }
+                  >
                     {o.label}
                   </option>
                 ))}
               </Select>
+              {form.paymentStatus !== "Paid" &&
+                Number(form.amountReceived) !== Number(form.amountDue) && (
+                  <p className="text-xs text-muted-foreground">
+                    &ldquo;Paid&rdquo; requires amount received = amount due
+                  </p>
+                )}
             </div>
             <div className="space-y-1.5">
               <Label>Payment Mode</Label>
@@ -590,11 +485,7 @@ export function PaymentsView({ payments }: PaymentsViewProps) {
               Cancel
             </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting
-                ? "Saving…"
-                : editTarget
-                  ? "Save Changes"
-                  : "Create Payment"}
+              {isSubmitting ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
