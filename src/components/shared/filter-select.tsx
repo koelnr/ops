@@ -22,7 +22,7 @@ export function FilterSelect({
     <Select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={cn("w-40", className)}
+      className={cn("w-full sm:w-40", className)}
     >
       <option value="">{placeholder}</option>
       {options.map((opt) => (
