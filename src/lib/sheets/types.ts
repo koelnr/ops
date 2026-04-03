@@ -270,6 +270,22 @@ export const UpdatePaymentSchema = z
   })
   .refine((d) => Object.values(d).some((v) => v !== undefined), {
     message: "At least one field must be provided",
+  })
+  .superRefine((d, ctx) => {
+    if (d.paymentStatus === "Paid") {
+      if (d.amountReceived === undefined || d.amountDue === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Both amountReceived and amountDue are required when status is Paid",
+        });
+      } else if (d.amountReceived !== d.amountDue) {
+        ctx.addIssue({
+          code: "custom",
+          message: "amountReceived must equal amountDue when status is Paid",
+          path: ["amountReceived"],
+        });
+      }
+    }
   });
 
 export const UpdateLeadSchema = z
@@ -387,6 +403,17 @@ export const UpdateCustomerSchema = z
     message: "At least one field must be provided",
   });
 
+export const CreateCustomerSchema = z.object({
+  customerName: z.string().min(1, "Customer name is required"),
+  phoneNumber: z.string().min(1, "Phone number is required"),
+  primaryArea: z.string().optional().default(""),
+  preferredTimeSlot: z.string().optional().default(""),
+  preferredServices: z.string().optional().default(""),
+  subscriptionStatus: z.string().optional().default(""),
+  referralSource: z.string().optional().default(""),
+  notes: z.string().optional().default(""),
+});
+
 export const CreateWorkerSchema = z.object({
   workerName: z.string().min(1, "Worker name is required"),
   date: z.string().min(1, "Date is required"),
@@ -425,3 +452,4 @@ export type CreateComplaintInput = z.infer<typeof CreateComplaintSchema>;
 export type UpdateWorkerInput = z.infer<typeof UpdateWorkerSchema>;
 export type UpdateCustomerInput = z.infer<typeof UpdateCustomerSchema>;
 export type CreateWorkerInput = z.infer<typeof CreateWorkerSchema>;
+export type CreateCustomerInput = z.infer<typeof CreateCustomerSchema>;
