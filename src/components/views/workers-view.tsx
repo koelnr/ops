@@ -6,28 +6,12 @@ import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import type { WorkerDailyOps } from "@/lib/sheets/types";
 import { mutate, create, remove } from "@/lib/mutate";
-import { formatCurrency } from "@/lib/format";
 import { WorkersSummary } from "@/components/dashboard/workers-summary";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
-import { EmptyState } from "@/components/shared/empty-state";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/ui/data-table";
+import { getWorkerColumns } from "./workers-columns";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 type WorkerFormData = {
   payoutDue: string;
@@ -104,6 +88,11 @@ export function WorkersView({ workers }: WorkersViewProps) {
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+
+  function resetFilters() {
+    setSearch("");
+    setDateFilter("");
+  }
 
   // Clerk user — used for UI gating only; server enforces admin on all writes
   const { user } = useUser();
@@ -258,108 +247,22 @@ export function WorkersView({ workers }: WorkersViewProps) {
           placeholder="All dates"
         />
         {filtered.length !== workers.length && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {workers.length} records shown
-          </span>
+          <>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {workers.length} records shown
+            </span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
+              Clear filters
+            </Button>
+          </>
         )}
       </div>
-      {filtered.length === 0 ? (
-        <EmptyState message="No worker records match your filters." />
-      ) : (
-        <>
-          <WorkersSummary workers={filtered} />
-
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Worker</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Assigned</TableHead>
-                  <TableHead className="text-right">Completed</TableHead>
-                  <TableHead>Area</TableHead>
-                  <TableHead className="text-right">Rating</TableHead>
-                  <TableHead className="text-right">Payout Due</TableHead>
-                  <TableHead className="text-right">Payout Paid</TableHead>
-                  <TableHead>Notes</TableHead>
-                  <TableHead className="w-12" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((worker) => (
-                  <TableRow key={worker.workerId}>
-                    <TableCell className="font-medium text-sm">
-                      {worker.workerName}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {worker.date}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
-                      {worker.assignedBookings}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
-                      {worker.completedBookings}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {worker.areaCovered || "—"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                      {worker.avgRating > 0 ? worker.avgRating : "—"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
-                      {worker.payoutDue > 0
-                        ? formatCurrency(worker.payoutDue)
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                      {worker.payoutPaid > 0
-                        ? formatCurrency(worker.payoutPaid)
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="max-w-40">
-                      <p
-                        className="text-xs text-muted-foreground truncate"
-                        title={worker.notes}
-                      >
-                        {worker.notes || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            disabled={isPending}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => openEdit(worker)}>
-                            Edit Record
-                          </DropdownMenuItem>
-                          {isAdmin && (
-                            <DropdownMenuItem
-                              onSelect={() => setDeleteTarget(worker)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              Delete Record
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </>
-      )}
+      {filtered.length === 0 ? null : <WorkersSummary workers={filtered} />}
+      <DataTable
+        columns={getWorkerColumns({ onEdit: openEdit, onDelete: setDeleteTarget, isAdmin, isPending })}
+        data={filtered}
+        emptyMessage="No worker records match your filters."
+      />
 
       {/* Edit Dialog */}
       <Dialog
@@ -372,7 +275,7 @@ export function WorkersView({ workers }: WorkersViewProps) {
               Edit Record — {editTarget?.workerName} ({editTarget?.date})
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Payout Due (₹)</Label>
               <Input
@@ -467,7 +370,7 @@ export function WorkersView({ workers }: WorkersViewProps) {
           <DialogHeader>
             <DialogTitle>New Worker Record</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1.5">
               <Label>Worker Name *</Label>
               <Input
