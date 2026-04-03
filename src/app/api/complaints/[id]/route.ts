@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateComplaintSchema } from "@/lib/sheets/types";
-import { updateComplaint } from "@/lib/sheets/mutations/complaints";
+import { updateComplaint, deleteComplaint } from "@/lib/sheets/mutations/complaints";
 
 export async function PATCH(
   req: NextRequest,
@@ -27,5 +27,23 @@ export async function PATCH(
       return NextResponse.json({ error: message }, { status: 404 });
     }
     return NextResponse.json({ error: "Failed to update complaint" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await deleteComplaint(id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete complaint";
+    console.error("[DELETE /api/complaints/[id]]", err);
+    if (message.includes("not found")) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Failed to delete complaint" }, { status: 500 });
   }
 }

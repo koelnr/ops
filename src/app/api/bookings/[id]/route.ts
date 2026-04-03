@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateBookingSchema } from "@/lib/sheets/types";
-import { updateBooking } from "@/lib/sheets/mutations/bookings";
+import { updateBooking, deleteBooking } from "@/lib/sheets/mutations/bookings";
 
 export async function PATCH(
   req: NextRequest,
@@ -27,5 +27,23 @@ export async function PATCH(
       return NextResponse.json({ error: message }, { status: 404 });
     }
     return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await deleteBooking(id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete booking";
+    console.error("[DELETE /api/bookings/[id]]", err);
+    if (message.includes("not found")) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
   }
 }

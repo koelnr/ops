@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdatePaymentSchema } from "@/lib/sheets/types";
-import { updatePayment } from "@/lib/sheets/mutations/payments";
+import { updatePayment, deletePayment } from "@/lib/sheets/mutations/payments";
 
 export async function PATCH(
   req: NextRequest,
@@ -27,5 +27,23 @@ export async function PATCH(
       return NextResponse.json({ error: message }, { status: 404 });
     }
     return NextResponse.json({ error: "Failed to update payment" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await deletePayment(id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete payment";
+    console.error("[DELETE /api/payments/[id]]", err);
+    if (message.includes("not found")) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Failed to delete payment" }, { status: 500 });
   }
 }

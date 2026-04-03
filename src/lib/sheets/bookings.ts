@@ -1,6 +1,7 @@
 import { getSheetsClient } from "./client";
 import { SPREADSHEET_ID, RANGES } from "./config";
 import { rowsToObjects, parseNumber } from "./utils";
+import { generateNextId } from "./mutations/helpers";
 import {
   BookingSchema,
   CreateBookingSchema,
@@ -80,7 +81,7 @@ export async function createBooking(
   input: CreateBookingInput,
 ): Promise<Booking> {
   const validated = CreateBookingSchema.parse(input);
-  const bookingId = `BK-${Date.now()}`;
+  const bookingId = await generateNextId("Bookings", "BKG");
 
   const sheets = await getSheetsClient();
   await sheets.spreadsheets.values.append({
