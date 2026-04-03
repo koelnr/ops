@@ -199,33 +199,150 @@ export const UpdateBookingSchema = z
     assignedWorker: z.string().optional(),
     paymentStatus: PaymentStatus.optional(),
     completionStatus: CompletionStatus.optional(),
-  })
-  .refine((d) => Object.values(d).some((v) => v !== undefined), {
-    message: "At least one field must be provided",
-  });
-
-export const UpdatePaymentSchema = z.object({
-  paymentStatus: PaymentStatus,
-  upiTransactionRef: z.string().optional(),
-});
-
-export const UpdateLeadSchema = z
-  .object({
-    followUpStatus: z.string().optional(),
-    conversionStatus: z.string().optional(),
+    bookingDate: z.string().optional(),
+    serviceDate: z.string().optional(),
+    timeSlot: z.string().optional(),
+    customerName: z.string().optional(),
+    phoneNumber: z.string().optional(),
+    areaSociety: z.string().optional(),
+    fullAddress: z.string().optional(),
+    carModel: z.string().optional(),
+    vehicleType: VehicleType.optional(),
+    servicePackage: ServicePackage.optional(),
+    addOns: z.string().optional(),
+    price: z.coerce.number().optional(),
+    paymentMode: PaymentMode.optional(),
+    bookingSource: BookingSource.optional(),
+    serviceStartTime: z.string().optional(),
+    serviceEndTime: z.string().optional(),
+    customerRating: z.coerce.number().optional(),
+    complaintFlag: ComplaintFlag.optional(),
+    repeatCustomer: RepeatCustomer.optional(),
     notes: z.string().optional(),
   })
   .refine((d) => Object.values(d).some((v) => v !== undefined), {
     message: "At least one field must be provided",
   });
 
-export const UpdateComplaintSchema = z.object({
+export const UpdatePaymentSchema = z
+  .object({
+    paymentStatus: PaymentStatus.optional(),
+    upiTransactionRef: z.string().optional(),
+    bookingId: z.string().optional(),
+    customerName: z.string().optional(),
+    serviceDate: z.string().optional(),
+    amountDue: z.coerce.number().optional(),
+    amountReceived: z.coerce.number().optional(),
+    paymentMode: PaymentMode.optional(),
+    paymentDate: z.string().optional(),
+    followUpRequired: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
+
+export const UpdateLeadSchema = z
+  .object({
+    followUpStatus: z.string().optional(),
+    conversionStatus: z.string().optional(),
+    notes: z.string().optional(),
+    leadDate: z.string().optional(),
+    leadSource: z.string().optional(),
+    prospectName: z.string().optional(),
+    phoneNumber: z.string().optional(),
+    areaSociety: z.string().optional(),
+    interestedService: z.string().optional(),
+    firstBookingDate: z.string().optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
+
+export const UpdateComplaintSchema = z
+  .object({
+    resolutionStatus: z.string().optional(),
+    resolutionGiven: z.string().optional(),
+    refundOrRewash: z.string().optional(),
+    followUpComplete: z.string().optional(),
+    rootCause: z.string().optional(),
+    bookingId: z.string().optional(),
+    customerName: z.string().optional(),
+    date: z.string().optional(),
+    workerAssigned: z.string().optional(),
+    complaintType: z.string().optional(),
+    complaintDetails: z.string().optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
+
+export const CreatePaymentSchema = z.object({
+  bookingId: z.string(),
+  customerName: z.string(),
+  serviceDate: z.string(),
+  amountDue: z.coerce.number(),
+  amountReceived: z.coerce.number(),
+  paymentStatus: PaymentStatus,
+  paymentMode: PaymentMode,
+  upiTransactionRef: z.string().optional(),
+  paymentDate: z.string().optional(),
+  followUpRequired: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const CreateLeadSchema = z.object({
+  leadDate: z.string(),
+  leadSource: z.string(),
+  prospectName: z.string(),
+  phoneNumber: z.string(),
+  areaSociety: z.string().optional(),
+  interestedService: z.string().optional(),
+  followUpStatus: z.string(),
+  conversionStatus: z.string(),
+  notes: z.string().optional(),
+});
+
+export const CreateComplaintSchema = z.object({
+  bookingId: z.string(),
+  customerName: z.string(),
+  date: z.string(),
+  workerAssigned: z.string().optional(),
+  complaintType: z.string(),
+  complaintDetails: z.string(),
   resolutionStatus: z.string(),
   resolutionGiven: z.string().optional(),
   refundOrRewash: z.string().optional(),
   followUpComplete: z.string().optional(),
   rootCause: z.string().optional(),
 });
+
+export const UpdateWorkerSchema = z
+  .object({
+    payoutDue: z.coerce.number().optional(),
+    payoutPaid: z.coerce.number().optional(),
+    notes: z.string().optional(),
+    areaCovered: z.string().optional(),
+    avgRating: z.coerce.number().optional(),
+    lateArrivalCount: z.coerce.number().optional(),
+    rewashCount: z.coerce.number().optional(),
+    complaintCount: z.coerce.number().optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
+
+export const UpdateCustomerSchema = z
+  .object({
+    notes: z.string().optional(),
+    subscriptionStatus: z.string().optional(),
+    preferredTimeSlot: z.string().optional(),
+    preferredServices: z.string().optional(),
+    referralSource: z.string().optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
 
 // ─── TypeScript Types ─────────────────────────────────────────────────────────
 
@@ -241,3 +358,8 @@ export type UpdateBookingInput = z.infer<typeof UpdateBookingSchema>;
 export type UpdatePaymentInput = z.infer<typeof UpdatePaymentSchema>;
 export type UpdateLeadInput = z.infer<typeof UpdateLeadSchema>;
 export type UpdateComplaintInput = z.infer<typeof UpdateComplaintSchema>;
+export type CreatePaymentInput = z.infer<typeof CreatePaymentSchema>;
+export type CreateLeadInput = z.infer<typeof CreateLeadSchema>;
+export type CreateComplaintInput = z.infer<typeof CreateComplaintSchema>;
+export type UpdateWorkerInput = z.infer<typeof UpdateWorkerSchema>;
+export type UpdateCustomerInput = z.infer<typeof UpdateCustomerSchema>;
