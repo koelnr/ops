@@ -165,7 +165,7 @@ export function LeadsView({ leads }: LeadsViewProps) {
                 const isRowPending = isLeadPending(lead.followUpStatus);
                 return (
                   <TableRow
-                    key={`${lead.leadDate}-${lead.prospectName}`}
+                    key={lead.leadId || `${lead.leadDate}-${lead.prospectName}`}
                     className={
                       isRowPending
                         ? "bg-yellow-50/50 dark:bg-yellow-900/10"
