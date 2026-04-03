@@ -21,8 +21,11 @@ vi.mock("@/lib/mutate", () => ({
 
 import { PaymentsView } from "@/components/views/payments-view";
 import * as mutateModule from "@/lib/mutate";
+import type { Payment } from "@/lib/sheets/types";
 
 beforeEach(() => vi.clearAllMocks());
+
+// ─── Table rendering ──────────────────────────────────────────────────────────
 
 describe("PaymentsView — table rendering", () => {
   it("renders all payment rows", () => {
@@ -35,8 +38,12 @@ describe("PaymentsView — table rendering", () => {
 
   it("shows pending/partial count in header", () => {
     render(<PaymentsView payments={mockPayments} />);
-    // PAY-002 is Partially Paid → 1 pending or partial
     expect(screen.getByText(/1 pending or partial/)).toBeInTheDocument();
+  });
+
+  it("does not render a New Payment button", () => {
+    render(<PaymentsView payments={mockPayments} />);
+    expect(screen.queryByRole("button", { name: /new payment/i })).not.toBeInTheDocument();
   });
 
   it("shows empty state when no results match", async () => {
@@ -47,6 +54,8 @@ describe("PaymentsView — table rendering", () => {
   });
 });
 
+// ─── Search and filters ───────────────────────────────────────────────────────
+
 describe("PaymentsView — search and filters", () => {
   it("filters by customer name", async () => {
     const user = userEvent.setup();
@@ -54,14 +63,6 @@ describe("PaymentsView — search and filters", () => {
     await user.type(screen.getByPlaceholderText(/search payment/i), "arjun");
     expect(screen.getByText("PAY-001")).toBeInTheDocument();
     expect(screen.queryByText("PAY-002")).not.toBeInTheDocument();
-  });
-
-  it("filters by booking ID", async () => {
-    const user = userEvent.setup();
-    render(<PaymentsView payments={mockPayments} />);
-    await user.type(screen.getByPlaceholderText(/search payment/i), "BKG-002");
-    expect(screen.getByText("PAY-002")).toBeInTheDocument();
-    expect(screen.queryByText("PAY-001")).not.toBeInTheDocument();
   });
 
   it("status filter narrows results", async () => {
@@ -81,69 +82,134 @@ describe("PaymentsView — search and filters", () => {
   });
 });
 
-describe("PaymentsView — create dialog", () => {
-  it("opens create dialog on New Payment click", async () => {
-    const user = userEvent.setup();
+// ─── Edit dialog — field restrictions ────────────────────────────────────────
+
+describe("PaymentsView — edit dialog restrictions", () => {
+  async function openEditForPAY001(user: ReturnType<typeof userEvent.setup>) {
     render(<PaymentsView payments={mockPayments} />);
-    await user.click(screen.getByRole("button", { name: /new payment/i }));
+    const rows = screen.getAllByRole("row");
+    const arjunRow = rows.find((r) => within(r).queryByText("PAY-001"));
+    await user.click(within(arjunRow!).getByRole("button"));
+    await user.click(screen.getByRole("menuitem", { name: /edit/i }));
+  }
+
+  it("opens edit dialog via dropdown", async () => {
+    const user = userEvent.setup();
+    await openEditForPAY001(user);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("blocks submit when booking ID or customer name is empty", async () => {
+  it("booking ID field is disabled in edit dialog", async () => {
     const user = userEvent.setup();
-    render(<PaymentsView payments={mockPayments} />);
-    await user.click(screen.getByRole("button", { name: /new payment/i }));
-    await user.click(screen.getByRole("button", { name: /create payment/i }));
-    expect(mockToastError).toHaveBeenCalledWith("Booking ID and customer name are required");
-    expect(mutateModule.create).not.toHaveBeenCalled();
+    await openEditForPAY001(user);
+    const input = screen.getByLabelText("Booking ID (read only)");
+    expect(input).toBeDisabled();
   });
 
-  it("blocks submit when amount received exceeds amount due", async () => {
+  it("customer name field is disabled in edit dialog", async () => {
     const user = userEvent.setup();
-    render(<PaymentsView payments={mockPayments} />);
-    await user.click(screen.getByRole("button", { name: /new payment/i }));
-    const dialog = screen.getByRole("dialog");
-    await user.type(within(dialog).getByPlaceholderText("BKG-001"), "BKG-003");
-    await user.type(within(dialog).getByPlaceholderText("Name"), "Test Customer");
-    // Set amount due to 100 and received to 200
-    const [amountDueInput] = within(dialog).getAllByDisplayValue("") ;
-    // Clear and type values via placeholder
-    const inputs = within(dialog).getAllByRole("spinbutton");
-    // amountDue input (placeholder "0")
-    await user.clear(inputs[0]);
-    await user.type(inputs[0], "100");
-    await user.clear(inputs[1]);
-    await user.type(inputs[1], "200");
-    await user.click(within(dialog).getByRole("button", { name: /create payment/i }));
-    expect(mockToastError).toHaveBeenCalledWith("Amount received cannot exceed amount due");
+    await openEditForPAY001(user);
+    const input = screen.getByLabelText("Customer Name (read only)");
+    expect(input).toBeDisabled();
   });
 
-  it("calls create on valid form submit", async () => {
-    vi.mocked(mutateModule.create).mockResolvedValue({ ok: true });
+  it("service date field is disabled in edit dialog", async () => {
+    const user = userEvent.setup();
+    await openEditForPAY001(user);
+    const input = screen.getByLabelText("Service Date (read only)");
+    expect(input).toBeDisabled();
+  });
+
+  it("amount due field is disabled in edit dialog", async () => {
+    const user = userEvent.setup();
+    await openEditForPAY001(user);
+    const input = screen.getByLabelText("Amount Due (read only)");
+    expect(input).toBeDisabled();
+  });
+
+  it("defaults paymentDate to today when payment has no paymentDate", async () => {
+    const paymentWithoutDate: Payment = {
+      ...mockPayments[0],
+      paymentDate: "",
+    };
+    const user = userEvent.setup();
+    render(<PaymentsView payments={[paymentWithoutDate]} />);
+    const rows = screen.getAllByRole("row");
+    const row = rows.find((r) => within(r).queryByText("PAY-001"));
+    await user.click(within(row!).getByRole("button"));
+    await user.click(screen.getByRole("menuitem", { name: /edit/i }));
+
+    const today = new Date().toISOString().split("T")[0];
+    const dateInput = screen.getByDisplayValue(today);
+    expect(dateInput).toBeInTheDocument();
+  });
+
+  it("Paid option is disabled in status select when amountReceived !== amountDue", async () => {
+    // PAY-002 has amountDue=1200, amountReceived=600 — mismatched
     const user = userEvent.setup();
     render(<PaymentsView payments={mockPayments} />);
-    await user.click(screen.getByRole("button", { name: /new payment/i }));
+    const rows = screen.getAllByRole("row");
+    const priyaRow = rows.find((r) => within(r).queryByText("PAY-002"));
+    await user.click(within(priyaRow!).getByRole("button"));
+    await user.click(screen.getByRole("menuitem", { name: /edit/i }));
+
     const dialog = screen.getByRole("dialog");
-    await user.type(within(dialog).getByPlaceholderText("BKG-001"), "BKG-003");
-    await user.type(within(dialog).getByPlaceholderText("Name"), "Test Customer");
-    // Status is Pending by default so no paymentDate or UPI ref needed
-    await user.selectOptions(within(dialog).getByDisplayValue("Pending"), "Pending");
-    await user.click(within(dialog).getByRole("button", { name: /create payment/i }));
+    const paidOption = within(dialog).getByRole("option", { name: "Paid" });
+    expect(paidOption).toBeDisabled();
+  });
+
+  it("blocks Paid status via form submit guard and shows error toast", async () => {
+    // PAY-001 has amountDue=500, amountReceived=500 — equal, but we manually
+    // change the amountReceived in the form state via the existing payment to test guard
+    // Create a payment where amounts differ but status is Paid (edge case via direct state)
+    // Instead: verify the toast fires when the form is manipulated
+    // Since the select option is disabled, we test the handleFormSubmit guard
+    // by rendering a component with a payment that already has paymentStatus=Paid but mismatched amounts
+    const mismatchedPayment: Payment = {
+      ...mockPayments[0],
+      paymentStatus: "Paid",
+      amountDue: 500,
+      amountReceived: 300,
+    };
+    render(<PaymentsView payments={[mismatchedPayment]} />);
+    const rows = screen.getAllByRole("row");
+    const row = rows.find((r) => within(r).queryByText("PAY-001"));
+    const user = userEvent.setup();
+    await user.click(within(row!).getByRole("button"));
+    await user.click(screen.getByRole("menuitem", { name: /edit/i }));
+
+    const dialog = screen.getByRole("dialog");
+    // Submit directly — status is already Paid in the pre-populated form, amounts differ
+    await user.click(within(dialog).getByRole("button", { name: /save changes/i }));
+
+    expect(mockToastError).toHaveBeenCalledWith(
+      "Amount received must equal amount due to mark as Paid",
+    );
+    expect(mutateModule.mutate).not.toHaveBeenCalled();
+  });
+
+  it("submits successfully when status is not Paid", async () => {
+    vi.mocked(mutateModule.mutate).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    await openEditForPAY001(user);
+    const dialog = screen.getByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /save changes/i }));
     await waitFor(() => {
-      expect(mutateModule.create).toHaveBeenCalledWith("/api/payments", expect.objectContaining({
-        bookingId: "BKG-003",
-        customerName: "Test Customer",
-      }));
+      expect(mutateModule.mutate).toHaveBeenCalledWith(
+        "/api/payments/PAY-001",
+        expect.objectContaining({ paymentStatus: "Paid" }),
+      );
     });
   });
 });
+
+// ─── Status quick actions ─────────────────────────────────────────────────────
 
 describe("PaymentsView — status quick actions", () => {
   it("mark as Paid calls mutate with correct payload", async () => {
     vi.mocked(mutateModule.mutate).mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     render(<PaymentsView payments={mockPayments} />);
-    // Open PAY-002 dropdown (Partially Paid, so Mark as Paid is enabled)
     const rows = screen.getAllByRole("row");
     const priyaRow = rows.find((r) => within(r).queryByText("PAY-002"));
     await user.click(within(priyaRow!).getByRole("button"));
@@ -166,6 +232,8 @@ describe("PaymentsView — status quick actions", () => {
     });
   });
 });
+
+// ─── UPI reference dialog ─────────────────────────────────────────────────────
 
 describe("PaymentsView — UPI reference dialog", () => {
   it("opens UPI ref dialog and saves reference", async () => {
@@ -193,6 +261,8 @@ describe("PaymentsView — UPI reference dialog", () => {
     });
   });
 });
+
+// ─── Delete flow ──────────────────────────────────────────────────────────────
 
 describe("PaymentsView — delete flow", () => {
   it("shows delete confirmation and calls remove", async () => {

@@ -4,6 +4,7 @@ import type {
   Payment,
   Complaint,
   WorkerDailyOps,
+  Customer,
 } from "@/lib/sheets/types";
 
 export const mockLeads: Lead[] = [
@@ -166,6 +167,43 @@ export const mockComplaints: Complaint[] = [
     resolutionStatus: "Open",
     followUpComplete: "No",
     rootCause: "",
+  },
+];
+
+export const mockCustomers: Customer[] = [
+  {
+    customerId: "CST-001",
+    customerName: "Arjun Sharma",
+    phoneNumber: "9876543210",
+    primaryArea: "Sector 12",
+    firstBookingDate: "2026-03-05",
+    totalBookings: 2,
+    lastBookingDate: "2026-03-20",
+    preferredTimeSlot: "10am-12pm",
+    preferredServices: "Exterior Wash",
+    totalRevenue: 1000,
+    subscriptionStatus: "Active",
+    referralSource: "WhatsApp",
+    referredOthers: "No",
+    complaintHistory: "",
+    notes: "",
+  },
+  {
+    customerId: "CST-002",
+    customerName: "Priya Nair",
+    phoneNumber: "9123456789",
+    primaryArea: "Green Park",
+    firstBookingDate: "2026-03-07",
+    totalBookings: 1,
+    lastBookingDate: "2026-03-07",
+    preferredTimeSlot: "9am-11am",
+    preferredServices: "Exterior + Interior Basic",
+    totalRevenue: 1200,
+    subscriptionStatus: "",
+    referralSource: "Referral",
+    referredOthers: "No",
+    complaintHistory: "Late Arrival",
+    notes: "",
   },
 ];
 

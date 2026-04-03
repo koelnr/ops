@@ -81,7 +81,23 @@ describe("WorkersView — search and date filter", () => {
 });
 
 describe("WorkersView — edit dialog", () => {
-  it("opens edit dialog with pre-populated values", async () => {
+  function asAdmin() {
+    vi.mocked(useUser).mockReturnValue({
+      user: { publicMetadata: { role: "admin" } },
+    } as ReturnType<typeof useUser>);
+  }
+
+  it("non-admin does not see Edit Record in dropdown", async () => {
+    // Default mock is non-admin (member)
+    const user = userEvent.setup();
+    render(<WorkersView workers={mockWorkers} />);
+    const rajuRow = findWorkerTableRow("Raju");
+    await user.click(within(rajuRow!).getByRole("button"));
+    expect(screen.queryByRole("menuitem", { name: /edit record/i })).not.toBeInTheDocument();
+  });
+
+  it("opens edit dialog with pre-populated values (admin)", async () => {
+    asAdmin();
     const user = userEvent.setup();
     render(<WorkersView workers={mockWorkers} />);
     const rajuRow = findWorkerTableRow("Raju");
@@ -95,7 +111,8 @@ describe("WorkersView — edit dialog", () => {
     expect(payoutInputs[0]).toHaveValue(800);
   });
 
-  it("calls mutate with updated values on save", async () => {
+  it("calls mutate with updated values on save (admin)", async () => {
+    asAdmin();
     vi.mocked(mutateModule.mutate).mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     render(<WorkersView workers={mockWorkers} />);
@@ -115,7 +132,8 @@ describe("WorkersView — edit dialog", () => {
     });
   });
 
-  it("shows error toast when update fails", async () => {
+  it("shows error toast when update fails (admin)", async () => {
+    asAdmin();
     vi.mocked(mutateModule.mutate).mockResolvedValue({ ok: false, error: "Update failed" });
     const user = userEvent.setup();
     render(<WorkersView workers={mockWorkers} />);
@@ -131,7 +149,8 @@ describe("WorkersView — edit dialog", () => {
     });
   });
 
-  it("closes dialog on cancel", async () => {
+  it("closes dialog on cancel (admin)", async () => {
+    asAdmin();
     const user = userEvent.setup();
     render(<WorkersView workers={mockWorkers} />);
 
