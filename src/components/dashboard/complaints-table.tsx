@@ -11,9 +11,10 @@ import { StatusBadge } from "./status-badge"
 
 interface ComplaintsTableProps {
   complaints: Complaint[]
+  limit?: number
 }
 
-export function ComplaintsTable({ complaints }: ComplaintsTableProps) {
+export function ComplaintsTable({ complaints, limit = 10 }: ComplaintsTableProps) {
   if (complaints.length === 0) {
     return (
       <div className="rounded-md border">
@@ -26,7 +27,7 @@ export function ComplaintsTable({ complaints }: ComplaintsTableProps) {
 
   const sorted = [...complaints]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 10)
+    .slice(0, limit)
 
   return (
     <div className="rounded-md border overflow-x-auto">

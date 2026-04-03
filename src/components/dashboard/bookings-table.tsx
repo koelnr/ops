@@ -11,9 +11,10 @@ import { StatusBadge } from "./status-badge"
 
 interface BookingsTableProps {
   bookings: Booking[]
+  showDate?: boolean
 }
 
-export function BookingsTable({ bookings }: BookingsTableProps) {
+export function BookingsTable({ bookings, showDate = false }: BookingsTableProps) {
   if (bookings.length === 0) {
     return (
       <div className="rounded-md border">
@@ -30,6 +31,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[120px]">Booking ID</TableHead>
+            {showDate && <TableHead>Date</TableHead>}
             <TableHead>Customer</TableHead>
             <TableHead>Time Slot</TableHead>
             <TableHead>Service</TableHead>
@@ -43,6 +45,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
           {bookings.map((booking) => (
             <TableRow key={booking.id}>
               <TableCell className="font-mono text-xs">{booking.id}</TableCell>
+              {showDate && <TableCell className="text-sm text-muted-foreground">{booking.date ?? "—"}</TableCell>}
               <TableCell>
                 <div className="font-medium text-sm">{booking.customerName}</div>
                 <div className="text-xs text-muted-foreground">{booking.customerId}</div>
