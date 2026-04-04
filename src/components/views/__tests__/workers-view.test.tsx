@@ -87,13 +87,11 @@ describe("WorkersView — edit dialog", () => {
     } as ReturnType<typeof useUser>);
   }
 
-  it("non-admin does not see Edit Record in dropdown", async () => {
-    // Default mock is non-admin (member)
-    const user = userEvent.setup();
+  it("non-admin does not see Edit Record in dropdown", () => {
+    // Default mock is non-admin (member) — no action button rendered at all
     render(<WorkersView workers={mockWorkers} />);
-    const rajuRow = findWorkerTableRow("Raju");
-    await user.click(within(rajuRow!).getByRole("button"));
-    expect(screen.queryByRole("menuitem", { name: /edit record/i })).not.toBeInTheDocument();
+    const rajuRow = screen.getAllByRole("row").find((r) => within(r).queryByText("Raju"));
+    expect(within(rajuRow!).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("opens edit dialog with pre-populated values (admin)", async () => {
@@ -199,14 +197,12 @@ describe("WorkersView — admin actions", () => {
     expect(screen.getByRole("menuitem", { name: /delete record/i })).toBeInTheDocument();
   });
 
-  it("hides delete option in dropdown for non-admin", async () => {
+  it("hides delete option in dropdown for non-admin", () => {
     asNonAdmin();
-    const user = userEvent.setup();
     render(<WorkersView workers={mockWorkers} />);
 
-    const rajuRow = findWorkerTableRow("Raju");
-    await user.click(within(rajuRow!).getByRole("button"));
-    expect(screen.queryByRole("menuitem", { name: /delete record/i })).not.toBeInTheDocument();
+    const rajuRow = screen.getAllByRole("row").find((r) => within(r).queryByText("Raju"));
+    expect(within(rajuRow!).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("opens create dialog when admin clicks New Record", async () => {

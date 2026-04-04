@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@clerk/nextjs", () => ({
   UserButton: () => <div data-testid="user-button" />,
+  useUser: vi.fn(() => ({ user: null })),
 }));
 
 vi.mock("next-themes", () => ({
