@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBookings, createBooking } from "@/lib/sheets/bookings";
-import { upsertCustomerFromBooking } from "@/lib/sheets/mutations/customers";
+import { getBookings } from "@/lib/sheets/bookings";
+import { createBooking } from "@/lib/sheets/mutations/bookings";
 import { createPayment } from "@/lib/sheets/mutations/payments";
-import { CreateBookingSchema } from "@/lib/sheets/types";
+import { CreateBookingSchema } from "@/lib/schemas";
+import { requireSignedIn } from "@/lib/auth";
 
 export async function GET() {
   try {
+    await requireSignedIn();
     const bookings = await getBookings();
     return NextResponse.json({ bookings });
   } catch (err) {
@@ -16,42 +18,34 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireSignedIn();
     const body: unknown = await req.json();
     const parsed = CreateBookingSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request body", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const booking = await createBooking(parsed.data);
 
-    // Best-effort customer upsert — does not fail booking creation on sync error
-    try {
-      await upsertCustomerFromBooking(parsed.data);
-    } catch (upsertErr) {
-      console.error("[POST /api/bookings] Customer upsert failed:", upsertErr);
-    }
-
-    // Best-effort payment creation — does not fail booking creation on error
+    // Best-effort initial payment record — does not fail booking creation
     try {
       await createPayment({
-        bookingId: booking.bookingId,
-        customerName: parsed.data.customerName,
-        serviceDate: parsed.data.serviceDate,
-        amountDue: parsed.data.price,
-        amountReceived: 0,
-        paymentStatus: "Pending",
-        paymentMode: parsed.data.paymentMode,
-        upiTransactionRef: "",
-        paymentDate: "",
-        followUpRequired: "Yes",
+        booking_id: booking.booking_id,
+        payment_date: "",
+        amount_received: 0,
+        payment_mode_id: "",
+        payment_status_id: "",
+        upi_transaction_ref: "",
+        collected_by_worker_id: "",
+        follow_up_required: false,
         notes: "",
       });
-    } catch (paymentErr) {
-      console.error("[POST /api/bookings] Payment creation failed:", paymentErr);
+    } catch (err) {
+      console.error("[POST /api/bookings] Payment creation failed:", err);
     }
 
     return NextResponse.json({ booking }, { status: 201 });

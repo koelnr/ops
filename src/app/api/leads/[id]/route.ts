@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UpdateLeadSchema } from "@/lib/sheets/types";
+import { UpdateLeadSchema } from "@/lib/schemas";
 import { updateLead, deleteLead } from "@/lib/sheets/mutations/leads";
+import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireSignedIn();
     const { id } = await params;
     const body: unknown = await req.json();
     const parsed = UpdateLeadSchema.safeParse(body);
@@ -14,7 +16,7 @@ export async function PATCH(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request body", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,9 +34,10 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireSignedIn();
     const { id } = await params;
     await deleteLead(id);
     return NextResponse.json({ ok: true });

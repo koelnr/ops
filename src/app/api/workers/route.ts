@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { getWorkers } from "@/lib/sheets/workers";
 import { createWorker } from "@/lib/sheets/mutations/workers";
-import { CreateWorkerSchema } from "@/lib/sheets/types";
+import { CreateWorkerSchema } from "@/lib/schemas";
 
 export async function GET() {
   try {
@@ -33,6 +33,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ worker }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/workers]", err);
-    return NextResponse.json({ error: "Failed to create worker record" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create worker" }, { status: 500 });
   }
 }

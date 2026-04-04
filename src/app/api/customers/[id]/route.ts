@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UpdateCustomerSchema } from "@/lib/sheets/types";
-import { updateCustomer } from "@/lib/sheets/mutations/customers";
+import { UpdateCustomerSchema } from "@/lib/schemas";
+import { updateCustomer, deleteCustomer } from "@/lib/sheets/mutations/customers";
+import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireSignedIn();
     const { id } = await params;
     const body: unknown = await req.json();
     const parsed = UpdateCustomerSchema.safeParse(body);
@@ -14,7 +16,7 @@ export async function PATCH(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request body", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,5 +29,24 @@ export async function PATCH(
       return NextResponse.json({ error: message }, { status: 404 });
     }
     return NextResponse.json({ error: "Failed to update customer" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await requireSignedIn();
+    const { id } = await params;
+    await deleteCustomer(id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete customer";
+    console.error("[DELETE /api/customers/[id]]", err);
+    if (message.includes("not found")) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Failed to delete customer" }, { status: 500 });
   }
 }

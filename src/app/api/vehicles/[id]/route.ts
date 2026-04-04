@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UpdateComplaintSchema } from "@/lib/schemas";
-import { updateComplaint, deleteComplaint } from "@/lib/sheets/mutations/complaints";
+import { UpdateVehicleSchema } from "@/lib/schemas";
+import { updateVehicle, deleteVehicle } from "@/lib/sheets/mutations/vehicles";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -11,7 +11,7 @@ export async function PATCH(
     await requireSignedIn();
     const { id } = await params;
     const body: unknown = await req.json();
-    const parsed = UpdateComplaintSchema.safeParse(body);
+    const parsed = UpdateVehicleSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -20,15 +20,15 @@ export async function PATCH(
       );
     }
 
-    await updateComplaint(id, parsed.data);
+    await updateVehicle(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update complaint";
-    console.error("[PATCH /api/complaints/[id]]", err);
+    const message = err instanceof Error ? err.message : "Failed to update vehicle";
+    console.error("[PATCH /api/vehicles/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update complaint" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update vehicle" }, { status: 500 });
   }
 }
 
@@ -39,14 +39,14 @@ export async function DELETE(
   try {
     await requireSignedIn();
     const { id } = await params;
-    await deleteComplaint(id);
+    await deleteVehicle(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete complaint";
-    console.error("[DELETE /api/complaints/[id]]", err);
+    const message = err instanceof Error ? err.message : "Failed to delete vehicle";
+    console.error("[DELETE /api/vehicles/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete complaint" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete vehicle" }, { status: 500 });
   }
 }

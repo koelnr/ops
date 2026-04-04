@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { UpdateWorkerSchema } from "@/lib/sheets/types";
+import { UpdateWorkerSchema } from "@/lib/schemas";
 import { updateWorker, deleteWorker } from "@/lib/sheets/mutations/workers";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const authError = await requireAdmin();
   if (authError) return authError;
@@ -18,7 +18,7 @@ export async function PATCH(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request body", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -36,7 +36,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const authError = await requireAdmin();
   if (authError) return authError;
@@ -51,6 +51,6 @@ export async function DELETE(
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete worker record" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete worker" }, { status: 500 });
   }
 }
