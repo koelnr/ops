@@ -11,9 +11,12 @@ import { LeadsSummary } from "@/components/dashboard/leads-summary";
 import { PaymentsTable } from "@/components/dashboard/payments-table";
 import { SectionHeader } from "@/components/dashboard/section-header";
 import { WorkersSummary } from "@/components/dashboard/workers-summary";
+import { currentUser } from "@clerk/nextjs/server";
 
 export default async function HomePage() {
   const today = new Date().toISOString().split("T")[0];
+  const user = await currentUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
 
   const [
     bookingsResult,
@@ -107,26 +110,30 @@ export default async function HomePage() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
-          <KpiCard label="Total Inquiries" value={leads.length} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           <KpiCard
             label="Confirmed"
             value={confirmedBookings}
             sublabel="bookings"
           />
           <KpiCard label="Completed" value={completedJobs} sublabel="jobs" />
-          <KpiCard
-            label="Revenue"
-            value={formatCurrency(revenueCollected)}
-            sublabel="collected"
-          />
-          <KpiCard
-            label="Pending"
-            value={formatCurrency(pendingPaymentsAmount)}
-            sublabel="payments"
-          />
-          <KpiCard label="Complaints" value={complaints.length} />
           <KpiCard label="Repeat Customers" value={repeatCustomers} />
+          {isAdmin && (
+            <>
+              <KpiCard label="Total Inquiries" value={leads.length} />
+              <KpiCard
+                label="Revenue"
+                value={formatCurrency(revenueCollected)}
+                sublabel="collected"
+              />
+              <KpiCard
+                label="Pending"
+                value={formatCurrency(pendingPaymentsAmount)}
+                sublabel="payments"
+              />
+              <KpiCard label="Complaints" value={complaints.length} />
+            </>
+          )}
         </div>
 
         {/* Today's Bookings */}
@@ -138,41 +145,46 @@ export default async function HomePage() {
           <BookingsTable bookings={todaysBookings} />
         </section>
 
-        {/* Pending Payments */}
-        <section className="space-y-3">
-          <SectionHeader
-            title="Pending Payments"
-            description={`${pendingPayments.length} unpaid or partial`}
-          />
-          <PaymentsTable payments={pendingPayments} />
-        </section>
+        {/* Admin-only sections */}
+        {isAdmin && (
+          <>
+            {/* Pending Payments */}
+            <section className="space-y-3">
+              <SectionHeader
+                title="Pending Payments"
+                description={`${pendingPayments.length} unpaid or partial`}
+              />
+              <PaymentsTable payments={pendingPayments} />
+            </section>
 
-        {/* Worker Performance */}
-        <section className="space-y-3">
-          <SectionHeader
-            title="Worker Performance"
-            description="Aggregated across all recorded days"
-          />
-          <WorkersSummary workers={workers} />
-        </section>
+            {/* Worker Performance */}
+            <section className="space-y-3">
+              <SectionHeader
+                title="Worker Performance"
+                description="Aggregated across all recorded days"
+              />
+              <WorkersSummary workers={workers} />
+            </section>
 
-        {/* Leads Funnel */}
-        <section className="space-y-3">
-          <SectionHeader
-            title="Leads Funnel"
-            description={`${leads.length} total leads`}
-          />
-          <LeadsSummary leads={leads} />
-        </section>
+            {/* Leads Funnel */}
+            <section className="space-y-3">
+              <SectionHeader
+                title="Leads Funnel"
+                description={`${leads.length} total leads`}
+              />
+              <LeadsSummary leads={leads} />
+            </section>
 
-        {/* Complaints */}
-        <section className="space-y-3">
-          <SectionHeader
-            title="Complaints"
-            description={`${complaints.length} total — showing latest 10`}
-          />
-          <ComplaintsTable complaints={complaints} />
-        </section>
+            {/* Complaints */}
+            <section className="space-y-3">
+              <SectionHeader
+                title="Complaints"
+                description={`${complaints.length} total — showing latest 10`}
+              />
+              <ComplaintsTable complaints={complaints} />
+            </section>
+          </>
+        )}
       </div>
     </div>
   );
