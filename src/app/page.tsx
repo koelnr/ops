@@ -12,6 +12,7 @@ import { PaymentsTable } from "@/components/dashboard/payments-table";
 import { SectionHeader } from "@/components/dashboard/section-header";
 import { WorkersSummary } from "@/components/dashboard/workers-summary";
 import { currentUser } from "@clerk/nextjs/server";
+import { isAfter } from "date-fns";
 
 export default async function HomePage() {
   const today = new Date().toISOString().split("T")[0];
@@ -32,11 +33,16 @@ export default async function HomePage() {
     getComplaints(),
   ]);
 
-  if (bookingsResult.status === "rejected") console.error("[page] bookings failed:", bookingsResult.reason);
-  if (paymentsResult.status === "rejected") console.error("[page] payments failed:", paymentsResult.reason);
-  if (workersResult.status === "rejected") console.error("[page] workers failed:", workersResult.reason);
-  if (leadsResult.status === "rejected") console.error("[page] leads failed:", leadsResult.reason);
-  if (complaintsResult.status === "rejected") console.error("[page] complaints failed:", complaintsResult.reason);
+  if (bookingsResult.status === "rejected")
+    console.error("[page] bookings failed:", bookingsResult.reason);
+  if (paymentsResult.status === "rejected")
+    console.error("[page] payments failed:", paymentsResult.reason);
+  if (workersResult.status === "rejected")
+    console.error("[page] workers failed:", workersResult.reason);
+  if (leadsResult.status === "rejected")
+    console.error("[page] leads failed:", leadsResult.reason);
+  if (complaintsResult.status === "rejected")
+    console.error("[page] complaints failed:", complaintsResult.reason);
 
   const bookings =
     bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
@@ -77,7 +83,9 @@ export default async function HomePage() {
       .map((b) => b.customerName),
   ).size;
 
-  const todaysBookings = bookings.filter((b) => b.serviceDate === today);
+  const upcomingBookings = bookings.filter((b) =>
+    isAfter(b.serviceDate, today),
+  );
   const pendingPayments = payments.filter(
     (p) =>
       p.paymentStatus === "Pending" || p.paymentStatus === "Partially Paid",
@@ -103,8 +111,8 @@ export default async function HomePage() {
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">
-              {todaysBookings.length} booking
-              {todaysBookings.length !== 1 ? "s" : ""} today
+              {upcomingBookings.length} booking
+              {upcomingBookings.length !== 1 ? "s" : ""} today
             </p>
           </div>
         </div>
@@ -136,13 +144,13 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* Today's Bookings */}
+        {/* Upcoming Bookings */}
         <section className="space-y-3">
           <SectionHeader
-            title="Today's Bookings"
-            description={`${todaysBookings.length} scheduled for ${today}`}
+            title="Upcoming Bookings"
+            description={`${upcomingBookings.length} upcoming bookings`}
           />
-          <BookingsTable bookings={todaysBookings} />
+          <BookingsTable bookings={upcomingBookings} />
         </section>
 
         {/* Admin-only sections */}
