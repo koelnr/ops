@@ -3,25 +3,23 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Customer } from "@/lib/sheets/types";
-import { mutate, create } from "@/lib/mutate";
+import { useUser } from "@clerk/nextjs";
+import type { CustomerWithSummary, SerializedLookupContext } from "@/lib/domain";
+import type { SelectOptions } from "@/lib/options";
+import { mutate, create, remove } from "@/lib/mutate";
+import { STATIC_OPTIONS } from "@/lib/options";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchInput } from "@/components/shared/search-input";
 import { FilterSelect } from "@/components/shared/filter-select";
 import { DataTable } from "@/components/ui/data-table";
 import { getCustomerColumns } from "./customers-columns";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  BOOKING_SOURCE_OPTIONS,
-  TIME_SLOT_OPTIONS,
-  SUBSCRIPTION_STATUS_OPTIONS,
-} from "@/lib/options";
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,149 +28,118 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 
 type CustomerFormData = {
-  subscriptionStatus: string;
-  preferredTimeSlot: string;
-  preferredServices: string;
-  referralSource: string;
+  full_name: string;
+  phone: string;
+  secondary_phone: string;
+  area_id: string;
+  full_address: string;
+  landmark: string;
+  acquisition_source_id: string;
   notes: string;
 };
 
-type CreateCustomerFormData = {
-  customerName: string;
-  phoneNumber: string;
-  primaryArea: string;
-  preferredTimeSlot: string;
-  preferredServices: string;
-  subscriptionStatus: string;
-  referralSource: string;
-  notes: string;
-};
-
-const emptyCreateForm: CreateCustomerFormData = {
-  customerName: "",
-  phoneNumber: "",
-  primaryArea: "",
-  preferredTimeSlot: "",
-  preferredServices: "",
-  subscriptionStatus: "",
-  referralSource: "",
+const emptyForm: CustomerFormData = {
+  full_name: "",
+  phone: "",
+  secondary_phone: "",
+  area_id: "",
+  full_address: "",
+  landmark: "",
+  acquisition_source_id: "",
   notes: "",
 };
 
-function customerToForm(c: Customer): CustomerFormData {
+function customerToForm(c: CustomerWithSummary): CustomerFormData {
   return {
-    subscriptionStatus: c.subscriptionStatus,
-    preferredTimeSlot: c.preferredTimeSlot,
-    preferredServices: c.preferredServices,
-    referralSource: c.referralSource,
+    full_name: c.full_name,
+    phone: c.phone,
+    secondary_phone: c.secondary_phone,
+    area_id: c.area_id,
+    full_address: c.full_address,
+    landmark: c.landmark,
+    acquisition_source_id: c.acquisition_source_id,
     notes: c.notes,
   };
 }
 
 interface CustomersViewProps {
-  customers: Customer[];
+  customers: CustomerWithSummary[];
+  serializedCtx: SerializedLookupContext | null;
+  options: SelectOptions | null;
 }
 
-export function CustomersView({ customers }: CustomersViewProps) {
+export function CustomersView({ customers, options }: CustomersViewProps) {
   const router = useRouter();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
-  const [subscriptionFilter, setSubscriptionFilter] = useState("");
+  const [areaFilter, setAreaFilter] = useState("");
 
-  function resetFilters() {
-    setSearch("");
-    setSubscriptionFilter("");
-  }
+  const opts = options ?? STATIC_OPTIONS;
 
-  // Create dialog
-  const [showCreate, setShowCreate] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateCustomerFormData>(emptyCreateForm);
-  const [isCreating, setIsCreating] = useState(false);
+  function resetFilters() { setSearch(""); setAreaFilter(""); }
 
-  // Edit dialog
-  const [editTarget, setEditTarget] = useState<Customer | null>(null);
-  const [form, setForm] = useState<CustomerFormData>({
-    subscriptionStatus: "",
-    preferredTimeSlot: "",
-    preferredServices: "",
-    referralSource: "",
-    notes: "",
-  });
+  const [formOpen, setFormOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<CustomerWithSummary | null>(null);
+  const [form, setForm] = useState<CustomerFormData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<CustomerWithSummary | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return customers.filter((c) => {
-      if (subscriptionFilter && c.subscriptionStatus !== subscriptionFilter)
-        return false;
+      if (areaFilter && c.area_id !== areaFilter) return false;
       if (q) {
         return (
-          c.customerName.toLowerCase().includes(q) ||
-          c.phoneNumber.toLowerCase().includes(q) ||
-          c.primaryArea.toLowerCase().includes(q) ||
-          c.customerId.toLowerCase().includes(q)
+          c.full_name.toLowerCase().includes(q) ||
+          c.phone.toLowerCase().includes(q) ||
+          c.areaName.toLowerCase().includes(q) ||
+          c.customer_id.toLowerCase().includes(q)
         );
       }
       return true;
     });
-  }, [customers, search, subscriptionFilter]);
+  }, [customers, search, areaFilter]);
 
   function setField(key: keyof CustomerFormData, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function setCreateField(key: keyof CreateCustomerFormData, value: string) {
-    setCreateForm((f) => ({ ...f, [key]: value }));
-  }
-
-  function openEdit(customer: Customer) {
-    setEditTarget(customer);
-    setForm(customerToForm(customer));
-  }
-
-  async function handleCreate() {
-    if (!createForm.customerName.trim()) {
-      toast.error("Customer name is required");
-      return;
-    }
-    if (!createForm.phoneNumber.trim()) {
-      toast.error("Phone number is required");
-      return;
-    }
-    setIsCreating(true);
-    const result = await create("/api/customers", createForm);
-    setIsCreating(false);
-    if (result.ok) {
-      toast.success("Customer created");
-      setShowCreate(false);
-      setCreateForm(emptyCreateForm);
-      startTransition(() => router.refresh());
-    } else {
-      toast.error(result.error ?? "Failed to create customer");
-    }
-  }
+  function openCreate() { setEditTarget(null); setForm(emptyForm); setFormOpen(true); }
+  function openEdit(customer: CustomerWithSummary) { setEditTarget(customer); setForm(customerToForm(customer)); setFormOpen(true); }
 
   async function handleFormSubmit() {
-    if (!editTarget) return;
+    if (!form.full_name.trim()) { toast.error("Customer name is required"); return; }
+    if (!form.phone.trim()) { toast.error("Phone number is required"); return; }
     setIsSubmitting(true);
-    const result = await mutate(
-      `/api/customers/${editTarget.customerId}`,
-      form,
-    );
+    const result = editTarget
+      ? await mutate(`/api/customers/${editTarget.customer_id}`, form)
+      : await create("/api/customers", form);
     setIsSubmitting(false);
     if (result.ok) {
-      toast.success(`Customer ${editTarget.customerName} updated`);
-      setEditTarget(null);
+      toast.success(editTarget ? `${editTarget.full_name} updated` : "Customer created");
+      setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? "Failed to update customer");
+      toast.error(result.error ?? (editTarget ? "Failed to update" : "Failed to create"));
     }
   }
 
-  const columns = getCustomerColumns({
-    onEdit: openEdit,
-    isPending,
-  });
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    const result = await remove(`/api/customers/${deleteTarget.customer_id}`);
+    if (result.ok) {
+      toast.success(`${deleteTarget.full_name} deleted`);
+      setDeleteTarget(null);
+      startTransition(() => router.refresh());
+    } else {
+      toast.error(result.error ?? "Failed to delete customer");
+    }
+  }
+
+  const columns = getCustomerColumns({ onEdit: openEdit, onDelete: setDeleteTarget, isPending, isAdmin });
 
   return (
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
@@ -180,221 +147,99 @@ export function CustomersView({ customers }: CustomersViewProps) {
         title="Customers"
         description={`${customers.length} customers`}
         action={
-          <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Create Customer
-          </Button>
+          isAdmin ? (
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Customer
+            </Button>
+          ) : undefined
         }
       />
       <div className="flex flex-wrap items-center gap-2">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search name, phone, area…"
-          className="w-full sm:w-60"
-        />
-        <FilterSelect
-          value={subscriptionFilter}
-          onChange={setSubscriptionFilter}
-          options={SUBSCRIPTION_STATUS_OPTIONS}
-          placeholder="Subscription status"
-        />
+        <SearchInput value={search} onChange={setSearch} placeholder="Search name, phone, ID…" className="w-60" />
+        <FilterSelect value={areaFilter} onChange={setAreaFilter} options={opts.areas} placeholder="All areas" />
         {filtered.length !== customers.length && (
           <>
-            <span className="text-xs text-muted-foreground">
-              {filtered.length} of {customers.length} shown
-            </span>
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
-              Clear filters
-            </Button>
+            <span className="text-xs text-muted-foreground">{filtered.length} of {customers.length} shown</span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">Clear filters</Button>
           </>
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filtered}
-        emptyMessage="No customers match your filters."
-      />
+      <DataTable columns={columns} data={filtered} emptyMessage="No customers match your filters." />
 
-      {/* Create Customer Dialog */}
-      <Dialog open={showCreate} onOpenChange={(open) => !open && setShowCreate(false)}>
+      {/* Create / Edit Dialog */}
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Customer</DialogTitle>
+            <DialogTitle>{editTarget ? `Edit ${editTarget.full_name}` : "New Customer"}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Customer Name *</Label>
-              <Input
-                value={createForm.customerName}
-                onChange={(e) => setCreateField("customerName", e.target.value)}
-                placeholder="Full name"
-              />
+              <Label>Full Name *</Label>
+              <Input value={form.full_name} onChange={(e) => setField("full_name", e.target.value)} placeholder="Full name" />
             </div>
             <div className="space-y-1.5">
-              <Label>Phone Number *</Label>
-              <Input
-                value={createForm.phoneNumber}
-                onChange={(e) => setCreateField("phoneNumber", e.target.value)}
-                placeholder="10-digit mobile number"
-              />
+              <Label>Phone *</Label>
+              <Input value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder="10-digit mobile" />
             </div>
             <div className="space-y-1.5">
-              <Label>Area / Society</Label>
-              <Input
-                value={createForm.primaryArea}
-                onChange={(e) => setCreateField("primaryArea", e.target.value)}
-                placeholder="e.g. Sector 12"
-              />
+              <Label>Secondary Phone</Label>
+              <Input value={form.secondary_phone} onChange={(e) => setField("secondary_phone", e.target.value)} placeholder="Optional" />
             </div>
             <div className="space-y-1.5">
-              <Label>Subscription Status</Label>
-              <Select
-                value={createForm.subscriptionStatus}
-                onChange={(e) => setCreateField("subscriptionStatus", e.target.value)}
-              >
-                <option value="">— select —</option>
-                {SUBSCRIPTION_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
+              <Label>Area</Label>
+              <Select value={form.area_id} onChange={(e) => setField("area_id", e.target.value)}>
+                <option value="">— select area —</option>
+                {opts.areas.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Preferred Time Slot</Label>
-              <Select
-                value={createForm.preferredTimeSlot}
-                onChange={(e) => setCreateField("preferredTimeSlot", e.target.value)}
-              >
-                <option value="">— select slot —</option>
-                {TIME_SLOT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Referral Source</Label>
-              <Select
-                value={createForm.referralSource}
-                onChange={(e) => setCreateField("referralSource", e.target.value)}
-              >
+              <Label>Acquisition Source</Label>
+              <Select value={form.acquisition_source_id} onChange={(e) => setField("acquisition_source_id", e.target.value)}>
                 <option value="">— select source —</option>
-                {BOOKING_SOURCE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
+                {opts.leadSources.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Preferred Services</Label>
-              <Input
-                value={createForm.preferredServices}
-                onChange={(e) => setCreateField("preferredServices", e.target.value)}
-                placeholder="e.g. Exterior Wash"
-              />
+              <Label>Landmark</Label>
+              <Input value={form.landmark} onChange={(e) => setField("landmark", e.target.value)} placeholder="Near landmark" />
             </div>
-            <div className="col-span-full space-y-1.5">
+            <div className="col-span-2 space-y-1.5">
+              <Label>Full Address</Label>
+              <Input value={form.full_address} onChange={(e) => setField("full_address", e.target.value)} placeholder="Complete address" />
+            </div>
+            <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
-              <Textarea
-                value={createForm.notes}
-                onChange={(e) => setCreateField("notes", e.target.value)}
-                placeholder="Notes…"
-                rows={2}
-              />
+              <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Notes…" rows={2} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreate} disabled={isCreating}>
-              {isCreating ? "Creating…" : "Create Customer"}
+            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button onClick={handleFormSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Saving…" : editTarget ? "Save Changes" : "Create Customer"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog
-        open={!!editTarget}
-        onOpenChange={(open) => !open && setEditTarget(null)}
-      >
-        <DialogContent className="sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              Edit Customer — {editTarget?.customerName}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Subscription Status</Label>
-              <Select
-                value={form.subscriptionStatus}
-                onChange={(e) => setField("subscriptionStatus", e.target.value)}
-              >
-                <option value="">— select —</option>
-                {SUBSCRIPTION_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Preferred Time Slot</Label>
-              <Select
-                value={form.preferredTimeSlot}
-                onChange={(e) => setField("preferredTimeSlot", e.target.value)}
-              >
-                <option value="">— select slot —</option>
-                {TIME_SLOT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Preferred Services</Label>
-              <Input
-                value={form.preferredServices}
-                onChange={(e) => setField("preferredServices", e.target.value)}
-                placeholder="e.g. Exterior Wash"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Referral Source</Label>
-              <Select
-                value={form.referralSource}
-                onChange={(e) => setField("referralSource", e.target.value)}
-              >
-                <option value="">— select source —</option>
-                {BOOKING_SOURCE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Notes</Label>
-              <Textarea
-                value={form.notes}
-                onChange={(e) => setField("notes", e.target.value)}
-                placeholder="Notes…"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete customer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove <span className="font-medium">{deleteTarget?.full_name}</span>. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

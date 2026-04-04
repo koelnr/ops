@@ -6,19 +6,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Complaint } from "@/lib/sheets/types";
+import type { Complaint, Booking, Customer, SerializedLookupContext } from "@/lib/domain";
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "./status-badge";
 
 interface ComplaintsTableProps {
   complaints: Complaint[];
-  limit?: number;
+  bookings: Booking[];
+  customers: Customer[];
+  serializedCtx: SerializedLookupContext | null;
 }
 
-export function ComplaintsTable({
-  complaints,
-  limit = 10,
-}: ComplaintsTableProps) {
+export function ComplaintsTable({ complaints, bookings, customers, serializedCtx }: ComplaintsTableProps) {
   if (complaints.length === 0) {
     return (
       <div className="rounded-md border">
@@ -29,9 +28,15 @@ export function ComplaintsTable({
     );
   }
 
-  const sorted = [...complaints]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, limit);
+  const bookingMap = new Map(bookings.map((b) => [b.booking_id, b]));
+  const customerMap = new Map(customers.map((c) => [c.customer_id, c]));
+  const typeMap = serializedCtx
+    ? new Map(serializedCtx.complaintTypes.map((t) => [t.complaint_type_id, t]))
+    : null;
+
+  const sorted = [...complaints].sort((a, b) =>
+    b.complaint_date.localeCompare(a.complaint_date),
+  );
 
   return (
     <div className="rounded-md border overflow-x-auto">
@@ -40,8 +45,7 @@ export function ComplaintsTable({
           <TableRow>
             <TableHead className="w-30">ID</TableHead>
             <TableHead>Customer</TableHead>
-            <TableHead>Booking ID</TableHead>
-            <TableHead>Worker</TableHead>
+            <TableHead>Booking</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Issue</TableHead>
             <TableHead>Status</TableHead>
@@ -49,40 +53,36 @@ export function ComplaintsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((complaint) => (
-            <TableRow key={complaint.complaintId}>
-              <TableCell className="font-mono text-xs">
-                {complaint.complaintId}
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {complaint.customerName}
-              </TableCell>
-              <TableCell className="font-mono text-xs">
-                {complaint.bookingId}
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {complaint.workerAssigned || "—"}
-              </TableCell>
-              <TableCell className="text-sm">
-                {complaint.complaintType || "—"}
-              </TableCell>
-              <TableCell className="max-w-60">
-                <p className="text-sm truncate" title={complaint.complaintDetails}>
-                  {complaint.complaintDetails}
-                </p>
-              </TableCell>
-              <TableCell>
-                {complaint.resolutionStatus ? (
-                  <StatusBadge status={complaint.resolutionStatus} />
-                ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDate(complaint.date)}
-              </TableCell>
-            </TableRow>
-          ))}
+          {sorted.map((complaint) => {
+            const booking = bookingMap.get(complaint.booking_id);
+            const customer = booking ? customerMap.get(booking.customer_id) : undefined;
+            const type = typeMap?.get(complaint.complaint_type_id);
+            return (
+              <TableRow key={complaint.complaint_id}>
+                <TableCell className="font-mono text-xs">{complaint.complaint_id}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {customer?.full_name ?? "—"}
+                </TableCell>
+                <TableCell className="font-mono text-xs">{complaint.booking_id || "—"}</TableCell>
+                <TableCell className="text-sm">{type?.label ?? "—"}</TableCell>
+                <TableCell className="max-w-60">
+                  <p className="text-sm truncate" title={complaint.details}>
+                    {complaint.details}
+                  </p>
+                </TableCell>
+                <TableCell>
+                  {complaint.resolution_status ? (
+                    <StatusBadge status={complaint.resolution_status} />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {formatDate(complaint.complaint_date)}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Customer } from "@/lib/sheets/types";
+import type { CustomerWithSummary } from "@/lib/domain";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   DropdownMenu,
@@ -15,40 +15,47 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 
 interface CustomerColumnActions {
-  onEdit: (customer: Customer) => void;
+  onEdit: (customer: CustomerWithSummary) => void;
+  onDelete: (customer: CustomerWithSummary) => void;
   isPending: boolean;
+  isAdmin: boolean;
 }
 
-export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Customer>[] {
-  return [
+export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<CustomerWithSummary>[] {
+  const columns: ColumnDef<CustomerWithSummary>[] = [
     {
-      accessorKey: "customerId",
+      accessorKey: "customer_id",
       header: "Customer ID",
       size: 112,
       cell: ({ row }) => (
-        <span className="font-mono text-xs">{row.original.customerId}</span>
+        <span className="font-mono text-xs">{row.original.customer_id}</span>
       ),
     },
     {
-      accessorKey: "customerName",
+      accessorKey: "full_name",
       header: "Name",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="font-medium text-sm">{row.original.customerName}</span>
+        <div>
+          <div className="font-medium text-sm">{row.original.full_name}</div>
+          {row.original.isRepeat && (
+            <span className="text-xs text-green-700 dark:text-green-400">Repeat</span>
+          )}
+        </div>
       ),
     },
     {
-      accessorKey: "phoneNumber",
+      accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground font-mono">{row.original.phoneNumber}</span>
+        <span className="text-sm text-muted-foreground font-mono">{row.original.phone}</span>
       ),
     },
     {
-      accessorKey: "primaryArea",
+      accessorKey: "areaName",
       header: "Area",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.primaryArea || "—"}</span>
+        <span className="text-sm text-muted-foreground">{row.original.areaName || "—"}</span>
       ),
     },
     {
@@ -70,25 +77,13 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Cu
       ),
     },
     {
-      accessorKey: "lastBookingDate",
+      accessorKey: "lastVisit",
       header: "Last Booking",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.original.lastBookingDate)}</span>
-      ),
-    },
-    {
-      accessorKey: "subscriptionStatus",
-      header: "Subscription",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.subscriptionStatus || "—"}</span>
-      ),
-    },
-    {
-      accessorKey: "preferredTimeSlot",
-      header: "Preferred Slot",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.preferredTimeSlot || "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.lastVisit ? formatDate(row.original.lastVisit) : "—"}
+        </span>
       ),
     },
     {
@@ -99,12 +94,7 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Cu
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                disabled={actions.isPending}
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -112,10 +102,20 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Cu
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => actions.onEdit(customer)}>Edit</DropdownMenuItem>
+              {actions.isAdmin && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => actions.onDelete(customer)}
+                >
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
       },
     },
   ];
+
+  return columns;
 }

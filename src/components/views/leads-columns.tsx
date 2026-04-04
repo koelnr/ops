@@ -1,8 +1,9 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Lead } from "@/lib/sheets/types";
+import type { LeadWithContext } from "@/lib/domain";
 import { StatusBadge } from "@/components/dashboard/status-badge";
+import { formatDate } from "@/lib/format";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,88 +15,86 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 
-function isLeadPending(status: string) {
-  return status === "New" || status === "Follow-Up Pending";
-}
-
 interface LeadColumnActions {
-  onEdit: (lead: Lead) => void;
-  onMarkContacted: (lead: Lead) => void;
-  onMarkConverted: (lead: Lead) => void;
-  onMarkFollowUp: (lead: Lead) => void;
-  onDelete: (lead: Lead) => void;
+  onEdit: (lead: LeadWithContext) => void;
+  onMarkContacted: (lead: LeadWithContext) => void;
+  onMarkConverted: (lead: LeadWithContext) => void;
+  onMarkFollowUp: (lead: LeadWithContext) => void;
+  onDelete: (lead: LeadWithContext) => void;
   isPending: boolean;
 }
 
-export function getLeadColumns(actions: LeadColumnActions): ColumnDef<Lead>[] {
+export function getLeadColumns(actions: LeadColumnActions): ColumnDef<LeadWithContext>[] {
   return [
     {
-      accessorKey: "prospectName",
+      accessorKey: "prospect_name",
       header: "Name",
       enableSorting: true,
       cell: ({ row }) => {
-        const isPending = isLeadPending(row.original.followUpStatus);
+        const isPending =
+          row.original.follow_up_status === "New" ||
+          row.original.follow_up_status === "Follow-Up Pending";
         return (
           <span className={`font-medium text-sm${isPending ? " text-yellow-700 dark:text-yellow-400" : ""}`}>
-            {row.original.prospectName}
+            {row.original.prospect_name}
           </span>
         );
       },
     },
     {
-      accessorKey: "phoneNumber",
+      accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground font-mono">{row.original.phoneNumber}</span>
+        <span className="text-sm text-muted-foreground font-mono">{row.original.phone}</span>
       ),
     },
     {
-      accessorKey: "areaSociety",
+      accessorKey: "areaName",
       header: "Area",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.areaSociety || "—"}</span>
+        <span className="text-sm text-muted-foreground">{row.original.areaName || "—"}</span>
       ),
     },
     {
-      accessorKey: "leadSource",
+      accessorKey: "sourceLabel",
       header: "Source",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.leadSource}</span>
+        <span className="text-sm">{row.original.sourceLabel || "—"}</span>
       ),
     },
     {
-      accessorKey: "interestedService",
+      accessorKey: "interestedServiceName",
       header: "Service Interest",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.interestedService || "—"}</span>
+        <span className="text-sm text-muted-foreground">{row.original.interestedServiceName || "—"}</span>
       ),
     },
     {
-      accessorKey: "followUpStatus",
+      accessorKey: "follow_up_status",
       header: "Follow-Up",
       cell: ({ row }) =>
-        row.original.followUpStatus ? (
-          <StatusBadge status={row.original.followUpStatus} />
+        row.original.follow_up_status ? (
+          <StatusBadge status={row.original.follow_up_status} />
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         ),
     },
     {
-      accessorKey: "conversionStatus",
+      accessorKey: "conversion_status",
       header: "Conversion",
       cell: ({ row }) =>
-        row.original.conversionStatus ? (
-          <StatusBadge status={row.original.conversionStatus} />
+        row.original.conversion_status ? (
+          <StatusBadge status={row.original.conversion_status} />
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         ),
     },
     {
-      accessorKey: "leadDate",
+      accessorKey: "lead_date",
       header: "Lead Date",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.leadDate}</span>
+        <span className="text-sm text-muted-foreground">{formatDate(row.original.lead_date)}</span>
       ),
     },
     {
@@ -113,12 +112,7 @@ export function getLeadColumns(actions: LeadColumnActions): ColumnDef<Lead>[] {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                disabled={actions.isPending}
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -127,19 +121,19 @@ export function getLeadColumns(actions: LeadColumnActions): ColumnDef<Lead>[] {
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => actions.onEdit(lead)}>Edit</DropdownMenuItem>
               <DropdownMenuItem
-                disabled={lead.followUpStatus === "Contacted"}
+                disabled={lead.follow_up_status === "Contacted"}
                 onSelect={() => actions.onMarkContacted(lead)}
               >
                 Mark Contacted
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={lead.conversionStatus === "Converted"}
+                disabled={lead.conversion_status === "Converted"}
                 onSelect={() => actions.onMarkConverted(lead)}
               >
                 Mark Converted
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={lead.followUpStatus === "Follow-Up Pending"}
+                disabled={lead.follow_up_status === "Follow-Up Pending"}
                 onSelect={() => actions.onMarkFollowUp(lead)}
               >
                 Mark Follow-Up Needed

@@ -3,33 +3,18 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Lead } from "@/lib/sheets/types";
+import type { LeadWithContext, SerializedLookupContext } from "@/lib/domain";
+import type { SelectOptions } from "@/lib/options";
 import { mutate, create, remove } from "@/lib/mutate";
-import { isLeadPending } from "@/lib/lead-utils";
-import {
-  BOOKING_SOURCE_OPTIONS,
-  FOLLOW_UP_STATUS_OPTIONS,
-  CONVERSION_STATUS_OPTIONS,
-  SERVICE_PACKAGE_OPTIONS,
-} from "@/lib/options";
+import { STATIC_OPTIONS, FOLLOW_UP_STATUS_OPTIONS, CONVERSION_STATUS_OPTIONS } from "@/lib/options";
 import { DataTable } from "@/components/ui/data-table";
 import { getLeadColumns } from "./leads-columns";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -42,127 +27,104 @@ import { FilterSelect } from "@/components/shared/filter-select";
 import { Plus } from "lucide-react";
 
 type LeadFormData = {
-  leadDate: string;
-  leadSource: string;
-  prospectName: string;
-  phoneNumber: string;
-  areaSociety: string;
-  interestedService: string;
-  followUpStatus: string;
-  conversionStatus: string;
-  firstBookingDate: string;
+  lead_date: string;
+  source_id: string;
+  prospect_name: string;
+  phone: string;
+  area_id: string;
+  interested_service_id: string;
+  follow_up_status: string;
+  conversion_status: string;
+  converted_customer_id: string;
   notes: string;
 };
 
 const emptyForm: LeadFormData = {
-  leadDate: "",
-  leadSource: "WhatsApp",
-  prospectName: "",
-  phoneNumber: "",
-  areaSociety: "",
-  interestedService: "",
-  followUpStatus: "New",
-  conversionStatus: "Not Converted",
-  firstBookingDate: "",
+  lead_date: "",
+  source_id: "",
+  prospect_name: "",
+  phone: "",
+  area_id: "",
+  interested_service_id: "",
+  follow_up_status: "New",
+  conversion_status: "Not Converted",
+  converted_customer_id: "",
   notes: "",
 };
 
-function leadToForm(l: Lead): LeadFormData {
+function leadToForm(l: LeadWithContext): LeadFormData {
   return {
-    leadDate: l.leadDate,
-    leadSource: l.leadSource,
-    prospectName: l.prospectName,
-    phoneNumber: l.phoneNumber,
-    areaSociety: l.areaSociety,
-    interestedService: l.interestedService ?? "",
-    followUpStatus: l.followUpStatus,
-    conversionStatus: l.conversionStatus,
-    firstBookingDate: l.firstBookingDate ?? "",
-    notes: l.notes ?? "",
+    lead_date: l.lead_date,
+    source_id: l.source_id,
+    prospect_name: l.prospect_name,
+    phone: l.phone,
+    area_id: l.area_id,
+    interested_service_id: l.interested_service_id,
+    follow_up_status: l.follow_up_status,
+    conversion_status: l.conversion_status,
+    converted_customer_id: l.converted_customer_id,
+    notes: l.notes,
   };
 }
 
 interface LeadsViewProps {
-  leads: Lead[];
+  leads: LeadWithContext[];
+  serializedCtx: SerializedLookupContext | null;
+  options: SelectOptions | null;
 }
 
-export function LeadsView({ leads }: LeadsViewProps) {
+export function LeadsView({ leads, options }: LeadsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [followUpFilter, setFollowUpFilter] = useState("");
   const [conversionFilter, setConversionFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("");
+  const [areaFilter, setAreaFilter] = useState("");
 
-  function resetFilters() {
-    setSearch("");
-    setFollowUpFilter("");
-    setConversionFilter("");
-    setSourceFilter("");
-  }
+  const opts = options ?? STATIC_OPTIONS;
 
-  // Create / Edit dialog
+  function resetFilters() { setSearch(""); setFollowUpFilter(""); setConversionFilter(""); setAreaFilter(""); }
+
   const [formOpen, setFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Lead | null>(null);
+  const [editTarget, setEditTarget] = useState<LeadWithContext | null>(null);
   const [form, setForm] = useState<LeadFormData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Delete dialog
-  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
-
-  const sourceOptions = useMemo(() => {
-    return Array.from(new Set(leads.map((l) => l.leadSource).filter(Boolean)))
-      .sort()
-      .map((s) => ({ label: s, value: s }));
-  }, [leads]);
+  const [deleteTarget, setDeleteTarget] = useState<LeadWithContext | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return leads.filter((l) => {
-      if (followUpFilter && l.followUpStatus !== followUpFilter) return false;
-      if (conversionFilter && l.conversionStatus !== conversionFilter)
-        return false;
-      if (sourceFilter && l.leadSource !== sourceFilter) return false;
+      if (followUpFilter && l.follow_up_status !== followUpFilter) return false;
+      if (conversionFilter && l.conversion_status !== conversionFilter) return false;
+      if (areaFilter && l.area_id !== areaFilter) return false;
       if (q) {
         return (
-          l.prospectName.toLowerCase().includes(q) ||
-          l.phoneNumber.toLowerCase().includes(q) ||
-          l.areaSociety.toLowerCase().includes(q) ||
-          (l.notes?.toLowerCase().includes(q) ?? false)
+          l.prospect_name.toLowerCase().includes(q) ||
+          l.phone.toLowerCase().includes(q) ||
+          l.areaName.toLowerCase().includes(q) ||
+          l.notes.toLowerCase().includes(q)
         );
       }
       return true;
     });
-  }, [leads, search, followUpFilter, conversionFilter, sourceFilter]);
+  }, [leads, search, followUpFilter, conversionFilter, areaFilter]);
 
-  const pendingCount = leads.filter((l) =>
-    isLeadPending(l.followUpStatus),
+  const pendingCount = leads.filter(
+    (l) => l.follow_up_status === "New" || l.follow_up_status === "Follow-Up Pending",
   ).length;
 
   function setField(key: keyof LeadFormData, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function openCreate() {
-    setEditTarget(null);
-    setForm(emptyForm);
-    setFormOpen(true);
-  }
+  function openCreate() { setEditTarget(null); setForm(emptyForm); setFormOpen(true); }
+  function openEdit(lead: LeadWithContext) { setEditTarget(lead); setForm(leadToForm(lead)); setFormOpen(true); }
 
-  function openEdit(lead: Lead) {
-    setEditTarget(lead);
-    setForm(leadToForm(lead));
-    setFormOpen(true);
-  }
-
-  async function handleUpdate(
-    lead: Lead,
-    body: Record<string, string>,
-    successMsg: string,
-  ) {
-    const result = await mutate(`/api/leads/${lead.leadId}`, body);
+  async function handleUpdate(lead: LeadWithContext, body: Record<string, string>, msg: string) {
+    const result = await mutate(`/api/leads/${lead.lead_id}`, body);
     if (result.ok) {
-      toast.success(successMsg);
+      toast.success(msg);
       startTransition(() => router.refresh());
     } else {
       toast.error(result.error ?? "Failed to update lead");
@@ -170,38 +132,26 @@ export function LeadsView({ leads }: LeadsViewProps) {
   }
 
   async function handleFormSubmit() {
-    if (!form.prospectName.trim()) {
-      toast.error("Prospect name is required");
-      return;
-    }
-    if (form.conversionStatus === "Converted" && !form.firstBookingDate) {
-      toast.error("First booking date is required when lead is converted");
-      return;
-    }
+    if (!form.prospect_name.trim()) { toast.error("Prospect name is required"); return; }
     setIsSubmitting(true);
-    let result;
-    if (editTarget) {
-      result = await mutate(`/api/leads/${editTarget.leadId}`, form);
-    } else {
-      result = await create("/api/leads", form);
-    }
+    const result = editTarget
+      ? await mutate(`/api/leads/${editTarget.lead_id}`, form)
+      : await create("/api/leads", form);
     setIsSubmitting(false);
     if (result.ok) {
       toast.success(editTarget ? "Lead updated" : "Lead created");
       setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(
-        result.error ?? (editTarget ? "Failed to update" : "Failed to create"),
-      );
+      toast.error(result.error ?? (editTarget ? "Failed to update" : "Failed to create"));
     }
   }
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    const result = await remove(`/api/leads/${deleteTarget.leadId}`);
+    const result = await remove(`/api/leads/${deleteTarget.lead_id}`);
     if (result.ok) {
-      toast.success(`Lead for ${deleteTarget.prospectName} deleted`);
+      toast.success(`Lead for ${deleteTarget.prospect_name} deleted`);
       setDeleteTarget(null);
       startTransition(() => router.refresh());
     } else {
@@ -222,62 +172,23 @@ export function LeadsView({ leads }: LeadsViewProps) {
         }
       />
       <div className="flex flex-wrap items-center gap-2">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search name, phone, area…"
-          className="w-60"
-        />
-        <FilterSelect
-          value={followUpFilter}
-          onChange={setFollowUpFilter}
-          options={FOLLOW_UP_STATUS_OPTIONS}
-          placeholder="Follow-up status"
-        />
-        <FilterSelect
-          value={conversionFilter}
-          onChange={setConversionFilter}
-          options={CONVERSION_STATUS_OPTIONS}
-          placeholder="Conversion status"
-        />
-        <FilterSelect
-          value={sourceFilter}
-          onChange={setSourceFilter}
-          options={sourceOptions}
-          placeholder="All sources"
-        />
+        <SearchInput value={search} onChange={setSearch} placeholder="Search name, phone, area…" className="w-60" />
+        <FilterSelect value={followUpFilter} onChange={setFollowUpFilter} options={FOLLOW_UP_STATUS_OPTIONS} placeholder="Follow-up status" />
+        <FilterSelect value={conversionFilter} onChange={setConversionFilter} options={CONVERSION_STATUS_OPTIONS} placeholder="Conversion status" />
+        <FilterSelect value={areaFilter} onChange={setAreaFilter} options={opts.areas} placeholder="All areas" />
         {filtered.length !== leads.length && (
           <>
-            <span className="text-xs text-muted-foreground">
-              {filtered.length} of {leads.length} shown
-            </span>
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">
-              Clear filters
-            </Button>
+            <span className="text-xs text-muted-foreground">{filtered.length} of {leads.length} shown</span>
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">Clear filters</Button>
           </>
         )}
       </div>
       <DataTable
         columns={getLeadColumns({
           onEdit: openEdit,
-          onMarkContacted: (lead) =>
-            handleUpdate(
-              lead,
-              { followUpStatus: "Contacted" },
-              `${lead.prospectName} marked as contacted`,
-            ),
-          onMarkConverted: (lead) =>
-            handleUpdate(
-              lead,
-              { conversionStatus: "Converted" },
-              `${lead.prospectName} marked as converted`,
-            ),
-          onMarkFollowUp: (lead) =>
-            handleUpdate(
-              lead,
-              { followUpStatus: "Follow-Up Pending" },
-              `Follow-up set for ${lead.prospectName}`,
-            ),
+          onMarkContacted: (lead) => handleUpdate(lead, { follow_up_status: "Contacted" }, `${lead.prospect_name} marked as contacted`),
+          onMarkConverted: (lead) => handleUpdate(lead, { conversion_status: "Converted" }, `${lead.prospect_name} marked as converted`),
+          onMarkFollowUp: (lead) => handleUpdate(lead, { follow_up_status: "Follow-Up Pending" }, `Follow-up set for ${lead.prospect_name}`),
           onDelete: setDeleteTarget,
           isPending,
         })}
@@ -289,153 +200,81 @@ export function LeadsView({ leads }: LeadsViewProps) {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editTarget
-                ? `Edit Lead — ${editTarget.prospectName}`
-                : "New Lead"}
-            </DialogTitle>
+            <DialogTitle>{editTarget ? `Edit Lead — ${editTarget.prospect_name}` : "New Lead"}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Prospect Name *</Label>
-              <Input
-                value={form.prospectName}
-                onChange={(e) => setField("prospectName", e.target.value)}
-                placeholder="Name"
-              />
+              <Input value={form.prospect_name} onChange={(e) => setField("prospect_name", e.target.value)} placeholder="Name" />
             </div>
             <div className="space-y-1.5">
-              <Label>Phone Number</Label>
-              <Input
-                value={form.phoneNumber}
-                onChange={(e) => setField("phoneNumber", e.target.value)}
-                placeholder="Phone"
-              />
+              <Label>Phone</Label>
+              <Input value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder="Phone" />
             </div>
             <div className="space-y-1.5">
               <Label>Lead Date</Label>
-              <Input
-                type="date"
-                value={form.leadDate}
-                onChange={(e) => setField("leadDate", e.target.value)}
-              />
+              <Input type="date" value={form.lead_date} onChange={(e) => setField("lead_date", e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>Lead Source</Label>
-              <Select
-                value={form.leadSource}
-                onChange={(e) => setField("leadSource", e.target.value)}
-              >
-                {BOOKING_SOURCE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
+              <Select value={form.source_id} onChange={(e) => setField("source_id", e.target.value)}>
+                <option value="">— select source —</option>
+                {opts.leadSources.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Area / Society</Label>
-              <Input
-                value={form.areaSociety}
-                onChange={(e) => setField("areaSociety", e.target.value)}
-                placeholder="Society name"
-              />
+              <Label>Area</Label>
+              <Select value={form.area_id} onChange={(e) => setField("area_id", e.target.value)}>
+                <option value="">— select area —</option>
+                {opts.areas.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Interested Service</Label>
-              <Select
-                value={form.interestedService}
-                onChange={(e) => setField("interestedService", e.target.value)}
-              >
+              <Select value={form.interested_service_id} onChange={(e) => setField("interested_service_id", e.target.value)}>
                 <option value="">— select service —</option>
-                {SERVICE_PACKAGE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
+                {opts.services.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Follow-Up Status</Label>
-              <Select
-                value={form.followUpStatus}
-                onChange={(e) => setField("followUpStatus", e.target.value)}
-              >
-                {FOLLOW_UP_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
+              <Select value={form.follow_up_status} onChange={(e) => setField("follow_up_status", e.target.value)}>
+                {FOLLOW_UP_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Conversion Status</Label>
-              <Select
-                value={form.conversionStatus}
-                onChange={(e) => setField("conversionStatus", e.target.value)}
-              >
-                {CONVERSION_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
+              <Select value={form.conversion_status} onChange={(e) => setField("conversion_status", e.target.value)}>
+                {CONVERSION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </div>
-            {form.conversionStatus === "Converted" && (
-              <div className="col-span-2 space-y-1.5">
-                <Label>First Booking Date *</Label>
-                <Input
-                  type="date"
-                  value={form.firstBookingDate}
-                  onChange={(e) => setField("firstBookingDate", e.target.value)}
-                />
-              </div>
-            )}
             <div className="col-span-2 space-y-1.5">
               <Label>Notes</Label>
-              <Textarea
-                value={form.notes}
-                onChange={(e) => setField("notes", e.target.value)}
-                placeholder="Any notes…"
-                rows={2}
-              />
+              <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Any notes…" rows={2} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting
-                ? "Saving…"
-                : editTarget
-                  ? "Save Changes"
-                  : "Create Lead"}
+              {isSubmitting ? "Saving…" : editTarget ? "Save Changes" : "Create Lead"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete lead?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove the lead for{" "}
-              <span className="font-medium">{deleteTarget?.prospectName}</span>.
-              This cannot be undone.
+              <span className="font-medium">{deleteTarget?.prospect_name}</span>. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,7 +1,8 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Payment } from "@/lib/sheets/types";
+import type { PaymentWithContext } from "@/lib/domain";
+import type { SelectOption } from "@/lib/domain";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import {
@@ -10,34 +11,38 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 
 interface PaymentColumnActions {
-  onEdit: (payment: Payment) => void;
-  onStatusUpdate: (id: string, status: string) => void;
-  onUpdateRef: (payment: Payment) => void;
-  onDelete: (payment: Payment) => void;
+  onEdit: (payment: PaymentWithContext) => void;
+  onSetPaymentStatus: (id: string, statusId: string) => void;
+  onUpdateRef: (payment: PaymentWithContext) => void;
+  onDelete: (payment: PaymentWithContext) => void;
   isPending: boolean;
+  paymentStatusOptions: SelectOption[];
 }
 
-export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Payment>[] {
+export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<PaymentWithContext>[] {
   return [
     {
-      accessorKey: "paymentId",
+      accessorKey: "payment_id",
       header: "Payment ID",
       size: 120,
       cell: ({ row }) => (
-        <span className="font-mono text-xs">{row.original.paymentId}</span>
+        <span className="font-mono text-xs">{row.original.payment_id}</span>
       ),
     },
     {
-      accessorKey: "bookingId",
+      accessorKey: "booking_id",
       header: "Booking ID",
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-muted-foreground">{row.original.bookingId}</span>
+        <span className="font-mono text-xs text-muted-foreground">{row.original.booking_id}</span>
       ),
     },
     {
@@ -45,53 +50,53 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Paym
       header: "Customer",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.customerName}</span>
+        <span className="text-sm">{row.original.customerName || "—"}</span>
       ),
     },
     {
-      accessorKey: "amountDue",
+      accessorKey: "finalPrice",
       header: "Amount Due",
       enableSorting: true,
       cell: ({ row }) => (
         <span className="text-right font-medium text-sm tabular-nums block">
-          {formatCurrency(row.original.amountDue)}
+          {formatCurrency(row.original.finalPrice)}
         </span>
       ),
     },
     {
-      accessorKey: "amountReceived",
+      accessorKey: "amount_received",
       header: "Received",
       cell: ({ row }) => (
         <span className="text-right text-sm tabular-nums text-muted-foreground block">
-          {formatCurrency(row.original.amountReceived)}
+          {formatCurrency(row.original.amount_received)}
         </span>
       ),
     },
     {
-      accessorKey: "paymentMode",
+      accessorKey: "paymentModeLabel",
       header: "Mode",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.paymentMode}</span>
+        <span className="text-sm">{row.original.paymentModeLabel || "—"}</span>
       ),
     },
     {
-      accessorKey: "paymentStatus",
+      accessorKey: "paymentStatusLabel",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.paymentStatus} />,
+      cell: ({ row }) => <StatusBadge status={row.original.paymentStatusLabel} />,
     },
     {
-      accessorKey: "paymentDate",
+      accessorKey: "payment_date",
       header: "Payment Date",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.original.paymentDate)}</span>
+        <span className="text-sm text-muted-foreground">{formatDate(row.original.payment_date)}</span>
       ),
     },
     {
-      accessorKey: "upiTransactionRef",
+      accessorKey: "upi_transaction_ref",
       header: "UPI Ref",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">{row.original.upiTransactionRef || "—"}</span>
+        <span className="text-xs text-muted-foreground">{row.original.upi_transaction_ref || "—"}</span>
       ),
     },
     {
@@ -102,12 +107,7 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Paym
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                disabled={actions.isPending}
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -115,24 +115,20 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Paym
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => actions.onEdit(payment)}>Edit</DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={payment.paymentStatus === "Paid"}
-                onSelect={() => actions.onStatusUpdate(payment.paymentId, "Paid")}
-              >
-                Mark as Paid
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={payment.paymentStatus === "Partially Paid"}
-                onSelect={() => actions.onStatusUpdate(payment.paymentId, "Partially Paid")}
-              >
-                Mark as Partially Paid
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={payment.paymentStatus === "Pending"}
-                onSelect={() => actions.onStatusUpdate(payment.paymentId, "Pending")}
-              >
-                Mark as Pending
-              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Payment Status</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {actions.paymentStatusOptions.map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.value}
+                      disabled={payment.payment_status_id === opt.value}
+                      onSelect={() => actions.onSetPaymentStatus(payment.payment_id, opt.value)}
+                    >
+                      {opt.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => actions.onUpdateRef(payment)}>
                 Update UPI Reference
