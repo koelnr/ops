@@ -25,10 +25,11 @@ interface BookingColumnActions {
   onSetPaymentStatus: (id: string, status: string) => void;
   onDelete: (booking: Booking) => void;
   isPending: boolean;
+  isAdmin: boolean;
 }
 
 export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Booking>[] {
-  return [
+  const columns: ColumnDef<Booking>[] = [
     {
       accessorKey: "bookingId",
       header: "Booking ID",
@@ -101,7 +102,10 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Book
       header: "Payment",
       cell: ({ row }) => <StatusBadge status={row.original.paymentStatus} />,
     },
-    {
+  ];
+
+  if (actions.isAdmin) {
+    columns.push({
       id: "actions",
       size: 48,
       cell: ({ row }) => {
@@ -163,6 +167,8 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Book
           </DropdownMenu>
         );
       },
-    },
-  ];
+    });
+  }
+
+  return columns;
 }

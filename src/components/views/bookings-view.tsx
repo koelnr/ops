@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 type BookingFormData = {
   bookingDate: string;
@@ -115,6 +116,8 @@ interface BookingsViewProps {
 
 export function BookingsView({ bookings, workers }: BookingsViewProps) {
   const router = useRouter();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -270,6 +273,7 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
       handleMutate(id, { paymentStatus: s }, `Payment marked as ${s}`),
     onDelete: setDeleteTarget,
     isPending,
+    isAdmin,
   });
 
   return (
@@ -278,10 +282,12 @@ export function BookingsView({ bookings, workers }: BookingsViewProps) {
         title="Bookings"
         description={`${bookings.length} total bookings`}
         action={
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-1" />
-            New Booking
-          </Button>
+          isAdmin ? (
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Booking
+            </Button>
+          ) : undefined
         }
       />
       <div className="flex flex-wrap items-center gap-2">

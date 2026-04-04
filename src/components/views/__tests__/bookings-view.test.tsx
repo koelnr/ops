@@ -19,6 +19,10 @@ vi.mock("@/lib/mutate", () => ({
   remove: vi.fn(),
 }));
 
+vi.mock("@clerk/nextjs", () => ({
+  useUser: vi.fn(() => ({ user: { publicMetadata: { role: "admin" } } })),
+}));
+
 import { BookingsView } from "@/components/views/bookings-view";
 import * as mutateModule from "@/lib/mutate";
 
