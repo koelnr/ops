@@ -1,48 +1,61 @@
-import type { CreateComplaintInput, UpdateComplaintInput } from "../types";
+import type { CreateComplaintInput, UpdateComplaintInput } from "../../schemas";
+import type { Complaint } from "../../domain";
 import { findRowIndex, updateRowCells, appendRow, deleteRow, generateNextId } from "./helpers";
 
-// Complaints column map: A=Complaint ID, B=Booking ID, C=Customer Name,
-// D=Date, E=Worker Assigned, F=Complaint Type, G=Complaint Details,
-// H=Resolution Given, I=Refund / Rewash, J=Resolution Status,
-// K=Follow-Up Complete, L=Root Cause
+// Complaints column map (A=complaint_id, B=booking_id, C=complaint_date,
+// D=complaint_type_id, E=details, F=assigned_worker_id,
+// G=resolution_type, H=resolution_notes, I=resolution_status,
+// J=follow_up_complete, K=root_cause, L=created_at)
 
-export async function createComplaint(input: CreateComplaintInput): Promise<void> {
-  const complaintId = await generateNextId("Complaints", "CMP");
+export async function createComplaint(input: CreateComplaintInput): Promise<Complaint> {
+  const complaint_id = await generateNextId("Complaints", "CMP");
+  const created_at = new Date().toISOString();
+
   await appendRow("Complaints", [
-    complaintId,
-    input.bookingId,
-    input.customerName,
-    input.date,
-    input.workerAssigned ?? "",
-    input.complaintType,
-    input.complaintDetails,
-    input.resolutionGiven ?? "",
-    input.refundOrRewash ?? "",
-    input.resolutionStatus,
-    input.followUpComplete ?? "",
-    input.rootCause ?? "",
+    complaint_id,
+    input.booking_id,
+    input.complaint_date,
+    input.complaint_type_id,
+    input.details,
+    input.assigned_worker_id ?? "",
+    input.resolution_type ?? "",
+    input.resolution_notes ?? "",
+    input.resolution_status ?? "Open",
+    String(input.follow_up_complete ?? false),
+    input.root_cause ?? "",
+    created_at,
   ]);
+
+  return {
+    complaint_id,
+    booking_id: input.booking_id,
+    complaint_date: input.complaint_date,
+    complaint_type_id: input.complaint_type_id,
+    details: input.details,
+    assigned_worker_id: input.assigned_worker_id ?? "",
+    resolution_type: input.resolution_type ?? "",
+    resolution_notes: input.resolution_notes ?? "",
+    resolution_status: input.resolution_status ?? "Open",
+    follow_up_complete: input.follow_up_complete ?? false,
+    root_cause: input.root_cause ?? "",
+    created_at,
+  };
 }
 
-export async function updateComplaint(
-  id: string,
-  patch: UpdateComplaintInput,
-): Promise<void> {
+export async function updateComplaint(id: string, patch: UpdateComplaintInput): Promise<void> {
   const row = await findRowIndex("Complaints", id);
   if (row === null) throw new Error(`Complaint not found: ${id}`);
 
   const cells: [string, string][] = [];
-  if (patch.bookingId !== undefined) cells.push(["B", patch.bookingId]);
-  if (patch.customerName !== undefined) cells.push(["C", patch.customerName]);
-  if (patch.date !== undefined) cells.push(["D", patch.date]);
-  if (patch.workerAssigned !== undefined) cells.push(["E", patch.workerAssigned]);
-  if (patch.complaintType !== undefined) cells.push(["F", patch.complaintType]);
-  if (patch.complaintDetails !== undefined) cells.push(["G", patch.complaintDetails]);
-  if (patch.resolutionGiven !== undefined) cells.push(["H", patch.resolutionGiven]);
-  if (patch.refundOrRewash !== undefined) cells.push(["I", patch.refundOrRewash]);
-  if (patch.resolutionStatus !== undefined) cells.push(["J", patch.resolutionStatus]);
-  if (patch.followUpComplete !== undefined) cells.push(["K", patch.followUpComplete]);
-  if (patch.rootCause !== undefined) cells.push(["L", patch.rootCause]);
+  if (patch.complaint_date !== undefined) cells.push(["C", patch.complaint_date]);
+  if (patch.complaint_type_id !== undefined) cells.push(["D", patch.complaint_type_id]);
+  if (patch.details !== undefined) cells.push(["E", patch.details]);
+  if (patch.assigned_worker_id !== undefined) cells.push(["F", patch.assigned_worker_id]);
+  if (patch.resolution_type !== undefined) cells.push(["G", patch.resolution_type]);
+  if (patch.resolution_notes !== undefined) cells.push(["H", patch.resolution_notes]);
+  if (patch.resolution_status !== undefined) cells.push(["I", patch.resolution_status]);
+  if (patch.follow_up_complete !== undefined) cells.push(["J", String(patch.follow_up_complete)]);
+  if (patch.root_cause !== undefined) cells.push(["K", patch.root_cause]);
 
   if (cells.length > 0) {
     await updateRowCells("Complaints", row, cells);

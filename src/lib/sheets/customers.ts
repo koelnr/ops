@@ -1,53 +1,35 @@
+import type { Customer } from "../domain";
 import { getSheetsClient } from "./client";
-import { SPREADSHEET_ID, RANGES } from "./config";
-import { rowsToObjects, parseNumber } from "./utils";
-import { CustomerSchema, type Customer } from "./types";
+import { RANGES } from "./config";
+import { rowsToObjects } from "./utils";
 
-// Customers column order: A=Customer ID, B=Customer Name, C=Phone Number,
-// D=Primary Area, E=First Booking Date, F=Total Bookings, G=Last Booking Date,
-// H=Preferred Time Slot, I=Preferred Services, J=Total Revenue,
-// K=Subscription Status, L=Referral Source, M=Referred Others,
-// N=Complaint History, O=Notes
+// Column order (row 1 headers must match exactly):
+// customer_id, full_name, phone, secondary_phone, area_id, full_address,
+// google_maps_link, landmark, created_at, acquisition_source_id, notes
 
 export async function getCustomers(): Promise<Customer[]> {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID!,
     range: RANGES.customers,
   });
 
   const rows = rowsToObjects((res.data.values as string[][] | undefined) ?? []);
-  const customers: Customer[] = [];
-
-  for (const row of rows) {
-    const parsed = CustomerSchema.safeParse({
-      customerId: row["Customer ID"] ?? "",
-      customerName: row["Customer Name"] ?? "",
-      phoneNumber: row["Phone Number"] ?? "",
-      primaryArea: row["Primary Area"] ?? "",
-      firstBookingDate: row["First Booking Date"] ?? "",
-      totalBookings: parseNumber(row["Total Bookings"]),
-      lastBookingDate: row["Last Booking Date"] ?? "",
-      preferredTimeSlot: row["Preferred Time Slot"] ?? "",
-      preferredServices: row["Preferred Services"] ?? "",
-      totalRevenue: parseNumber(row["Total Revenue"]),
-      subscriptionStatus: row["Subscription Status"] ?? "",
-      referralSource: row["Referral Source"] ?? "",
-      referredOthers: row["Referred Others"] ?? "",
-      complaintHistory: row["Complaint History"] ?? "",
-      notes: row["Notes"] ?? "",
-    });
-
-    if (parsed.success) {
-      customers.push(parsed.data);
-    } else {
-      console.warn(
-        "[sheets/customers] Invalid row skipped:",
-        row["Customer ID"],
-        parsed.error.flatten(),
-      );
-    }
-  }
-
-  return customers;
+  return rows
+    .map(
+      (row): Customer => ({
+        customer_id: row.customer_id ?? "",
+        full_name: row.full_name ?? "",
+        phone: row.phone ?? "",
+        secondary_phone: row.secondary_phone ?? "",
+        area_id: row.area_id ?? "",
+        full_address: row.full_address ?? "",
+        google_maps_link: row.google_maps_link ?? "",
+        landmark: row.landmark ?? "",
+        created_at: row.created_at ?? "",
+        acquisition_source_id: row.acquisition_source_id ?? "",
+        notes: row.notes ?? "",
+      }),
+    )
+    .filter((c) => c.customer_id !== "");
 }

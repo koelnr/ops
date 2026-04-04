@@ -1,151 +1,45 @@
+import type { Booking } from "../domain";
 import { getSheetsClient } from "./client";
-import { SPREADSHEET_ID, RANGES } from "./config";
+import { RANGES } from "./config";
 import { rowsToObjects, parseNumber } from "./utils";
-import { generateNextId } from "./mutations/helpers";
-import {
-  BookingSchema,
-  CreateBookingSchema,
-  type Booking,
-  type CreateBookingInput,
-} from "./types";
 
-// Bookings column order: A=Booking ID, B=Booking Date, C=Service Date,
-// D=Time Slot, E=Customer Name, F=Phone Number, G=Area / Society,
-// H=Full Address, I=Car Model, J=Vehicle Type, K=Service Package,
-// L=Add-Ons, M=Price, N=Payment Status, O=Payment Mode,
-// P=Assigned Worker, Q=Booking Source, R=Booking Status,
-// S=Service Start Time, T=Service End Time, U=Completion Status,
-// V=Customer Rating, W=Complaint Flag, X=Repeat Customer,
-// Y=Notes, Z=Duration (mins)
+// Column order (row 1 headers must match exactly):
+// booking_id, customer_id, vehicle_id, service_date, time_slot_id,
+// booking_status_id, source_id, created_at, scheduled_start_at,
+// scheduled_end_at, actual_start_at, actual_end_at, assigned_worker_id,
+// area_id, base_price, discount_amount, addon_total, final_price, notes
 
 export async function getBookings(): Promise<Booking[]> {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID!,
     range: RANGES.bookings,
   });
 
   const rows = rowsToObjects((res.data.values as string[][] | undefined) ?? []);
-  const bookings: Booking[] = [];
-
-  for (const row of rows) {
-    const parsed = BookingSchema.safeParse({
-      bookingId: row["Booking ID"] ?? "",
-      bookingDate: row["Booking Date"] ?? "",
-      serviceDate: row["Service Date"] ?? "",
-      timeSlot: row["Time Slot"] ?? "",
-      customerName: row["Customer Name"] ?? "",
-      phoneNumber: row["Phone Number"] ?? "",
-      areaSociety: row["Area / Society"] ?? "",
-      fullAddress: row["Full Address"] ?? "",
-      carModel: row["Car Model"] ?? "",
-      vehicleType: row["Vehicle Type"] ?? "",
-      servicePackage: row["Service Package"] ?? "",
-      addOns: row["Add-Ons"] ?? "",
-      price: parseNumber(row["Price"]),
-      paymentStatus: row["Payment Status"] ?? "",
-      paymentMode: row["Payment Mode"] ?? "",
-      assignedWorker: row["Assigned Worker"] ?? "",
-      bookingSource: row["Booking Source"] ?? "",
-      bookingStatus: row["Booking Status"] ?? "",
-      serviceStartTime: row["Service Start Time"] ?? "",
-      serviceEndTime: row["Service End Time"] ?? "",
-      completionStatus: row["Completion Status"] ?? "",
-      customerRating: row["Customer Rating"]
-        ? parseNumber(row["Customer Rating"])
-        : undefined,
-      complaintFlag: row["Complaint Flag"] ?? "",
-      repeatCustomer: row["Repeat Customer"] ?? "",
-      notes: row["Notes"] ?? "",
-      durationMins: row["Duration (mins)"]
-        ? parseNumber(row["Duration (mins)"])
-        : undefined,
-    });
-
-    if (parsed.success) {
-      bookings.push(parsed.data);
-    } else {
-      console.warn(
-        "[sheets/bookings] Invalid row skipped:",
-        row["Booking ID"],
-        parsed.error.flatten(),
-      );
-    }
-  }
-
-  return bookings;
-}
-
-export async function createBooking(
-  input: CreateBookingInput,
-): Promise<Booking> {
-  const validated = CreateBookingSchema.parse(input);
-  const bookingId = await generateNextId("Bookings", "BKG");
-
-  const sheets = await getSheetsClient();
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: RANGES.bookings,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [
-        [
-          bookingId,
-          validated.bookingDate,
-          validated.serviceDate,
-          validated.timeSlot,
-          validated.customerName,
-          validated.phoneNumber,
-          validated.areaSociety,
-          validated.fullAddress,
-          validated.carModel,
-          validated.vehicleType,
-          validated.servicePackage,
-          validated.addOns ?? "",
-          validated.price,
-          validated.paymentStatus,
-          validated.paymentMode,
-          validated.assignedWorker ?? "",
-          validated.bookingSource,
-          validated.bookingStatus,
-          "", // Service Start Time
-          "", // Service End Time
-          "", // Completion Status
-          "", // Customer Rating
-          "", // Complaint Flag
-          "", // Repeat Customer
-          validated.notes ?? "",
-          "", // Duration (mins)
-        ],
-      ],
-    },
-  });
-
-  // Return a complete Booking object; optional fields default to empty/undefined
-  return {
-    bookingId,
-    bookingDate: validated.bookingDate,
-    serviceDate: validated.serviceDate,
-    timeSlot: validated.timeSlot,
-    customerName: validated.customerName,
-    phoneNumber: validated.phoneNumber,
-    areaSociety: validated.areaSociety,
-    fullAddress: validated.fullAddress,
-    carModel: validated.carModel,
-    vehicleType: validated.vehicleType,
-    servicePackage: validated.servicePackage,
-    addOns: validated.addOns ?? "",
-    price: validated.price,
-    paymentStatus: validated.paymentStatus,
-    paymentMode: validated.paymentMode,
-    assignedWorker: validated.assignedWorker ?? "",
-    bookingSource: validated.bookingSource,
-    bookingStatus: validated.bookingStatus,
-    serviceStartTime: "",
-    serviceEndTime: "",
-    completionStatus: "",
-    complaintFlag: "",
-    repeatCustomer: "",
-    notes: validated.notes ?? "",
-  };
+  return rows
+    .map(
+      (row): Booking => ({
+        booking_id: row.booking_id ?? "",
+        customer_id: row.customer_id ?? "",
+        vehicle_id: row.vehicle_id ?? "",
+        service_date: row.service_date ?? "",
+        time_slot_id: row.time_slot_id ?? "",
+        booking_status_id: row.booking_status_id ?? "",
+        source_id: row.source_id ?? "",
+        created_at: row.created_at ?? "",
+        scheduled_start_at: row.scheduled_start_at ?? "",
+        scheduled_end_at: row.scheduled_end_at ?? "",
+        actual_start_at: row.actual_start_at ?? "",
+        actual_end_at: row.actual_end_at ?? "",
+        assigned_worker_id: row.assigned_worker_id ?? "",
+        area_id: row.area_id ?? "",
+        base_price: parseNumber(row.base_price),
+        discount_amount: parseNumber(row.discount_amount),
+        addon_total: parseNumber(row.addon_total),
+        final_price: parseNumber(row.final_price),
+        notes: row.notes ?? "",
+      }),
+    )
+    .filter((b) => b.booking_id !== "");
 }

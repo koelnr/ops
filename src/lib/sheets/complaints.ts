@@ -1,49 +1,37 @@
+import type { Complaint } from "../domain";
 import { getSheetsClient } from "./client";
-import { SPREADSHEET_ID, RANGES } from "./config";
+import { RANGES } from "./config";
 import { rowsToObjects } from "./utils";
-import { ComplaintSchema, type Complaint } from "./types";
 
-// Complaints column order: A=Complaint ID, B=Booking ID, C=Customer Name,
-// D=Date, E=Worker Assigned, F=Complaint Type, G=Complaint Details,
-// H=Resolution Given, I=Refund / Rewash, J=Resolution Status,
-// K=Follow-Up Complete, L=Root Cause
+// Column order (row 1 headers must match exactly):
+// complaint_id, booking_id, complaint_date, complaint_type_id, details,
+// assigned_worker_id, resolution_type, resolution_notes, resolution_status,
+// follow_up_complete, root_cause, created_at
 
 export async function getComplaints(): Promise<Complaint[]> {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID!,
     range: RANGES.complaints,
   });
 
   const rows = rowsToObjects((res.data.values as string[][] | undefined) ?? []);
-  const complaints: Complaint[] = [];
-
-  for (const row of rows) {
-    const parsed = ComplaintSchema.safeParse({
-      complaintId: row["Complaint ID"] ?? "",
-      bookingId: row["Booking ID"] ?? "",
-      customerName: row["Customer Name"] ?? "",
-      date: row["Date"] ?? "",
-      workerAssigned: row["Worker Assigned"] ?? "",
-      complaintType: row["Complaint Type"] ?? "",
-      complaintDetails: row["Complaint Details"] ?? "",
-      resolutionGiven: row["Resolution Given"] ?? "",
-      refundOrRewash: row["Refund / Rewash"] ?? "",
-      resolutionStatus: row["Resolution Status"] ?? "",
-      followUpComplete: row["Follow-Up Complete"] ?? "",
-      rootCause: row["Root Cause"] ?? "",
-    });
-
-    if (parsed.success) {
-      complaints.push(parsed.data);
-    } else {
-      console.warn(
-        "[sheets/complaints] Invalid row skipped:",
-        row["Complaint ID"],
-        parsed.error.flatten(),
-      );
-    }
-  }
-
-  return complaints;
+  return rows
+    .map(
+      (row): Complaint => ({
+        complaint_id: row.complaint_id ?? "",
+        booking_id: row.booking_id ?? "",
+        complaint_date: row.complaint_date ?? "",
+        complaint_type_id: row.complaint_type_id ?? "",
+        details: row.details ?? "",
+        assigned_worker_id: row.assigned_worker_id ?? "",
+        resolution_type: row.resolution_type ?? "",
+        resolution_notes: row.resolution_notes ?? "",
+        resolution_status: row.resolution_status ?? "",
+        follow_up_complete: row.follow_up_complete === "true",
+        root_cause: row.root_cause ?? "",
+        created_at: row.created_at ?? "",
+      }),
+    )
+    .filter((c) => c.complaint_id !== "");
 }
