@@ -20,7 +20,9 @@ interface WorkerColumnActions {
   isPending: boolean;
 }
 
-export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<WorkerDailyOps>[] {
+export function getWorkerColumns(
+  actions: WorkerColumnActions,
+): ColumnDef<WorkerDailyOps>[] {
   return [
     {
       accessorKey: "workerName",
@@ -35,7 +37,9 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
       header: "Date",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.date}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.date}
+        </span>
       ),
     },
     {
@@ -43,7 +47,9 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
       header: "Assigned",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="tabular-nums text-sm text-right block">{row.original.assignedBookings}</span>
+        <span className="tabular-nums text-sm text-right block">
+          {row.original.assignedBookings}
+        </span>
       ),
     },
     {
@@ -51,14 +57,18 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
       header: "Completed",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="tabular-nums text-sm text-right block">{row.original.completedBookings}</span>
+        <span className="tabular-nums text-sm text-right block">
+          {row.original.completedBookings}
+        </span>
       ),
     },
     {
       accessorKey: "areaCovered",
       header: "Area",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.areaCovered || "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.areaCovered || "—"}
+        </span>
       ),
     },
     {
@@ -66,7 +76,9 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
       header: "Avg Rating",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="tabular-nums text-sm">{row.original.avgRating || "—"}</span>
+        <span className="tabular-nums text-sm">
+          {row.original.avgRating || "—"}
+        </span>
       ),
     },
     {
@@ -74,7 +86,9 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
       header: "Due (₹)",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="tabular-nums text-sm text-right block">₹{row.original.payoutDue}</span>
+        <span className="tabular-nums text-sm text-right block">
+          ₹{row.original.payoutDue}
+        </span>
       ),
     },
     {
@@ -82,14 +96,18 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
       header: "Paid (₹)",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="tabular-nums text-sm text-right block">₹{row.original.payoutPaid}</span>
+        <span className="tabular-nums text-sm text-right block">
+          ₹{row.original.payoutPaid}
+        </span>
       ),
     },
     {
       accessorKey: "notes",
       header: "Notes",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">{row.original.notes || "—"}</span>
+        <span className="text-xs text-muted-foreground">
+          {row.original.notes || "—"}
+        </span>
       ),
     },
     {
@@ -97,7 +115,7 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
       size: 48,
       cell: ({ row }) => {
         const worker = row.original;
-        return (
+        return actions.isAdmin ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -112,22 +130,18 @@ export function getWorkerColumns(actions: WorkerColumnActions): ColumnDef<Worker
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {actions.isAdmin && (
-                <DropdownMenuItem onSelect={() => actions.onEdit(worker)}>
-                  Edit Record
-                </DropdownMenuItem>
-              )}
-              {actions.isAdmin && (
-                <DropdownMenuItem
-                  onSelect={() => actions.onDelete(worker)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  Delete Record
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem onSelect={() => actions.onEdit(worker)}>
+                Edit Record
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => actions.onDelete(worker)}
+                className="text-destructive focus:text-destructive"
+              >
+                Delete Record
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        );
+        ) : null;
       },
     },
   ];
