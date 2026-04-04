@@ -1,116 +1,144 @@
-// Centralized option arrays for all form selects.
-// Values must match the Zod enums in src/lib/sheets/types.ts exactly.
+import type { SerializedLookupContext, SelectOption } from "./domain";
 
-type Option = { label: string; value: string };
+// ─── Build options from live lookup context ───────────────────────────────────
+// Called in RSC pages: buildSelectOptions(serializeLookupContext(ctx))
 
-function opts(values: readonly string[]): Option[] {
-  return values.map((v) => ({ label: v, value: v }));
+export interface SelectOptions {
+  areas: SelectOption[];
+  services: SelectOption[];
+  vehicleTypes: SelectOption[];
+  timeSlots: SelectOption[];
+  bookingStatuses: SelectOption[];
+  paymentStatuses: SelectOption[];
+  paymentModes: SelectOption[];
+  leadSources: SelectOption[];
+  complaintTypes: SelectOption[];
 }
 
-// ─── From Lists sheet ──────────────────────────────────────────────────────────
+export function buildSelectOptions(ctx: SerializedLookupContext): SelectOptions {
+  return {
+    areas: ctx.areas.map((a) => ({ value: a.area_id, label: a.name })),
+    services: ctx.services.map((s) => ({ value: s.service_id, label: s.name })),
+    vehicleTypes: ctx.vehicleTypes.map((vt) => ({ value: vt.vehicle_type_id, label: vt.name })),
+    timeSlots: ctx.timeSlots.map((ts) => ({ value: ts.time_slot_id, label: ts.label })),
+    bookingStatuses: ctx.bookingStatuses.map((bs) => ({
+      value: bs.booking_status_id,
+      label: bs.label,
+    })),
+    paymentStatuses: ctx.paymentStatuses.map((ps) => ({
+      value: ps.payment_status_id,
+      label: ps.label,
+    })),
+    paymentModes: ctx.paymentModes.map((pm) => ({
+      value: pm.payment_mode_id,
+      label: pm.label,
+    })),
+    leadSources: ctx.leadSources.map((ls) => ({ value: ls.source_id, label: ls.label })),
+    complaintTypes: ctx.complaintTypes.map((ct) => ({
+      value: ct.complaint_type_id,
+      label: ct.label,
+    })),
+  };
+}
 
-export const BOOKING_STATUS_OPTIONS = opts([
-  "New Inquiry",
-  "Confirmed",
-  "Assigned",
-  "In Progress",
-  "Completed",
-  "Cancelled",
-  "Rescheduled",
-  "Payment Pending",
-]);
+// ─── Static fallback options ──────────────────────────────────────────────────
+// Used in tests or when context is unavailable.
+// IDs here are illustrative — real IDs come from the lookup sheets.
 
-export const PAYMENT_STATUS_OPTIONS = opts([
-  "Pending",
-  "Paid",
-  "Partially Paid",
-  "Failed",
-  "Refunded",
-]);
+export const STATIC_OPTIONS: SelectOptions = {
+  areas: [
+    { value: "AREA-001", label: "Andheri West" },
+    { value: "AREA-002", label: "Bandra" },
+    { value: "AREA-003", label: "Juhu" },
+  ],
+  services: [
+    { value: "SVC-001", label: "Exterior Wash" },
+    { value: "SVC-002", label: "Exterior + Interior Basic" },
+    { value: "SVC-003", label: "Full Detail" },
+  ],
+  vehicleTypes: [
+    { value: "VT-001", label: "Hatchback" },
+    { value: "VT-002", label: "Sedan" },
+    { value: "VT-003", label: "SUV" },
+    { value: "VT-004", label: "Luxury" },
+  ],
+  timeSlots: [
+    { value: "TS-001", label: "7am–9am" },
+    { value: "TS-002", label: "9am–11am" },
+    { value: "TS-003", label: "11am–1pm" },
+    { value: "TS-004", label: "2pm–4pm" },
+    { value: "TS-005", label: "4pm–6pm" },
+  ],
+  bookingStatuses: [
+    { value: "BS-001", label: "New Inquiry" },
+    { value: "BS-002", label: "Confirmed" },
+    { value: "BS-003", label: "Assigned" },
+    { value: "BS-004", label: "In Progress" },
+    { value: "BS-005", label: "Completed" },
+    { value: "BS-006", label: "Cancelled" },
+    { value: "BS-007", label: "Rescheduled" },
+  ],
+  paymentStatuses: [
+    { value: "PS-001", label: "Pending" },
+    { value: "PS-002", label: "Paid" },
+    { value: "PS-003", label: "Partially Paid" },
+    { value: "PS-004", label: "Failed" },
+    { value: "PS-005", label: "Refunded" },
+  ],
+  paymentModes: [
+    { value: "PM-001", label: "UPI" },
+    { value: "PM-002", label: "Cash" },
+  ],
+  leadSources: [
+    { value: "LS-001", label: "WhatsApp" },
+    { value: "LS-002", label: "Referral" },
+    { value: "LS-003", label: "Society Outreach" },
+    { value: "LS-004", label: "Flyer" },
+    { value: "LS-005", label: "Instagram" },
+  ],
+  complaintTypes: [
+    { value: "CT-001", label: "Service Quality" },
+    { value: "CT-002", label: "Late Arrival" },
+    { value: "CT-003", label: "Damage" },
+    { value: "CT-004", label: "Attitude" },
+    { value: "CT-005", label: "Incomplete Work" },
+    { value: "CT-006", label: "Other" },
+  ],
+};
 
-export const COMPLETION_STATUS_OPTIONS = opts([
-  "Completed Successfully",
-  "Completed with Issue",
-  "Rewash Needed",
-  "Not Completed",
-]);
+// ─── Shared simple options (no FK, not from lookup sheets) ───────────────────
 
-export const VEHICLE_TYPE_OPTIONS = opts(["Hatchback", "Sedan", "SUV", "Luxury"]);
+export const FOLLOW_UP_STATUS_OPTIONS: SelectOption[] = [
+  { value: "New", label: "New" },
+  { value: "Contacted", label: "Contacted" },
+  { value: "Follow-Up Pending", label: "Follow-Up Pending" },
+  { value: "Converted", label: "Converted" },
+  { value: "Closed", label: "Closed" },
+];
 
-export const SERVICE_PACKAGE_OPTIONS = opts([
-  "Exterior Wash",
-  "Exterior + Interior Basic",
-  "Monthly Plan",
-]);
+export const CONVERSION_STATUS_OPTIONS: SelectOption[] = [
+  { value: "Not Converted", label: "Not Converted" },
+  { value: "Converted", label: "Converted" },
+  { value: "Lost", label: "Lost" },
+];
 
-export const PAYMENT_MODE_OPTIONS = opts(["UPI", "Cash"]);
+export const RESOLUTION_STATUS_OPTIONS: SelectOption[] = [
+  { value: "Open", label: "Open" },
+  { value: "Monitoring", label: "Monitoring" },
+  { value: "Resolved", label: "Resolved" },
+  { value: "Escalated", label: "Escalated" },
+  { value: "Rewash Scheduled", label: "Rewash Scheduled" },
+  { value: "Closed", label: "Closed" },
+];
 
-export const BOOKING_SOURCE_OPTIONS = opts([
-  "WhatsApp",
-  "Referral",
-  "Society Outreach",
-  "Flyer",
-  "Office Contact",
-  "Instagram",
-]);
+export const WORKER_STATUS_OPTIONS: SelectOption[] = [
+  { value: "Active", label: "Active" },
+  { value: "Inactive", label: "Inactive" },
+  { value: "On Leave", label: "On Leave" },
+];
 
-// ─── Not yet in Lists sheet — add these values there for full consistency ──────
-
-export const FOLLOW_UP_STATUS_OPTIONS = opts([
-  "New",
-  "Contacted",
-  "Follow-Up Pending",
-  "Converted",
-  "Closed",
-]);
-
-export const CONVERSION_STATUS_OPTIONS = opts([
-  "Not Converted",
-  "Converted",
-  "Lost",
-]);
-
-export const RESOLUTION_STATUS_OPTIONS = opts([
-  "Open",
-  "Monitoring",
-  "Resolved",
-  "Escalated",
-  "Rewash Scheduled",
-  "Closed",
-]);
-
-export const REFUND_REWASH_OPTIONS = opts([
-  "None",
-  "Refund",
-  "Partial Refund",
-  "Rewash",
-]);
-
-export const COMPLAINT_TYPE_OPTIONS = opts([
-  "Service Quality",
-  "Late Arrival",
-  "Damage",
-  "Attitude",
-  "Incomplete Work",
-  "Other",
-]);
-
-export const YES_NO_OPTIONS = opts(["Yes", "No"]);
-
-export const TIME_SLOT_OPTIONS = opts([
-  "7am–9am",
-  "8am–10am",
-  "9am–11am",
-  "10am–12pm",
-  "11am–1pm",
-  "2pm–4pm",
-  "3pm–5pm",
-  "4pm–6pm",
-]);
-
-export const SUBSCRIPTION_STATUS_OPTIONS = opts([
-  "Active",
-  "Inactive",
-  "Trial",
-  "Expired",
-]);
+export const PAYOUT_TYPE_OPTIONS: SelectOption[] = [
+  { value: "Per Booking", label: "Per Booking" },
+  { value: "Daily", label: "Daily" },
+  { value: "Monthly", label: "Monthly" },
+];
