@@ -20,21 +20,25 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/bookings", label: "Bookings", icon: CalendarDays },
-  { href: "/payments", label: "Payments", icon: CreditCard },
-  { href: "/customers", label: "Customers", icon: UserRound },
-  { href: "/workers", label: "Workers", icon: Users },
-  { href: "/leads", label: "Leads", icon: Megaphone },
-  { href: "/complaints", label: "Complaints", icon: AlertTriangle },
+  { href: "/", label: "Overview", icon: LayoutDashboard, adminOnly: false },
+  { href: "/bookings", label: "Bookings", icon: CalendarDays, adminOnly: false },
+  { href: "/payments", label: "Payments", icon: CreditCard, adminOnly: true },
+  { href: "/customers", label: "Customers", icon: UserRound, adminOnly: true },
+  { href: "/workers", label: "Workers", icon: Users, adminOnly: true },
+  { href: "/leads", label: "Leads", icon: Megaphone, adminOnly: true },
+  { href: "/complaints", label: "Complaints", icon: AlertTriangle, adminOnly: true },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
+  const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <Sidebar>
@@ -47,7 +51,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+              {visibleItems.map(({ href, label, icon: Icon }) => {
                 const isActive = pathname === href;
                 return (
                   <SidebarMenuItem key={href}>

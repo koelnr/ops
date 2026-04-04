@@ -25,6 +25,10 @@ vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname(),
 }));
 
+vi.mock("@clerk/nextjs", () => ({
+  useUser: vi.fn(() => ({ user: null })),
+}));
+
 function renderSidebar() {
   return render(
     <SidebarProvider>
@@ -33,8 +37,28 @@ function renderSidebar() {
   );
 }
 
-describe("AppSidebar — nav items", () => {
-  it("renders all navigation links", () => {
+describe("AppSidebar — non-admin user", () => {
+  it("shows only Overview and Bookings", () => {
+    renderSidebar();
+    expect(screen.getByRole("link", { name: /overview/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /bookings/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /payments/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /customers/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /workers/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /leads/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /complaints/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("AppSidebar — admin user", () => {
+  beforeAll(async () => {
+    const clerk = await import("@clerk/nextjs");
+    vi.mocked(clerk.useUser).mockReturnValue({
+      user: { publicMetadata: { role: "admin" } },
+    } as ReturnType<typeof clerk.useUser>);
+  });
+
+  it("shows all navigation links", () => {
     renderSidebar();
     expect(screen.getByRole("link", { name: /overview/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /bookings/i })).toBeInTheDocument();
@@ -55,7 +79,9 @@ describe("AppSidebar — nav items", () => {
     expect(screen.getByRole("link", { name: /leads/i })).toHaveAttribute("href", "/leads");
     expect(screen.getByRole("link", { name: /complaints/i })).toHaveAttribute("href", "/complaints");
   });
+});
 
+describe("AppSidebar — brand", () => {
   it("renders the brand name", () => {
     renderSidebar();
     expect(screen.getByText("Koelnr")).toBeInTheDocument();
@@ -76,10 +102,6 @@ describe("AppSidebar — active state", () => {
     mockPathname.mockReturnValue("/bookings");
     renderSidebar();
     expect(screen.getByRole("link", { name: /overview/i })).not.toHaveAttribute(
-      "data-active",
-      "true",
-    );
-    expect(screen.getByRole("link", { name: /payments/i })).not.toHaveAttribute(
       "data-active",
       "true",
     );
