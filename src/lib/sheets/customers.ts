@@ -19,7 +19,7 @@ export async function getCustomers(): Promise<Customer[]> {
     .map(
       (row): Customer => ({
         customer_id: row.customer_id ?? "",
-        full_name: row.full_name ?? "",
+        full_name: row.customer_name ?? "",
         phone: row.phone ?? "",
         secondary_phone: row.secondary_phone ?? "",
         area_id: row.area_id ?? "",
@@ -46,7 +46,7 @@ export async function getCustomersResolved(): Promise<ResolvedCustomer[]> {
     .map(
       (row): ResolvedCustomer => ({
         customer_id: row.customer_id ?? "",
-        full_name: row.full_name ?? "",
+        full_name: row.customer_name ?? "",
         phone: row.phone ?? "",
         secondary_phone: row.secondary_phone ?? "",
         area_id: row.area_id ?? "",
