@@ -44,6 +44,7 @@ export interface TimeSlotDoc {
 
 export interface BookingStatusDoc {
   name: string
+  color: string
   sortOrder: number
   isActive: boolean
   createdAt: Timestamp
@@ -128,6 +129,8 @@ export interface CustomerDoc {
   areaId: string
   areaName: string
   fullAddress: string
+  googleMapsLink: string
+  landmark: string
   acquisitionSourceId: string
   acquisitionSourceName: string
   notes: string
@@ -195,6 +198,7 @@ export interface PaymentDoc {
   customerId: string
   customerName: string
   serviceDate: string
+  finalPrice: number
   amountReceived: number
   paymentDate: Timestamp | null
   paymentModeId: string
@@ -206,6 +210,17 @@ export interface PaymentDoc {
   followUpRequired: boolean
   upiTransactionRef: string | null
   notes: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface BookingServiceDoc {
+  bookingId: string
+  serviceId: string
+  serviceName: string
+  quantity: number
+  unitPrice: number
+  lineTotal: number
   createdAt: Timestamp
   updatedAt: Timestamp
 }

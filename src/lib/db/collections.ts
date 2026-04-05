@@ -2,6 +2,7 @@ import { db } from '../firebase/firestore'
 import {
   areaConverter,
   bookingConverter,
+  bookingServiceConverter,
   bookingStatusConverter,
   complaintConverter,
   complaintTypeConverter,
@@ -69,3 +70,6 @@ export const complaintDoc = (id: string) => complaintsCol().doc(id)
 
 export const leadsCol = () => db.collection('leads').withConverter(leadConverter)
 export const leadDoc = (id: string) => leadsCol().doc(id)
+
+export const bookingServicesCol = () => db.collection('bookingServices').withConverter(bookingServiceConverter)
+export const bookingServiceDoc = (id: string) => bookingServicesCol().doc(id)

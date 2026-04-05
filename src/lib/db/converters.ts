@@ -2,6 +2,7 @@ import type { FirestoreDataConverter, QueryDocumentSnapshot } from 'firebase-adm
 import type {
   AreaDoc,
   BookingDoc,
+  BookingServiceDoc,
   BookingStatusDoc,
   ComplaintDoc,
   ComplaintTypeDoc,
@@ -29,6 +30,7 @@ function makeConverter<T extends object>(): FirestoreDataConverter<T> {
   }
 }
 
+export const bookingServiceConverter = makeConverter<BookingServiceDoc>()
 export const areaConverter = makeConverter<AreaDoc>()
 export const serviceConverter = makeConverter<ServiceDoc>()
 export const vehicleTypeConverter = makeConverter<VehicleTypeDoc>()
