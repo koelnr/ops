@@ -23,12 +23,16 @@ export async function PATCH(
     await updateLead(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update lead";
+    const message =
+      err instanceof Error ? err.message : "Failed to update lead";
     console.error("[PATCH /api/leads/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update lead" },
+      { status: 500 },
+    );
   }
 }
 
@@ -42,11 +46,15 @@ export async function DELETE(
     await deleteLead(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete lead";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete lead";
     console.error("[DELETE /api/leads/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete lead" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete lead" },
+      { status: 500 },
+    );
   }
 }

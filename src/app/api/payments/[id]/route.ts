@@ -23,12 +23,16 @@ export async function PATCH(
     await updatePayment(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update payment";
+    const message =
+      err instanceof Error ? err.message : "Failed to update payment";
     console.error("[PATCH /api/payments/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update payment" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update payment" },
+      { status: 500 },
+    );
   }
 }
 
@@ -42,11 +46,15 @@ export async function DELETE(
     await deletePayment(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete payment";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete payment";
     console.error("[DELETE /api/payments/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete payment" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete payment" },
+      { status: 500 },
+    );
   }
 }

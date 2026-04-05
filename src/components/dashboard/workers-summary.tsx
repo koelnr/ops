@@ -1,12 +1,11 @@
 import type { WorkerWithSummary } from "@/lib/domain";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-function StatChip({ label, value, highlight }: {
+function StatChip({
+  label,
+  value,
+  highlight,
+}: {
   label: string;
   value: string | number;
   highlight?: "green" | "yellow" | "red";
@@ -23,7 +22,9 @@ function StatChip({ label, value, highlight }: {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={`text-sm tabular-nums font-medium ${colorClass}`}>{value}</span>
+      <span className={`text-sm tabular-nums font-medium ${colorClass}`}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -60,12 +61,16 @@ export function WorkersSummary({ workers }: WorkersSummaryProps) {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center justify-between">
                 <span>{worker.worker_name}</span>
-                <span className={`text-xs font-normal ${worker.status === "Active" ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
+                <span
+                  className={`text-xs font-normal ${worker.status === "Active" ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}`}
+                >
                   {worker.status}
                 </span>
               </CardTitle>
               {worker.areaName && (
-                <p className="text-xs text-muted-foreground">{worker.areaName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {worker.areaName}
+                </p>
               )}
             </CardHeader>
             <CardContent>
@@ -73,12 +78,20 @@ export function WorkersSummary({ workers }: WorkersSummaryProps) {
                 <StatChip label="Assigned" value={worker.assignedCount} />
                 <StatChip
                   label="Completion"
-                  value={worker.assignedCount > 0 ? `${Math.round(worker.completionRate * 100)}%` : "—"}
+                  value={
+                    worker.assignedCount > 0
+                      ? `${Math.round(worker.completionRate * 100)}%`
+                      : "—"
+                  }
                   highlight={completionHighlight}
                 />
                 <StatChip
                   label="Payout Rate"
-                  value={worker.default_payout_rate > 0 ? `₹${worker.default_payout_rate}` : "—"}
+                  value={
+                    worker.default_payout_rate > 0
+                      ? `₹${worker.default_payout_rate}`
+                      : "—"
+                  }
                 />
               </div>
             </CardContent>
@@ -96,15 +109,25 @@ export function WorkersSummaryCompact({ workers }: WorkersSummaryProps) {
   const workersWithAssigned = workers.filter((w) => w.assignedCount > 0);
   const avgCompletion =
     workersWithAssigned.length > 0
-      ? workersWithAssigned.reduce((s, w) => s + w.completionRate, 0) / workersWithAssigned.length
+      ? workersWithAssigned.reduce((s, w) => s + w.completionRate, 0) /
+        workersWithAssigned.length
       : 0;
 
   return (
     <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-      <span><span className="font-medium">{activeCount}</span> active</span>
-      <span><span className="font-medium">{totalAssigned}</span> assigned</span>
+      <span>
+        <span className="font-medium">{activeCount}</span> active
+      </span>
+      <span>
+        <span className="font-medium">{totalAssigned}</span> assigned
+      </span>
       {avgCompletion > 0 && (
-        <span><span className="font-medium">{Math.round(avgCompletion * 100)}%</span> avg completion</span>
+        <span>
+          <span className="font-medium">
+            {Math.round(avgCompletion * 100)}%
+          </span>{" "}
+          avg completion
+        </span>
       )}
     </div>
   );

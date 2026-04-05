@@ -23,12 +23,16 @@ export async function PATCH(
     await updateBooking(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update booking";
+    const message =
+      err instanceof Error ? err.message : "Failed to update booking";
     console.error("[PATCH /api/bookings/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update booking" },
+      { status: 500 },
+    );
   }
 }
 
@@ -42,11 +46,15 @@ export async function DELETE(
     await deleteBooking(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete booking";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete booking";
     console.error("[DELETE /api/bookings/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete booking" },
+      { status: 500 },
+    );
   }
 }

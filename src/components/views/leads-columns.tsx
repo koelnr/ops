@@ -24,7 +24,9 @@ interface LeadColumnActions {
   isPending: boolean;
 }
 
-export function getLeadColumns(actions: LeadColumnActions): ColumnDef<LeadWithContext>[] {
+export function getLeadColumns(
+  actions: LeadColumnActions,
+): ColumnDef<LeadWithContext>[] {
   return [
     {
       accessorKey: "prospect_name",
@@ -35,7 +37,9 @@ export function getLeadColumns(actions: LeadColumnActions): ColumnDef<LeadWithCo
           row.original.follow_up_status === "New" ||
           row.original.follow_up_status === "Follow-Up Pending";
         return (
-          <span className={`font-medium text-sm${isPending ? " text-yellow-700 dark:text-yellow-400" : ""}`}>
+          <span
+            className={`font-medium text-sm${isPending ? " text-yellow-700 dark:text-yellow-400" : ""}`}
+          >
             {row.original.prospect_name}
           </span>
         );
@@ -45,14 +49,18 @@ export function getLeadColumns(actions: LeadColumnActions): ColumnDef<LeadWithCo
       accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground font-mono">{row.original.phone}</span>
+        <span className="text-sm text-muted-foreground font-mono">
+          {row.original.phone}
+        </span>
       ),
     },
     {
       accessorKey: "areaName",
       header: "Area",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.areaName || "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.areaName || "—"}
+        </span>
       ),
     },
     {
@@ -66,7 +74,9 @@ export function getLeadColumns(actions: LeadColumnActions): ColumnDef<LeadWithCo
       accessorKey: "interestedServiceName",
       header: "Service Interest",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.interestedServiceName || "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.interestedServiceName || "—"}
+        </span>
       ),
     },
     {
@@ -94,14 +104,18 @@ export function getLeadColumns(actions: LeadColumnActions): ColumnDef<LeadWithCo
       header: "Lead Date",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.original.lead_date)}</span>
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.lead_date)}
+        </span>
       ),
     },
     {
       accessorKey: "notes",
       header: "Notes",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground line-clamp-1">{row.original.notes || "—"}</span>
+        <span className="text-xs text-muted-foreground line-clamp-1">
+          {row.original.notes || "—"}
+        </span>
       ),
     },
     {
@@ -112,14 +126,21 @@ export function getLeadColumns(actions: LeadColumnActions): ColumnDef<LeadWithCo
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={actions.isPending}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => actions.onEdit(lead)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => actions.onEdit(lead)}>
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={lead.follow_up_status === "Contacted"}
                 onSelect={() => actions.onMarkContacted(lead)}

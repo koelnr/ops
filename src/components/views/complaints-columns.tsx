@@ -24,7 +24,9 @@ interface ComplaintColumnActions {
   isPending: boolean;
 }
 
-export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<ResolvedComplaint>[] {
+export function getComplaintColumns(
+  actions: ComplaintColumnActions,
+): ColumnDef<ResolvedComplaint>[] {
   return [
     {
       accessorKey: "complaint_id",
@@ -39,28 +41,36 @@ export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<
       header: "Customer",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="font-medium text-sm">{row.original.customer_name || "—"}</span>
+        <span className="font-medium text-sm">
+          {row.original.customer_name || "—"}
+        </span>
       ),
     },
     {
       accessorKey: "booking_id",
       header: "Booking",
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-muted-foreground">{row.original.booking_id || "—"}</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          {row.original.booking_id || "—"}
+        </span>
       ),
     },
     {
       accessorKey: "worker_name",
       header: "Worker",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.worker_name || "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.worker_name || "—"}
+        </span>
       ),
     },
     {
       accessorKey: "complaint_type_name",
       header: "Type",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.complaint_type_name || "—"}</span>
+        <span className="text-sm">
+          {row.original.complaint_type_name || "—"}
+        </span>
       ),
     },
     {
@@ -84,14 +94,18 @@ export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<
     {
       accessorKey: "resolution_status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.resolution_status} />,
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.resolution_status} />
+      ),
     },
     {
       accessorKey: "complaint_date",
       header: "Date",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.original.complaint_date)}</span>
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.complaint_date)}
+        </span>
       ),
     },
     {
@@ -102,14 +116,21 @@ export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={actions.isPending}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => actions.onEdit(complaint)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => actions.onEdit(complaint)}>
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={complaint.resolution_status === "Resolved"}
                 onSelect={() => actions.onMarkResolved(complaint)}

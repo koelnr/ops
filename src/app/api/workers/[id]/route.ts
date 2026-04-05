@@ -25,12 +25,16 @@ export async function PATCH(
     await updateWorker(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update worker";
+    const message =
+      err instanceof Error ? err.message : "Failed to update worker";
     console.error("[PATCH /api/workers/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update worker" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update worker" },
+      { status: 500 },
+    );
   }
 }
 
@@ -46,11 +50,15 @@ export async function DELETE(
     await deleteWorker(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete worker";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete worker";
     console.error("[DELETE /api/workers/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete worker" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete worker" },
+      { status: 500 },
+    );
   }
 }

@@ -42,11 +42,21 @@ describe("AppSidebar — non-admin user", () => {
     renderSidebar();
     expect(screen.getByRole("link", { name: /overview/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /bookings/i })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /payments/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /customers/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /workers/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /leads/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /complaints/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /payments/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /customers/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /workers/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /leads/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /complaints/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -63,21 +73,46 @@ describe("AppSidebar — admin user", () => {
     expect(screen.getByRole("link", { name: /overview/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /bookings/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /payments/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /customers/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /customers/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /workers/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /leads/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /complaints/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /complaints/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders correct hrefs for each link", () => {
     renderSidebar();
-    expect(screen.getByRole("link", { name: /overview/i })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: /bookings/i })).toHaveAttribute("href", "/bookings");
-    expect(screen.getByRole("link", { name: /payments/i })).toHaveAttribute("href", "/payments");
-    expect(screen.getByRole("link", { name: /customers/i })).toHaveAttribute("href", "/customers");
-    expect(screen.getByRole("link", { name: /workers/i })).toHaveAttribute("href", "/workers");
-    expect(screen.getByRole("link", { name: /leads/i })).toHaveAttribute("href", "/leads");
-    expect(screen.getByRole("link", { name: /complaints/i })).toHaveAttribute("href", "/complaints");
+    expect(screen.getByRole("link", { name: /overview/i })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(screen.getByRole("link", { name: /bookings/i })).toHaveAttribute(
+      "href",
+      "/bookings",
+    );
+    expect(screen.getByRole("link", { name: /payments/i })).toHaveAttribute(
+      "href",
+      "/payments",
+    );
+    expect(screen.getByRole("link", { name: /customers/i })).toHaveAttribute(
+      "href",
+      "/customers",
+    );
+    expect(screen.getByRole("link", { name: /workers/i })).toHaveAttribute(
+      "href",
+      "/workers",
+    );
+    expect(screen.getByRole("link", { name: /leads/i })).toHaveAttribute(
+      "href",
+      "/leads",
+    );
+    expect(screen.getByRole("link", { name: /complaints/i })).toHaveAttribute(
+      "href",
+      "/complaints",
+    );
   });
 });
 

@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ leads });
   } catch (err) {
     console.error("[GET /api/leads]", err);
-    return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch leads" },
+      { status: 500 },
+    );
   }
 }
 
@@ -32,6 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ lead }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/leads]", err);
-    return NextResponse.json({ error: "Failed to create lead" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create lead" },
+      { status: 500 },
+    );
   }
 }

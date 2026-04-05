@@ -1,6 +1,6 @@
 interface EmptyStateProps {
-  message: string
-  description?: string
+  message: string;
+  description?: string;
 }
 
 export function EmptyState({ message, description }: EmptyStateProps) {
@@ -13,5 +13,5 @@ export function EmptyState({ message, description }: EmptyStateProps) {
         )}
       </div>
     </div>
-  )
+  );
 }

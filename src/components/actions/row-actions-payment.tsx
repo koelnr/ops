@@ -41,7 +41,9 @@ export function RowActionsPayment({
       follow_up_required: !followUpRequired,
     });
     if (result.ok) {
-      toast.success(followUpRequired ? "Follow-up cleared" : "Follow-up flagged");
+      toast.success(
+        followUpRequired ? "Follow-up cleared" : "Follow-up flagged",
+      );
       router.refresh();
     } else {
       toast.error(result.error ?? "Failed to update");

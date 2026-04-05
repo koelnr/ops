@@ -1,12 +1,20 @@
 import type { CreateCustomerInput, UpdateCustomerInput } from "../../schemas";
 import type { Customer } from "../../domain";
-import { findRowIndex, updateRowCells, generateNextId, appendRow, deleteRow } from "./helpers";
+import {
+  findRowIndex,
+  updateRowCells,
+  generateNextId,
+  appendRow,
+  deleteRow,
+} from "./helpers";
 
 // Customers column map (A=customer_id, B=full_name, C=phone,
 // D=secondary_phone, E=area_id, F=full_address, G=google_maps_link,
 // H=landmark, I=created_at, J=acquisition_source_id, K=notes)
 
-export async function createCustomer(input: CreateCustomerInput): Promise<Customer> {
+export async function createCustomer(
+  input: CreateCustomerInput,
+): Promise<Customer> {
   const customer_id = await generateNextId("customers", "CST");
   const created_at = new Date().toISOString();
 
@@ -39,19 +47,25 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Custom
   };
 }
 
-export async function updateCustomer(id: string, patch: UpdateCustomerInput): Promise<void> {
+export async function updateCustomer(
+  id: string,
+  patch: UpdateCustomerInput,
+): Promise<void> {
   const row = await findRowIndex("customers", id);
   if (row === null) throw new Error(`Customer not found: ${id}`);
 
   const cells: [string, string][] = [];
   if (patch.full_name !== undefined) cells.push(["B", patch.full_name]);
   if (patch.phone !== undefined) cells.push(["C", patch.phone]);
-  if (patch.secondary_phone !== undefined) cells.push(["D", patch.secondary_phone]);
+  if (patch.secondary_phone !== undefined)
+    cells.push(["D", patch.secondary_phone]);
   if (patch.area_id !== undefined) cells.push(["E", patch.area_id]);
   if (patch.full_address !== undefined) cells.push(["F", patch.full_address]);
-  if (patch.google_maps_link !== undefined) cells.push(["G", patch.google_maps_link]);
+  if (patch.google_maps_link !== undefined)
+    cells.push(["G", patch.google_maps_link]);
   if (patch.landmark !== undefined) cells.push(["H", patch.landmark]);
-  if (patch.acquisition_source_id !== undefined) cells.push(["J", patch.acquisition_source_id]);
+  if (patch.acquisition_source_id !== undefined)
+    cells.push(["J", patch.acquisition_source_id]);
   if (patch.notes !== undefined) cells.push(["K", patch.notes]);
 
   if (cells.length > 0) {

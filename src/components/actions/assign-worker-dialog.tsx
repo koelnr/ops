@@ -53,7 +53,11 @@ export function AssignWorkerDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children ?? <Button size="sm" variant="outline">Assign Worker</Button>}
+        {children ?? (
+          <Button size="sm" variant="outline">
+            Assign Worker
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
@@ -69,12 +73,18 @@ export function AssignWorkerDialog({
             >
               <option value="">Select worker…</option>
               {workers.map((w) => (
-                <option key={w.value} value={w.value}>{w.label}</option>
+                <option key={w.value} value={w.value}>
+                  {w.label}
+                </option>
               ))}
             </Select>
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !workerId}>

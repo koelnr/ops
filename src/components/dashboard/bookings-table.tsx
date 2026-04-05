@@ -16,7 +16,11 @@ interface BookingsTableProps {
   serializedCtx: SerializedLookupContext | null;
 }
 
-export function BookingsTable({ bookings, customers, serializedCtx }: BookingsTableProps) {
+export function BookingsTable({
+  bookings,
+  customers,
+  serializedCtx,
+}: BookingsTableProps) {
   if (bookings.length === 0) {
     return (
       <div className="rounded-md border">
@@ -29,7 +33,9 @@ export function BookingsTable({ bookings, customers, serializedCtx }: BookingsTa
 
   const customerMap = new Map(customers.map((c) => [c.customer_id, c]));
   const statusMap = serializedCtx
-    ? new Map(serializedCtx.bookingStatuses.map((s) => [s.booking_status_id, s]))
+    ? new Map(
+        serializedCtx.bookingStatuses.map((s) => [s.booking_status_id, s]),
+      )
     : null;
   const timeSlotMap = serializedCtx
     ? new Map(serializedCtx.timeSlots.map((t) => [t.time_slot_id, t]))
@@ -55,20 +61,32 @@ export function BookingsTable({ bookings, customers, serializedCtx }: BookingsTa
             const timeSlot = timeSlotMap?.get(booking.time_slot_id);
             return (
               <TableRow key={booking.booking_id}>
-                <TableCell className="font-mono text-xs">{booking.booking_id}</TableCell>
+                <TableCell className="font-mono text-xs">
+                  {booking.booking_id}
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {formatDate(booking.service_date)}
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium text-sm">{customer?.full_name ?? "—"}</div>
-                  <div className="text-xs text-muted-foreground">{customer?.phone ?? ""}</div>
+                  <div className="font-medium text-sm">
+                    {customer?.full_name ?? "—"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {customer?.phone ?? ""}
+                  </div>
                 </TableCell>
-                <TableCell className="text-sm">{timeSlot?.label ?? "—"}</TableCell>
+                <TableCell className="text-sm">
+                  {timeSlot?.label ?? "—"}
+                </TableCell>
                 <TableCell className="text-sm tabular-nums">
-                  {booking.final_price > 0 ? formatCurrency(booking.final_price) : "—"}
+                  {booking.final_price > 0
+                    ? formatCurrency(booking.final_price)
+                    : "—"}
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={status?.label ?? booking.booking_status_id} />
+                  <StatusBadge
+                    status={status?.label ?? booking.booking_status_id}
+                  />
                 </TableCell>
               </TableRow>
             );

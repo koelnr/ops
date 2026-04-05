@@ -10,7 +10,10 @@ export async function GET() {
     return NextResponse.json({ workers });
   } catch (err) {
     console.error("[GET /api/workers]", err);
-    return NextResponse.json({ error: "Failed to fetch workers" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch workers" },
+      { status: 500 },
+    );
   }
 }
 
@@ -33,6 +36,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ worker }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/workers]", err);
-    return NextResponse.json({ error: "Failed to create worker" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create worker" },
+      { status: 500 },
+    );
   }
 }

@@ -129,7 +129,7 @@ export async function updateCell(range: string, value: string): Promise<void> {
 export async function updateRowCells(
   sheetName: string,
   row: number,
-  cells: [string, string][]
+  cells: [string, string][],
 ): Promise<void> {
   const sheets = await getSheetsClient();
   await sheets.spreadsheets.values.batchUpdate({

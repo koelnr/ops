@@ -134,7 +134,9 @@ export function LeadConvertStepper({
 
   const bookingValid =
     bookingForm.mode === "skip" ||
-    (!!bookingForm.service_date && !!bookingForm.time_slot_id && !!bookingForm.booking_status_id);
+    (!!bookingForm.service_date &&
+      !!bookingForm.time_slot_id &&
+      !!bookingForm.booking_status_id);
 
   async function handleConvert() {
     setLoading(true);
@@ -209,8 +211,8 @@ export function LeadConvertStepper({
                 s === step
                   ? "bg-foreground text-background"
                   : i < stepIndex
-                  ? "text-muted-foreground line-through"
-                  : "text-muted-foreground"
+                    ? "text-muted-foreground line-through"
+                    : "text-muted-foreground"
               }`}
             >
               {stepLabels[s]}
@@ -241,7 +243,12 @@ export function LeadConvertStepper({
                 <Select
                   id="existing-customer"
                   value={customerForm.existingId}
-                  onChange={(e) => setCustomerForm((f) => ({ ...f, existingId: e.target.value }))}
+                  onChange={(e) =>
+                    setCustomerForm((f) => ({
+                      ...f,
+                      existingId: e.target.value,
+                    }))
+                  }
                 >
                   <option value="">Search customers…</option>
                   {existingCustomers.map((c) => (
@@ -258,7 +265,12 @@ export function LeadConvertStepper({
                   <Input
                     id="c-name"
                     value={customerForm.full_name}
-                    onChange={(e) => setCustomerForm((f) => ({ ...f, full_name: e.target.value }))}
+                    onChange={(e) =>
+                      setCustomerForm((f) => ({
+                        ...f,
+                        full_name: e.target.value,
+                      }))
+                    }
                     required
                   />
                 </div>
@@ -267,7 +279,9 @@ export function LeadConvertStepper({
                   <Input
                     id="c-phone"
                     value={customerForm.phone}
-                    onChange={(e) => setCustomerForm((f) => ({ ...f, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setCustomerForm((f) => ({ ...f, phone: e.target.value }))
+                    }
                     required
                   />
                 </div>
@@ -276,11 +290,18 @@ export function LeadConvertStepper({
                   <Select
                     id="c-area"
                     value={customerForm.area_id}
-                    onChange={(e) => setCustomerForm((f) => ({ ...f, area_id: e.target.value }))}
+                    onChange={(e) =>
+                      setCustomerForm((f) => ({
+                        ...f,
+                        area_id: e.target.value,
+                      }))
+                    }
                   >
                     <option value="">Select area</option>
                     {areaOptions.map((a) => (
-                      <option key={a.value} value={a.value}>{a.label}</option>
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
                     ))}
                   </Select>
                 </div>
@@ -289,7 +310,12 @@ export function LeadConvertStepper({
                   <Input
                     id="c-address"
                     value={customerForm.full_address}
-                    onChange={(e) => setCustomerForm((f) => ({ ...f, full_address: e.target.value }))}
+                    onChange={(e) =>
+                      setCustomerForm((f) => ({
+                        ...f,
+                        full_address: e.target.value,
+                      }))
+                    }
                   />
                 </div>
               </div>
@@ -328,7 +354,12 @@ export function LeadConvertStepper({
                     <Input
                       id="v-model"
                       value={vehicleForm.car_model}
-                      onChange={(e) => setVehicleForm((f) => ({ ...f, car_model: e.target.value }))}
+                      onChange={(e) =>
+                        setVehicleForm((f) => ({
+                          ...f,
+                          car_model: e.target.value,
+                        }))
+                      }
                       required
                     />
                   </div>
@@ -337,7 +368,9 @@ export function LeadConvertStepper({
                     <Input
                       id="v-brand"
                       value={vehicleForm.brand}
-                      onChange={(e) => setVehicleForm((f) => ({ ...f, brand: e.target.value }))}
+                      onChange={(e) =>
+                        setVehicleForm((f) => ({ ...f, brand: e.target.value }))
+                      }
                     />
                   </div>
                 </div>
@@ -347,7 +380,12 @@ export function LeadConvertStepper({
                     <Input
                       id="v-reg"
                       value={vehicleForm.registration_number}
-                      onChange={(e) => setVehicleForm((f) => ({ ...f, registration_number: e.target.value }))}
+                      onChange={(e) =>
+                        setVehicleForm((f) => ({
+                          ...f,
+                          registration_number: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -355,7 +393,9 @@ export function LeadConvertStepper({
                     <Input
                       id="v-color"
                       value={vehicleForm.color}
-                      onChange={(e) => setVehicleForm((f) => ({ ...f, color: e.target.value }))}
+                      onChange={(e) =>
+                        setVehicleForm((f) => ({ ...f, color: e.target.value }))
+                      }
                     />
                   </div>
                 </div>
@@ -364,11 +404,18 @@ export function LeadConvertStepper({
                   <Select
                     id="v-type"
                     value={vehicleForm.vehicle_type_id}
-                    onChange={(e) => setVehicleForm((f) => ({ ...f, vehicle_type_id: e.target.value }))}
+                    onChange={(e) =>
+                      setVehicleForm((f) => ({
+                        ...f,
+                        vehicle_type_id: e.target.value,
+                      }))
+                    }
                   >
                     <option value="">Select type</option>
                     {vehicleTypeOptions.map((vt) => (
-                      <option key={vt.value} value={vt.value}>{vt.label}</option>
+                      <option key={vt.value} value={vt.value}>
+                        {vt.label}
+                      </option>
                     ))}
                   </Select>
                 </div>
@@ -376,8 +423,12 @@ export function LeadConvertStepper({
             )}
 
             <div className="flex justify-between">
-              <Button variant="ghost" onClick={back} type="button">Back</Button>
-              <Button onClick={next} disabled={!vehicleValid} type="button">Next</Button>
+              <Button variant="ghost" onClick={back} type="button">
+                Back
+              </Button>
+              <Button onClick={next} disabled={!vehicleValid} type="button">
+                Next
+              </Button>
             </div>
           </div>
         )}
@@ -408,7 +459,12 @@ export function LeadConvertStepper({
                       id="b-date"
                       type="date"
                       value={bookingForm.service_date}
-                      onChange={(e) => setBookingForm((f) => ({ ...f, service_date: e.target.value }))}
+                      onChange={(e) =>
+                        setBookingForm((f) => ({
+                          ...f,
+                          service_date: e.target.value,
+                        }))
+                      }
                       required
                     />
                   </div>
@@ -417,11 +473,18 @@ export function LeadConvertStepper({
                     <Select
                       id="b-slot"
                       value={bookingForm.time_slot_id}
-                      onChange={(e) => setBookingForm((f) => ({ ...f, time_slot_id: e.target.value }))}
+                      onChange={(e) =>
+                        setBookingForm((f) => ({
+                          ...f,
+                          time_slot_id: e.target.value,
+                        }))
+                      }
                     >
                       <option value="">Select slot</option>
                       {timeSlotOptions.map((ts) => (
-                        <option key={ts.value} value={ts.value}>{ts.label}</option>
+                        <option key={ts.value} value={ts.value}>
+                          {ts.label}
+                        </option>
                       ))}
                     </Select>
                   </div>
@@ -432,11 +495,18 @@ export function LeadConvertStepper({
                     <Select
                       id="b-status"
                       value={bookingForm.booking_status_id}
-                      onChange={(e) => setBookingForm((f) => ({ ...f, booking_status_id: e.target.value }))}
+                      onChange={(e) =>
+                        setBookingForm((f) => ({
+                          ...f,
+                          booking_status_id: e.target.value,
+                        }))
+                      }
                     >
                       <option value="">Select status</option>
                       {statusOptions.map((s) => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
                       ))}
                     </Select>
                   </div>
@@ -445,11 +515,18 @@ export function LeadConvertStepper({
                     <Select
                       id="b-worker"
                       value={bookingForm.assigned_worker_id}
-                      onChange={(e) => setBookingForm((f) => ({ ...f, assigned_worker_id: e.target.value }))}
+                      onChange={(e) =>
+                        setBookingForm((f) => ({
+                          ...f,
+                          assigned_worker_id: e.target.value,
+                        }))
+                      }
                     >
                       <option value="">Select worker</option>
                       {workerOptions.map((w) => (
-                        <option key={w.value} value={w.value}>{w.label}</option>
+                        <option key={w.value} value={w.value}>
+                          {w.label}
+                        </option>
                       ))}
                     </Select>
                   </div>
@@ -462,7 +539,13 @@ export function LeadConvertStepper({
                       type="number"
                       min={0}
                       value={bookingForm.base_price}
-                      onChange={(e) => setBookingForm((f) => ({ ...f, base_price: e.target.value, final_price: e.target.value }))}
+                      onChange={(e) =>
+                        setBookingForm((f) => ({
+                          ...f,
+                          base_price: e.target.value,
+                          final_price: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -472,7 +555,12 @@ export function LeadConvertStepper({
                       type="number"
                       min={0}
                       value={bookingForm.final_price}
-                      onChange={(e) => setBookingForm((f) => ({ ...f, final_price: e.target.value }))}
+                      onChange={(e) =>
+                        setBookingForm((f) => ({
+                          ...f,
+                          final_price: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -481,11 +569,15 @@ export function LeadConvertStepper({
                   <Select
                     id="b-area"
                     value={bookingForm.area_id}
-                    onChange={(e) => setBookingForm((f) => ({ ...f, area_id: e.target.value }))}
+                    onChange={(e) =>
+                      setBookingForm((f) => ({ ...f, area_id: e.target.value }))
+                    }
                   >
                     <option value="">Select area</option>
                     {areaOptions.map((a) => (
-                      <option key={a.value} value={a.value}>{a.label}</option>
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
                     ))}
                   </Select>
                 </div>
@@ -493,8 +585,12 @@ export function LeadConvertStepper({
             )}
 
             <div className="flex justify-between">
-              <Button variant="ghost" onClick={back} type="button">Back</Button>
-              <Button onClick={next} disabled={!bookingValid} type="button">Next</Button>
+              <Button variant="ghost" onClick={back} type="button">
+                Back
+              </Button>
+              <Button onClick={next} disabled={!bookingValid} type="button">
+                Next
+              </Button>
             </div>
           </div>
         )}
@@ -504,16 +600,21 @@ export function LeadConvertStepper({
           <div className="space-y-4">
             <div className="rounded-md border divide-y text-sm">
               <div className="px-3 py-2.5">
-                <div className="text-xs text-muted-foreground mb-1">Customer</div>
+                <div className="text-xs text-muted-foreground mb-1">
+                  Customer
+                </div>
                 <div className="font-medium">
                   {customerForm.mode === "existing"
-                    ? existingCustomers.find((c) => c.customer_id === customerForm.existingId)
-                        ?.full_name ?? customerForm.existingId
+                    ? (existingCustomers.find(
+                        (c) => c.customer_id === customerForm.existingId,
+                      )?.full_name ?? customerForm.existingId)
                     : customerForm.full_name}
                 </div>
               </div>
               <div className="px-3 py-2.5">
-                <div className="text-xs text-muted-foreground mb-1">Vehicle</div>
+                <div className="text-xs text-muted-foreground mb-1">
+                  Vehicle
+                </div>
                 <div>
                   {vehicleForm.mode === "skip"
                     ? "—"
@@ -521,7 +622,9 @@ export function LeadConvertStepper({
                 </div>
               </div>
               <div className="px-3 py-2.5">
-                <div className="text-xs text-muted-foreground mb-1">Booking</div>
+                <div className="text-xs text-muted-foreground mb-1">
+                  Booking
+                </div>
                 <div>
                   {bookingForm.mode === "skip"
                     ? "—"
@@ -530,7 +633,9 @@ export function LeadConvertStepper({
               </div>
             </div>
             <div className="flex justify-between">
-              <Button variant="ghost" onClick={back} type="button">Back</Button>
+              <Button variant="ghost" onClick={back} type="button">
+                Back
+              </Button>
               <Button onClick={handleConvert} disabled={loading} type="button">
                 {loading ? "Converting…" : "Confirm & Convert"}
               </Button>

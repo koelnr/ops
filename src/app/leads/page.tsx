@@ -7,8 +7,14 @@ import { LeadsView } from "@/components/views/leads-view";
 
 export default async function LeadsPage() {
   const [leads, ctx] = await Promise.all([
-    getLeads().catch((err) => { console.error("[leads page]", err); return []; }),
-    getLookupContext().catch((err) => { console.error("[leads page] lookups", err); return null; }),
+    getLeads().catch((err) => {
+      console.error("[leads page]", err);
+      return [];
+    }),
+    getLookupContext().catch((err) => {
+      console.error("[leads page] lookups", err);
+      return null;
+    }),
   ]);
 
   const leadsWithContext = ctx

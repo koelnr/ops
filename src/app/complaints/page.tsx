@@ -7,9 +7,18 @@ import { ComplaintsView } from "@/components/views/complaints-view";
 
 export default async function ComplaintsPage() {
   const [resolvedComplaints, workers, ctx] = await Promise.all([
-    getComplaintsResolved().catch((err) => { console.error("[complaints page]", err); return []; }),
-    getWorkers().catch((err) => { console.error("[complaints page] workers", err); return []; }),
-    getLookupContext().catch((err) => { console.error("[complaints page] lookups", err); return null; }),
+    getComplaintsResolved().catch((err) => {
+      console.error("[complaints page]", err);
+      return [];
+    }),
+    getWorkers().catch((err) => {
+      console.error("[complaints page] workers", err);
+      return [];
+    }),
+    getLookupContext().catch((err) => {
+      console.error("[complaints page] lookups", err);
+      return null;
+    }),
   ]);
 
   const serializedCtx = ctx ? serializeLookupContext(ctx) : null;

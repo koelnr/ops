@@ -28,7 +28,9 @@ interface PaymentColumnActions {
   paymentStatusOptions: SelectOption[];
 }
 
-export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<ResolvedPayment>[] {
+export function getPaymentColumns(
+  actions: PaymentColumnActions,
+): ColumnDef<ResolvedPayment>[] {
   return [
     {
       accessorKey: "payment_id",
@@ -42,7 +44,9 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Reso
       accessorKey: "booking_id",
       header: "Booking ID",
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-muted-foreground">{row.original.booking_id}</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          {row.original.booking_id}
+        </span>
       ),
     },
     {
@@ -82,21 +86,27 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Reso
     {
       accessorKey: "payment_status_name",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.payment_status_name} />,
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.payment_status_name} />
+      ),
     },
     {
       accessorKey: "payment_date",
       header: "Payment Date",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.original.payment_date)}</span>
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.payment_date)}
+        </span>
       ),
     },
     {
       accessorKey: "upi_transaction_ref",
       header: "UPI Ref",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">{row.original.upi_transaction_ref || "—"}</span>
+        <span className="text-xs text-muted-foreground">
+          {row.original.upi_transaction_ref || "—"}
+        </span>
       ),
     },
     {
@@ -107,14 +117,21 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Reso
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={actions.isPending}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => actions.onEdit(payment)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => actions.onEdit(payment)}>
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Payment Status</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
@@ -122,7 +139,12 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Reso
                     <DropdownMenuItem
                       key={opt.value}
                       disabled={payment.payment_status_id === opt.value}
-                      onSelect={() => actions.onSetPaymentStatus(payment.payment_id, opt.value)}
+                      onSelect={() =>
+                        actions.onSetPaymentStatus(
+                          payment.payment_id,
+                          opt.value,
+                        )
+                      }
                     >
                       {opt.label}
                     </DropdownMenuItem>

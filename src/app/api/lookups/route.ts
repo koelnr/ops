@@ -10,6 +10,9 @@ export async function GET() {
     return NextResponse.json(serializeLookupContext(ctx));
   } catch (err) {
     console.error("[GET /api/lookups]", err);
-    return NextResponse.json({ error: "Failed to fetch lookups" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch lookups" },
+      { status: 500 },
+    );
   }
 }

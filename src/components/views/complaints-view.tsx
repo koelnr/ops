@@ -3,18 +3,32 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { ResolvedComplaint, Worker, SerializedLookupContext } from "@/lib/domain";
+import type {
+  ResolvedComplaint,
+  Worker,
+  SerializedLookupContext,
+} from "@/lib/domain";
 import type { SelectOptions } from "@/lib/options";
 import { mutate, create, remove } from "@/lib/mutate";
 import { STATIC_OPTIONS, RESOLUTION_STATUS_OPTIONS } from "@/lib/options";
 import { DataTable } from "@/components/ui/data-table";
 import { getComplaintColumns } from "./complaints-columns";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -74,7 +88,11 @@ interface ComplaintsViewProps {
   options: SelectOptions | null;
 }
 
-export function ComplaintsView({ resolvedComplaints, workers, options }: ComplaintsViewProps) {
+export function ComplaintsView({
+  resolvedComplaints,
+  workers,
+  options,
+}: ComplaintsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -83,14 +101,20 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
 
   const opts = options ?? STATIC_OPTIONS;
 
-  function resetFilters() { setSearch(""); setStatusFilter(""); setTypeFilter(""); }
+  function resetFilters() {
+    setSearch("");
+    setStatusFilter("");
+    setTypeFilter("");
+  }
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ResolvedComplaint | null>(null);
   const [form, setForm] = useState<ComplaintFormData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<ResolvedComplaint | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ResolvedComplaint | null>(
+    null,
+  );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -127,11 +151,26 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
     });
   }
 
-  function openCreate() { setEditTarget(null); setForm(emptyForm); setFormOpen(true); }
-  function openEdit(complaint: ResolvedComplaint) { setEditTarget(complaint); setForm(complaintToForm(complaint)); setFormOpen(true); }
+  function openCreate() {
+    setEditTarget(null);
+    setForm(emptyForm);
+    setFormOpen(true);
+  }
+  function openEdit(complaint: ResolvedComplaint) {
+    setEditTarget(complaint);
+    setForm(complaintToForm(complaint));
+    setFormOpen(true);
+  }
 
-  async function handleUpdate(complaint: ResolvedComplaint, body: Record<string, string>, msg: string) {
-    const result = await mutate(`/api/complaints/${complaint.complaint_id}`, body);
+  async function handleUpdate(
+    complaint: ResolvedComplaint,
+    body: Record<string, string>,
+    msg: string,
+  ) {
+    const result = await mutate(
+      `/api/complaints/${complaint.complaint_id}`,
+      body,
+    );
     if (result.ok) {
       toast.success(msg);
       startTransition(() => router.refresh());
@@ -141,7 +180,10 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
   }
 
   async function handleFormSubmit() {
-    if (!form.details.trim()) { toast.error("Complaint details are required"); return; }
+    if (!form.details.trim()) {
+      toast.error("Complaint details are required");
+      return;
+    }
     setIsSubmitting(true);
     const result = editTarget
       ? await mutate(`/api/complaints/${editTarget.complaint_id}`, {
@@ -158,7 +200,9 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
       setFormOpen(false);
       startTransition(() => router.refresh());
     } else {
-      toast.error(result.error ?? (editTarget ? "Failed to update" : "Failed to create"));
+      toast.error(
+        result.error ?? (editTarget ? "Failed to update" : "Failed to create"),
+      );
     }
   }
 
@@ -187,13 +231,37 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
         }
       />
       <div className="flex flex-wrap items-center gap-2">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search details, ID, customer, worker…" className="w-70" />
-        <FilterSelect value={statusFilter} onChange={setStatusFilter} options={RESOLUTION_STATUS_OPTIONS} placeholder="Resolution status" />
-        <FilterSelect value={typeFilter} onChange={setTypeFilter} options={opts.complaintTypes} placeholder="Complaint type" />
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search details, ID, customer, worker…"
+          className="w-70"
+        />
+        <FilterSelect
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={RESOLUTION_STATUS_OPTIONS}
+          placeholder="Resolution status"
+        />
+        <FilterSelect
+          value={typeFilter}
+          onChange={setTypeFilter}
+          options={opts.complaintTypes}
+          placeholder="Complaint type"
+        />
         {filtered.length !== resolvedComplaints.length && (
           <>
-            <span className="text-xs text-muted-foreground">{filtered.length} of {resolvedComplaints.length} shown</span>
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">Clear filters</Button>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {resolvedComplaints.length} shown
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="h-7 text-xs"
+            >
+              Clear filters
+            </Button>
           </>
         )}
       </div>
@@ -201,13 +269,33 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
       <DataTable
         columns={getComplaintColumns({
           onEdit: openEdit,
-          onMarkResolved: (c) => handleUpdate(c, { resolution_status: "Resolved" }, `Complaint ${c.complaint_id} marked resolved`),
-          onEscalate: (c) => handleUpdate(c, { resolution_status: "Escalated" }, `Complaint ${c.complaint_id} escalated`),
-          onScheduleRewash: (c) => handleUpdate(c, { resolution_status: "Rewash Scheduled", resolution_type: "Rewash" }, `Rewash scheduled for ${c.complaint_id}`),
+          onMarkResolved: (c) =>
+            handleUpdate(
+              c,
+              { resolution_status: "Resolved" },
+              `Complaint ${c.complaint_id} marked resolved`,
+            ),
+          onEscalate: (c) =>
+            handleUpdate(
+              c,
+              { resolution_status: "Escalated" },
+              `Complaint ${c.complaint_id} escalated`,
+            ),
+          onScheduleRewash: (c) =>
+            handleUpdate(
+              c,
+              {
+                resolution_status: "Rewash Scheduled",
+                resolution_type: "Rewash",
+              },
+              `Rewash scheduled for ${c.complaint_id}`,
+            ),
           onDelete: setDeleteTarget,
           isPending,
         })}
-        data={[...filtered].sort((a, b) => b.complaint_date.localeCompare(a.complaint_date))}
+        data={[...filtered].sort((a, b) =>
+          b.complaint_date.localeCompare(a.complaint_date),
+        )}
         emptyMessage="No complaints match your filters."
       />
 
@@ -215,40 +303,76 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editTarget ? `Edit Complaint ${editTarget.complaint_id}` : "New Complaint"}</DialogTitle>
+            <DialogTitle>
+              {editTarget
+                ? `Edit Complaint ${editTarget.complaint_id}`
+                : "New Complaint"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Booking ID</Label>
-              <Input value={form.booking_id} onChange={(e) => setField("booking_id", e.target.value)} placeholder="BKG-001" />
+              <Input
+                value={form.booking_id}
+                onChange={(e) => setField("booking_id", e.target.value)}
+                placeholder="BKG-001"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Date</Label>
-              <Input type="date" value={form.complaint_date} onChange={(e) => setField("complaint_date", e.target.value)} />
+              <Input
+                type="date"
+                value={form.complaint_date}
+                onChange={(e) => setField("complaint_date", e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Complaint Type</Label>
-              <Select value={form.complaint_type_id} onChange={(e) => setField("complaint_type_id", e.target.value)}>
+              <Select
+                value={form.complaint_type_id}
+                onChange={(e) => setField("complaint_type_id", e.target.value)}
+              >
                 <option value="">— select type —</option>
-                {opts.complaintTypes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {opts.complaintTypes.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Assigned Worker</Label>
-              <Select value={form.assigned_worker_id} onChange={(e) => setField("assigned_worker_id", e.target.value)}>
+              <Select
+                value={form.assigned_worker_id}
+                onChange={(e) => setField("assigned_worker_id", e.target.value)}
+              >
                 <option value="">— unassigned —</option>
-                {workers.map((w) => <option key={w.worker_id} value={w.worker_id}>{w.worker_name}</option>)}
+                {workers.map((w) => (
+                  <option key={w.worker_id} value={w.worker_id}>
+                    {w.worker_name}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Resolution Status</Label>
-              <Select value={form.resolution_status} onChange={(e) => setField("resolution_status", e.target.value)}>
-                {RESOLUTION_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select
+                value={form.resolution_status}
+                onChange={(e) => setField("resolution_status", e.target.value)}
+              >
+                {RESOLUTION_STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Resolution Type</Label>
-              <Select value={form.resolution_type} onChange={(e) => setField("resolution_type", e.target.value)}>
+              <Select
+                value={form.resolution_type}
+                onChange={(e) => setField("resolution_type", e.target.value)}
+              >
                 <option value="None">None</option>
                 <option value="Rewash">Rewash</option>
                 <option value="Refund">Refund</option>
@@ -258,46 +382,78 @@ export function ComplaintsView({ resolvedComplaints, workers, options }: Complai
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Complaint Details *</Label>
-              <Textarea value={form.details} onChange={(e) => setField("details", e.target.value)} placeholder="Describe the complaint…" rows={2} />
+              <Textarea
+                value={form.details}
+                onChange={(e) => setField("details", e.target.value)}
+                placeholder="Describe the complaint…"
+                rows={2}
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Resolution Notes</Label>
-              <Textarea value={form.resolution_notes} onChange={(e) => setField("resolution_notes", e.target.value)} placeholder="What was done to resolve…" rows={2} />
+              <Textarea
+                value={form.resolution_notes}
+                onChange={(e) => setField("resolution_notes", e.target.value)}
+                placeholder="What was done to resolve…"
+                rows={2}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Follow-Up Complete</Label>
-              <Select value={form.follow_up_complete} onChange={(e) => setField("follow_up_complete", e.target.value)}>
+              <Select
+                value={form.follow_up_complete}
+                onChange={(e) => setField("follow_up_complete", e.target.value)}
+              >
                 <option value="false">No</option>
                 <option value="true">Yes</option>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Root Cause</Label>
-              <Input value={form.root_cause} onChange={(e) => setField("root_cause", e.target.value)} placeholder="Root cause analysis…" />
+              <Input
+                value={form.root_cause}
+                onChange={(e) => setField("root_cause", e.target.value)}
+                placeholder="Root cause analysis…"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : editTarget ? "Save Changes" : "Create Complaint"}
+              {isSubmitting
+                ? "Saving…"
+                : editTarget
+                  ? "Save Changes"
+                  : "Create Complaint"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete complaint?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove complaint{" "}
-              <span className="font-mono font-medium">{deleteTarget?.complaint_id}</span>. This cannot be undone.
+              <span className="font-mono font-medium">
+                {deleteTarget?.complaint_id}
+              </span>
+              . This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

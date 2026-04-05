@@ -15,12 +15,20 @@ export interface SelectOptions {
   complaintTypes: SelectOption[];
 }
 
-export function buildSelectOptions(ctx: SerializedLookupContext): SelectOptions {
+export function buildSelectOptions(
+  ctx: SerializedLookupContext,
+): SelectOptions {
   return {
     areas: ctx.areas.map((a) => ({ value: a.area_id, label: a.name })),
     services: ctx.services.map((s) => ({ value: s.service_id, label: s.name })),
-    vehicleTypes: ctx.vehicleTypes.map((vt) => ({ value: vt.vehicle_type_id, label: vt.name })),
-    timeSlots: ctx.timeSlots.map((ts) => ({ value: ts.time_slot_id, label: ts.label })),
+    vehicleTypes: ctx.vehicleTypes.map((vt) => ({
+      value: vt.vehicle_type_id,
+      label: vt.name,
+    })),
+    timeSlots: ctx.timeSlots.map((ts) => ({
+      value: ts.time_slot_id,
+      label: ts.label,
+    })),
     bookingStatuses: ctx.bookingStatuses.map((bs) => ({
       value: bs.booking_status_id,
       label: bs.label,
@@ -33,7 +41,10 @@ export function buildSelectOptions(ctx: SerializedLookupContext): SelectOptions 
       value: pm.payment_mode_id,
       label: pm.label,
     })),
-    leadSources: ctx.leadSources.map((ls) => ({ value: ls.source_id, label: ls.label })),
+    leadSources: ctx.leadSources.map((ls) => ({
+      value: ls.source_id,
+      label: ls.label,
+    })),
     complaintTypes: ctx.complaintTypes.map((ct) => ({
       value: ct.complaint_type_id,
       label: ct.label,

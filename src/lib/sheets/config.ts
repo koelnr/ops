@@ -6,12 +6,14 @@ export function getSpreadsheetId(): string {
 
 // Keep SPREADSHEET_ID as a getter-compatible re-export for backwards compatibility
 // with mutations/helpers.ts which imports it directly.
-export const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? (() => {
-  if (typeof window === "undefined" && process.env.NODE_ENV !== "test") {
-    // Only throw at runtime in server context, not during module evaluation in tests
-  }
-  return "";
-})();
+export const SPREADSHEET_ID =
+  process.env.GOOGLE_SHEETS_SPREADSHEET_ID ??
+  (() => {
+    if (typeof window === "undefined" && process.env.NODE_ENV !== "test") {
+      // Only throw at runtime in server context, not during module evaluation in tests
+    }
+    return "";
+  })();
 
 export const RANGES = {
   bookings: "bookings!A:Z",

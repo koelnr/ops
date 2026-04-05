@@ -86,7 +86,10 @@ export function ComplaintActions({
           {statusOptions
             .filter((s) => s.label !== currentStatus)
             .map((s) => (
-              <DropdownMenuItem key={s.value} onClick={() => updateStatus(s.label)}>
+              <DropdownMenuItem
+                key={s.value}
+                onClick={() => updateStatus(s.label)}
+              >
                 Mark {s.label}
               </DropdownMenuItem>
             ))}
@@ -116,8 +119,17 @@ export function ComplaintActions({
                 onChange={(e) => setResolutionType(e.target.value)}
               >
                 <option value="">Select type…</option>
-                {["Refund", "Rewash", "Apology", "Replacement", "No Action", "Other"].map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {[
+                  "Refund",
+                  "Rewash",
+                  "Apology",
+                  "Replacement",
+                  "No Action",
+                  "Other",
+                ].map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
               </Select>
             </div>

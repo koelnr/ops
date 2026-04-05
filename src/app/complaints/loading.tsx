@@ -9,7 +9,7 @@ function SkeletonRow({ cols }: { cols: number }) {
         />
       ))}
     </div>
-  )
+  );
 }
 
 export default function Loading() {
@@ -26,7 +26,11 @@ export default function Loading() {
       <div className="rounded-md border overflow-hidden">
         <div className="flex items-center gap-3 border-b bg-muted/20 px-4 py-3">
           {[100, 100, 100, 240, 80, 90, 90].map((w, i) => (
-            <div key={i} className="h-3 rounded bg-muted animate-pulse" style={{ width: w }} />
+            <div
+              key={i}
+              className="h-3 rounded bg-muted animate-pulse"
+              style={{ width: w }}
+            />
           ))}
         </div>
         {Array.from({ length: 6 }).map((_, i) => (
@@ -34,5 +38,5 @@ export default function Loading() {
         ))}
       </div>
     </div>
-  )
+  );
 }

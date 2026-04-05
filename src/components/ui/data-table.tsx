@@ -54,7 +54,13 @@ export function DataTable<TData, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}>
+                <TableHead
+                  key={header.id}
+                  style={{
+                    width:
+                      header.getSize() !== 150 ? header.getSize() : undefined,
+                  }}
+                >
                   {header.isPlaceholder ? null : header.column.getCanSort() ? (
                     <Button
                       variant="ghost"
@@ -62,7 +68,10 @@ export function DataTable<TData, TValue>({
                       className="-ml-3 h-8 data-[state=open]:bg-accent"
                       onClick={header.column.getToggleSortingHandler()}
                     >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                       {header.column.getIsSorted() === "asc" ? (
                         <ArrowUp className="ml-1 h-3 w-3" />
                       ) : header.column.getIsSorted() === "desc" ? (
@@ -72,7 +81,10 @@ export function DataTable<TData, TValue>({
                       )}
                     </Button>
                   ) : (
-                    flexRender(header.column.columnDef.header, header.getContext())
+                    flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )
                   )}
                 </TableHead>
               ))}
@@ -81,7 +93,10 @@ export function DataTable<TData, TValue>({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+            <TableRow
+              key={row.id}
+              data-state={row.getIsSelected() && "selected"}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

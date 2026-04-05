@@ -31,11 +31,26 @@ const NAV_ITEMS = [
   { href: "/jobs/today", label: "Today's Jobs", icon: Zap, adminOnly: false },
   { href: "/leads", label: "Leads", icon: Megaphone, adminOnly: true },
   { href: "/customers", label: "Customers", icon: UserRound, adminOnly: true },
-  { href: "/bookings", label: "Bookings", icon: CalendarDays, adminOnly: false },
+  {
+    href: "/bookings",
+    label: "Bookings",
+    icon: CalendarDays,
+    adminOnly: false,
+  },
   { href: "/payments", label: "Payments", icon: CreditCard, adminOnly: true },
-  { href: "/complaints", label: "Complaints", icon: AlertTriangle, adminOnly: true },
+  {
+    href: "/complaints",
+    label: "Complaints",
+    icon: AlertTriangle,
+    adminOnly: true,
+  },
   { href: "/workers", label: "Workers", icon: Users, adminOnly: true },
-  { href: "/settings/lookups", label: "Settings", icon: Settings, adminOnly: true },
+  {
+    href: "/settings/lookups",
+    label: "Settings",
+    icon: Settings,
+    adminOnly: true,
+  },
 ];
 
 export function AppSidebar() {
@@ -56,7 +71,8 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleItems.map(({ href, label, icon: Icon }) => {
-                const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+                const isActive =
+                  href === "/" ? pathname === "/" : pathname.startsWith(href);
                 return (
                   <SidebarMenuItem key={href}>
                     <SidebarMenuButton asChild isActive={isActive}>

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateCustomerSchema } from "@/lib/schemas";
-import { updateCustomer, deleteCustomer } from "@/lib/sheets/mutations/customers";
+import {
+  updateCustomer,
+  deleteCustomer,
+} from "@/lib/sheets/mutations/customers";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -23,12 +26,16 @@ export async function PATCH(
     await updateCustomer(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update customer";
+    const message =
+      err instanceof Error ? err.message : "Failed to update customer";
     console.error("[PATCH /api/customers/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update customer" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update customer" },
+      { status: 500 },
+    );
   }
 }
 
@@ -42,11 +49,15 @@ export async function DELETE(
     await deleteCustomer(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete customer";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete customer";
     console.error("[DELETE /api/customers/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete customer" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete customer" },
+      { status: 500 },
+    );
   }
 }

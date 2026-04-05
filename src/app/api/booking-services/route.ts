@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ bookingServices });
   } catch (err) {
     console.error("[GET /api/booking-services]", err);
-    return NextResponse.json({ error: "Failed to fetch booking services" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch booking services" },
+      { status: 500 },
+    );
   }
 }
 
@@ -32,6 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ bookingService }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/booking-services]", err);
-    return NextResponse.json({ error: "Failed to create booking service" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create booking service" },
+      { status: 500 },
+    );
   }
 }

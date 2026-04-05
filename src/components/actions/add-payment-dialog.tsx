@@ -68,7 +68,11 @@ export function AddPaymentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children ?? <Button size="sm" variant="outline">Add Payment</Button>}
+        {children ?? (
+          <Button size="sm" variant="outline">
+            Add Payment
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -96,7 +100,9 @@ export function AddPaymentDialog({
             >
               <option value="">Select mode…</option>
               {paymentModes.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -109,7 +115,9 @@ export function AddPaymentDialog({
             >
               <option value="">Select status…</option>
               {paymentStatuses.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -123,7 +131,11 @@ export function AddPaymentDialog({
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

@@ -1,6 +1,12 @@
 import type { CreateWorkerInput, UpdateWorkerInput } from "../../schemas";
 import type { Worker } from "../../domain";
-import { findRowIndex, updateRowCells, generateNextId, appendRow, deleteRow } from "./helpers";
+import {
+  findRowIndex,
+  updateRowCells,
+  generateNextId,
+  appendRow,
+  deleteRow,
+} from "./helpers";
 
 // Workers column map (A=worker_id, B=worker_name, C=phone,
 // D=primary_area_id, E=joining_date, F=status,
@@ -34,18 +40,24 @@ export async function createWorker(input: CreateWorkerInput): Promise<Worker> {
   };
 }
 
-export async function updateWorker(id: string, patch: UpdateWorkerInput): Promise<void> {
+export async function updateWorker(
+  id: string,
+  patch: UpdateWorkerInput,
+): Promise<void> {
   const row = await findRowIndex("workers", id);
   if (row === null) throw new Error(`Worker not found: ${id}`);
 
   const cells: [string, string][] = [];
   if (patch.worker_name !== undefined) cells.push(["B", patch.worker_name]);
   if (patch.phone !== undefined) cells.push(["C", patch.phone]);
-  if (patch.primary_area_id !== undefined) cells.push(["D", patch.primary_area_id]);
+  if (patch.primary_area_id !== undefined)
+    cells.push(["D", patch.primary_area_id]);
   if (patch.joining_date !== undefined) cells.push(["E", patch.joining_date]);
   if (patch.status !== undefined) cells.push(["F", patch.status]);
-  if (patch.default_payout_type !== undefined) cells.push(["G", patch.default_payout_type]);
-  if (patch.default_payout_rate !== undefined) cells.push(["H", String(patch.default_payout_rate)]);
+  if (patch.default_payout_type !== undefined)
+    cells.push(["G", patch.default_payout_type]);
+  if (patch.default_payout_rate !== undefined)
+    cells.push(["H", String(patch.default_payout_rate)]);
   if (patch.notes !== undefined) cells.push(["I", patch.notes]);
 
   if (cells.length > 0) {

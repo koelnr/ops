@@ -17,7 +17,8 @@ interface Props {
 
 export default async function PaymentFollowupPage({ searchParams }: Props) {
   const { filter } = await searchParams;
-  const activeFilter = (filter === "follow-up" || filter === "partial") ? filter : "all";
+  const activeFilter =
+    filter === "follow-up" || filter === "partial" ? filter : "all";
 
   const [bookings, payments, customers, ctx] = await Promise.all([
     getBookings().catch(() => []),
@@ -27,10 +28,20 @@ export default async function PaymentFollowupPage({ searchParams }: Props) {
   ]);
 
   if (!ctx) {
-    return <div className="p-6 text-muted-foreground text-sm">Failed to load lookup data.</div>;
+    return (
+      <div className="p-6 text-muted-foreground text-sm">
+        Failed to load lookup data.
+      </div>
+    );
   }
 
-  const views = buildPendingPaymentViews(bookings, payments, customers, ctx, activeFilter);
+  const views = buildPendingPaymentViews(
+    bookings,
+    payments,
+    customers,
+    ctx,
+    activeFilter,
+  );
 
   const paymentsByBooking: Record<string, Payment[]> = {};
   for (const p of payments) {
@@ -54,12 +65,15 @@ export default async function PaymentFollowupPage({ searchParams }: Props) {
     <div className="mx-auto max-w-7xl px-4 py-6 space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/payments"><ChevronLeft className="h-4 w-4" /></Link>
+          <Link href="/payments">
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
         </Button>
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Payment Follow-up</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {views.length} pending · ₹{totalDue.toLocaleString("en-IN")} outstanding
+            {views.length} pending · ₹{totalDue.toLocaleString("en-IN")}{" "}
+            outstanding
             {followUpCount > 0 && ` · ${followUpCount} flagged`}
           </p>
         </div>
@@ -70,7 +84,11 @@ export default async function PaymentFollowupPage({ searchParams }: Props) {
         {filterLinks.map(({ label, value }) => (
           <Link
             key={value}
-            href={value === "all" ? "/payments/follow-up" : `/payments/follow-up?filter=${value}`}
+            href={
+              value === "all"
+                ? "/payments/follow-up"
+                : `/payments/follow-up?filter=${value}`
+            }
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeFilter === value
                 ? "border-foreground text-foreground"

@@ -6,7 +6,7 @@ export function rowsToObjects(rows: string[][]): Record<string, string>[] {
   if (rows.length < 2) return [];
   const [headers, ...dataRows] = rows;
   return dataRows.map((row) =>
-    Object.fromEntries(headers.map((header, i) => [header, row[i] ?? ""]))
+    Object.fromEntries(headers.map((header, i) => [header, row[i] ?? ""])),
   );
 }
 
@@ -14,7 +14,10 @@ export function rowsToObjects(rows: string[][]): Record<string, string>[] {
  *  Strips leading currency symbols (₹, $, £) and trailing % before parsing. */
 export function parseNumber(val: string | undefined): number {
   if (!val) return 0;
-  const cleaned = val.replace(/^[₹$£]/, "").replace(/%$/, "").trim();
+  const cleaned = val
+    .replace(/^[₹$£]/, "")
+    .replace(/%$/, "")
+    .trim();
   const n = Number(cleaned);
   return isNaN(n) ? 0 : n;
 }
@@ -26,7 +29,7 @@ export function normalizeEmpty(val: string | undefined): string | undefined {
 
 /** Reads multiple ranges from the spreadsheet in a single API call. */
 export async function batchReadRanges(
-  ranges: string[]
+  ranges: string[],
 ): Promise<Record<string, string>[][]> {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.batchGet({
@@ -35,6 +38,6 @@ export async function batchReadRanges(
   });
 
   return (res.data.valueRanges ?? []).map((vr) =>
-    rowsToObjects((vr.values as string[][] | undefined) ?? [])
+    rowsToObjects((vr.values as string[][] | undefined) ?? []),
   );
 }

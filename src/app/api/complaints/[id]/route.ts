@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateComplaintSchema } from "@/lib/schemas";
-import { updateComplaint, deleteComplaint } from "@/lib/sheets/mutations/complaints";
+import {
+  updateComplaint,
+  deleteComplaint,
+} from "@/lib/sheets/mutations/complaints";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -23,12 +26,16 @@ export async function PATCH(
     await updateComplaint(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update complaint";
+    const message =
+      err instanceof Error ? err.message : "Failed to update complaint";
     console.error("[PATCH /api/complaints/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update complaint" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update complaint" },
+      { status: 500 },
+    );
   }
 }
 
@@ -42,11 +49,15 @@ export async function DELETE(
     await deleteComplaint(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete complaint";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete complaint";
     console.error("[DELETE /api/complaints/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete complaint" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete complaint" },
+      { status: 500 },
+    );
   }
 }

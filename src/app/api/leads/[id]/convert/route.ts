@@ -24,13 +24,37 @@ export async function POST(req: NextRequest, { params }: Props) {
   }
 
   const { customer, vehicle, booking } = body as {
-    customer?: { existing_customer_id?: string; full_name?: string; phone?: string; area_id?: string; full_address?: string };
-    vehicle?: { existing_vehicle_id?: string; car_model?: string; brand?: string; vehicle_type_id?: string; registration_number?: string; color?: string };
-    booking?: { service_date?: string; time_slot_id?: string; booking_status_id?: string; assigned_worker_id?: string; base_price?: number; final_price?: number; area_id?: string };
+    customer?: {
+      existing_customer_id?: string;
+      full_name?: string;
+      phone?: string;
+      area_id?: string;
+      full_address?: string;
+    };
+    vehicle?: {
+      existing_vehicle_id?: string;
+      car_model?: string;
+      brand?: string;
+      vehicle_type_id?: string;
+      registration_number?: string;
+      color?: string;
+    };
+    booking?: {
+      service_date?: string;
+      time_slot_id?: string;
+      booking_status_id?: string;
+      assigned_worker_id?: string;
+      base_price?: number;
+      final_price?: number;
+      area_id?: string;
+    };
   };
 
   if (!customer) {
-    return NextResponse.json({ error: "customer is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "customer is required" },
+      { status: 400 },
+    );
   }
 
   try {
@@ -40,7 +64,10 @@ export async function POST(req: NextRequest, { params }: Props) {
       customerId = customer.existing_customer_id;
     } else {
       if (!customer.full_name || !customer.phone) {
-        return NextResponse.json({ error: "full_name and phone are required for new customer" }, { status: 400 });
+        return NextResponse.json(
+          { error: "full_name and phone are required for new customer" },
+          { status: 400 },
+        );
       }
       const created = await createCustomer({
         full_name: customer.full_name,
@@ -78,7 +105,12 @@ export async function POST(req: NextRequest, { params }: Props) {
 
     // 3. Optionally create booking
     let bookingId = "";
-    if (booking && booking.service_date && booking.time_slot_id && booking.booking_status_id) {
+    if (
+      booking &&
+      booking.service_date &&
+      booking.time_slot_id &&
+      booking.booking_status_id
+    ) {
       // Need a vehicleId to create booking — use a placeholder if not provided
       const ctx = await getLookupContext().catch(() => null);
       const effectiveVehicleId = vehicleId || "";

@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ complaints });
   } catch (err) {
     console.error("[GET /api/complaints]", err);
-    return NextResponse.json({ error: "Failed to fetch complaints" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch complaints" },
+      { status: 500 },
+    );
   }
 }
 
@@ -32,6 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ complaint }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/complaints]", err);
-    return NextResponse.json({ error: "Failed to create complaint" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create complaint" },
+      { status: 500 },
+    );
   }
 }

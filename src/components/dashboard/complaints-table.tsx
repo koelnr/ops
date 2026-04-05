@@ -6,7 +6,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Complaint, Booking, Customer, SerializedLookupContext } from "@/lib/domain";
+import type {
+  Complaint,
+  Booking,
+  Customer,
+  SerializedLookupContext,
+} from "@/lib/domain";
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "./status-badge";
 
@@ -17,7 +22,12 @@ interface ComplaintsTableProps {
   serializedCtx: SerializedLookupContext | null;
 }
 
-export function ComplaintsTable({ complaints, bookings, customers, serializedCtx }: ComplaintsTableProps) {
+export function ComplaintsTable({
+  complaints,
+  bookings,
+  customers,
+  serializedCtx,
+}: ComplaintsTableProps) {
   if (complaints.length === 0) {
     return (
       <div className="rounded-md border">
@@ -55,15 +65,21 @@ export function ComplaintsTable({ complaints, bookings, customers, serializedCtx
         <TableBody>
           {sorted.map((complaint) => {
             const booking = bookingMap.get(complaint.booking_id);
-            const customer = booking ? customerMap.get(booking.customer_id) : undefined;
+            const customer = booking
+              ? customerMap.get(booking.customer_id)
+              : undefined;
             const type = typeMap?.get(complaint.complaint_type_id);
             return (
               <TableRow key={complaint.complaint_id}>
-                <TableCell className="font-mono text-xs">{complaint.complaint_id}</TableCell>
+                <TableCell className="font-mono text-xs">
+                  {complaint.complaint_id}
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {customer?.full_name ?? "—"}
                 </TableCell>
-                <TableCell className="font-mono text-xs">{complaint.booking_id || "—"}</TableCell>
+                <TableCell className="font-mono text-xs">
+                  {complaint.booking_id || "—"}
+                </TableCell>
                 <TableCell className="text-sm">{type?.label ?? "—"}</TableCell>
                 <TableCell className="max-w-60">
                   <p className="text-sm truncate" title={complaint.details}>

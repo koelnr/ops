@@ -21,7 +21,9 @@ interface CustomerColumnActions {
   isAdmin: boolean;
 }
 
-export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<ResolvedCustomer>[] {
+export function getCustomerColumns(
+  actions: CustomerColumnActions,
+): ColumnDef<ResolvedCustomer>[] {
   const columns: ColumnDef<ResolvedCustomer>[] = [
     {
       accessorKey: "customer_id",
@@ -39,7 +41,9 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Re
         <div>
           <div className="font-medium text-sm">{row.original.full_name}</div>
           {row.original.is_repeat && (
-            <span className="text-xs text-green-700 dark:text-green-400">Repeat</span>
+            <span className="text-xs text-green-700 dark:text-green-400">
+              Repeat
+            </span>
           )}
         </div>
       ),
@@ -48,14 +52,18 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Re
       accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground font-mono">{row.original.phone}</span>
+        <span className="text-sm text-muted-foreground font-mono">
+          {row.original.phone}
+        </span>
       ),
     },
     {
       accessorKey: "area_name",
       header: "Area",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.area_name || "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.area_name || "—"}
+        </span>
       ),
     },
     {
@@ -63,7 +71,9 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Re
       header: "Bookings",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="tabular-nums text-sm text-right block">{row.original.total_bookings}</span>
+        <span className="tabular-nums text-sm text-right block">
+          {row.original.total_bookings}
+        </span>
       ),
     },
     {
@@ -72,7 +82,9 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Re
       enableSorting: true,
       cell: ({ row }) => (
         <span className="tabular-nums text-sm font-medium text-right block">
-          {row.original.total_revenue > 0 ? formatCurrency(row.original.total_revenue) : "—"}
+          {row.original.total_revenue > 0
+            ? formatCurrency(row.original.total_revenue)
+            : "—"}
         </span>
       ),
     },
@@ -94,14 +106,21 @@ export function getCustomerColumns(actions: CustomerColumnActions): ColumnDef<Re
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={actions.isPending}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => actions.onEdit(customer)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => actions.onEdit(customer)}>
+                Edit
+              </DropdownMenuItem>
               {actions.isAdmin && (
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"

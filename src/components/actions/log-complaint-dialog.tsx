@@ -68,7 +68,11 @@ export function LogComplaintDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children ?? <Button size="sm" variant="outline">Log Complaint</Button>}
+        {children ?? (
+          <Button size="sm" variant="outline">
+            Log Complaint
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -84,7 +88,9 @@ export function LogComplaintDialog({
             >
               <option value="">Select type…</option>
               {complaintTypes.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -108,12 +114,18 @@ export function LogComplaintDialog({
             >
               <option value="">— None —</option>
               {workers.map((w) => (
-                <option key={w.value} value={w.value}>{w.label}</option>
+                <option key={w.value} value={w.value}>
+                  {w.label}
+                </option>
               ))}
             </Select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

@@ -44,12 +44,17 @@ export default async function HomePage() {
     getLookupContext(),
   ]);
 
-  const bookings = bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
-  const payments = paymentsResult.status === "fulfilled" ? paymentsResult.value : [];
-  const workers = workersResult.status === "fulfilled" ? workersResult.value : [];
+  const bookings =
+    bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
+  const payments =
+    paymentsResult.status === "fulfilled" ? paymentsResult.value : [];
+  const workers =
+    workersResult.status === "fulfilled" ? workersResult.value : [];
   const leads = leadsResult.status === "fulfilled" ? leadsResult.value : [];
-  const complaints = complaintsResult.status === "fulfilled" ? complaintsResult.value : [];
-  const customers = customersResult.status === "fulfilled" ? customersResult.value : [];
+  const complaints =
+    complaintsResult.status === "fulfilled" ? complaintsResult.value : [];
+  const customers =
+    customersResult.status === "fulfilled" ? customersResult.value : [];
   const ctx = ctxResult.status === "fulfilled" ? ctxResult.value : null;
 
   const serializedCtx = ctx ? serializeLookupContext(ctx) : null;
@@ -73,16 +78,28 @@ export default async function HomePage() {
   const pendingPaymentViews = ctx
     ? buildPendingPaymentViews(bookings, payments, customers, ctx)
     : [];
-  const totalOutstanding = pendingPaymentViews.reduce((s, v) => s + v.amountDue, 0);
+  const totalOutstanding = pendingPaymentViews.reduce(
+    (s, v) => s + v.amountDue,
+    0,
+  );
 
-  const activeWorkers = workers.filter((w) => w.status.toLowerCase() === "active").length;
+  const activeWorkers = workers.filter(
+    (w) => w.status.toLowerCase() === "active",
+  ).length;
 
   const newLeadsCount = leads.filter(
     (l) => classifyFollowUpStatus(l.follow_up_status) === "pending",
   ).length;
 
   const todayJobsPreview = ctx
-    ? buildTodayJobViews(bookings, payments, complaints, customers, workers, ctx).slice(0, 8)
+    ? buildTodayJobViews(
+        bookings,
+        payments,
+        complaints,
+        customers,
+        workers,
+        ctx,
+      ).slice(0, 8)
     : [];
 
   const pendingPaymentsForTable = ctx
@@ -111,7 +128,9 @@ export default async function HomePage() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight">Ops Dashboard</h1>
+            <h1 className="text-lg font-semibold tracking-tight">
+              Ops Dashboard
+            </h1>
             <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -128,19 +147,36 @@ export default async function HomePage() {
 
         {/* Today KPIs */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          <KpiCard label="Today's Jobs" value={todayBookings.length} sublabel="scheduled" />
+          <KpiCard
+            label="Today's Jobs"
+            value={todayBookings.length}
+            sublabel="scheduled"
+          />
           <KpiCard label="Completed" value={todayCompleted} sublabel="today" />
-          <KpiCard label="Today's Revenue" value={formatCurrency(todayRevenue)} />
+          <KpiCard
+            label="Today's Revenue"
+            value={formatCurrency(todayRevenue)}
+          />
           {isAdmin && (
             <>
-              <KpiCard label="Outstanding" value={formatCurrency(totalOutstanding)} sublabel="unpaid" />
+              <KpiCard
+                label="Outstanding"
+                value={formatCurrency(totalOutstanding)}
+                sublabel="unpaid"
+              />
               <KpiCard
                 label="Follow-ups"
-                value={pendingPaymentViews.filter((v) => v.followUpRequired).length}
+                value={
+                  pendingPaymentViews.filter((v) => v.followUpRequired).length
+                }
               />
               <KpiCard label="Open Complaints" value={openComplaints} />
               <KpiCard label="Active Workers" value={activeWorkers} />
-              <KpiCard label="New Leads" value={newLeadsCount} sublabel="pending" />
+              <KpiCard
+                label="New Leads"
+                value={newLeadsCount}
+                sublabel="pending"
+              />
             </>
           )}
         </div>
@@ -193,7 +229,10 @@ export default async function HomePage() {
               description={`${pendingPaymentViews.length} bookings · ${formatCurrency(totalOutstanding)} outstanding`}
               action={
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/payments/follow-up" className="flex items-center gap-1">
+                  <Link
+                    href="/payments/follow-up"
+                    className="flex items-center gap-1"
+                  >
                     Full queue <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </Button>
@@ -227,7 +266,10 @@ export default async function HomePage() {
                 const area = ctx?.areas.get(l.area_id);
                 const service = ctx?.services.get(l.interested_service_id);
                 return (
-                  <div key={l.lead_id} className="flex items-center justify-between px-3 py-2.5">
+                  <div
+                    key={l.lead_id}
+                    className="flex items-center justify-between px-3 py-2.5"
+                  >
                     <div>
                       <Link
                         href={`/leads/${l.lead_id}`}
@@ -236,10 +278,14 @@ export default async function HomePage() {
                         {l.prospect_name}
                       </Link>
                       <div className="text-xs text-muted-foreground">
-                        {[l.phone, area?.name, service?.name].filter(Boolean).join(" · ")}
+                        {[l.phone, area?.name, service?.name]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">{l.follow_up_status}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {l.follow_up_status}
+                    </span>
                   </div>
                 );
               })}

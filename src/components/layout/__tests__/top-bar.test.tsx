@@ -46,7 +46,9 @@ function renderTopBar(defaultOpen = true) {
 describe("TopBar — sidebar trigger", () => {
   it("renders the sidebar toggle button", () => {
     renderTopBar();
-    expect(screen.getByRole("button", { name: /toggle sidebar/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /toggle sidebar/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the page title", () => {
@@ -76,7 +78,9 @@ describe("TopBar — sidebar trigger", () => {
 describe("TopBar — dark mode toggle", () => {
   it("renders the dark mode toggle button", () => {
     renderTopBar();
-    expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /toggle theme/i }),
+    ).toBeInTheDocument();
   });
 
   it("clicking the dark mode toggle does not throw", async () => {
@@ -84,7 +88,9 @@ describe("TopBar — dark mode toggle", () => {
     renderTopBar();
     await user.click(screen.getByRole("button", { name: /toggle theme/i }));
     // Toggle is still in the document after click
-    expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /toggle theme/i }),
+    ).toBeInTheDocument();
   });
 });
 

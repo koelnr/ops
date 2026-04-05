@@ -8,9 +8,15 @@ import { WorkersView } from "@/components/views/workers-view";
 
 export default async function WorkersPage() {
   const [workers, bookings, ctx] = await Promise.all([
-    getWorkers().catch((err) => { console.error("[workers page]", err); return []; }),
+    getWorkers().catch((err) => {
+      console.error("[workers page]", err);
+      return [];
+    }),
     getBookings().catch(() => []),
-    getLookupContext().catch((err) => { console.error("[workers page] lookups", err); return null; }),
+    getLookupContext().catch((err) => {
+      console.error("[workers page] lookups", err);
+      return null;
+    }),
   ]);
 
   const workersWithSummary = ctx

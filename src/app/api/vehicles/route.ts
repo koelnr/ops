@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ vehicles });
   } catch (err) {
     console.error("[GET /api/vehicles]", err);
-    return NextResponse.json({ error: "Failed to fetch vehicles" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch vehicles" },
+      { status: 500 },
+    );
   }
 }
 
@@ -32,6 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ vehicle }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/vehicles]", err);
-    return NextResponse.json({ error: "Failed to create vehicle" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create vehicle" },
+      { status: 500 },
+    );
   }
 }

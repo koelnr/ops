@@ -62,7 +62,11 @@ export function RowActionsBooking({
       [field]: new Date().toISOString(),
     });
     if (result.ok) {
-      toast.success(field === "actual_start_at" ? "Start time recorded" : "End time recorded");
+      toast.success(
+        field === "actual_start_at"
+          ? "Start time recorded"
+          : "End time recorded",
+      );
       router.refresh();
     } else {
       toast.error(result.error ?? "Failed to update");

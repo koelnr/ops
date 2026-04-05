@@ -12,11 +12,15 @@ export async function DELETE(
     await deleteBookingService(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete booking service";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete booking service";
     console.error("[DELETE /api/booking-services/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete booking service" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete booking service" },
+      { status: 500 },
+    );
   }
 }

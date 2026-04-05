@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ payments });
   } catch (err) {
     console.error("[GET /api/payments]", err);
-    return NextResponse.json({ error: "Failed to fetch payments" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch payments" },
+      { status: 500 },
+    );
   }
 }
 
@@ -32,6 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ payment }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/payments]", err);
-    return NextResponse.json({ error: "Failed to create payment" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create payment" },
+      { status: 500 },
+    );
   }
 }

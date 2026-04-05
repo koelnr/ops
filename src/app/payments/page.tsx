@@ -6,8 +6,14 @@ import { PaymentsView } from "@/components/views/payments-view";
 
 export default async function PaymentsPage() {
   const [resolvedPayments, ctx] = await Promise.all([
-    getPaymentsResolved().catch((err) => { console.error("[payments page]", err); return []; }),
-    getLookupContext().catch((err) => { console.error("[payments page] lookups", err); return null; }),
+    getPaymentsResolved().catch((err) => {
+      console.error("[payments page]", err);
+      return [];
+    }),
+    getLookupContext().catch((err) => {
+      console.error("[payments page] lookups", err);
+      return null;
+    }),
   ]);
 
   const serializedCtx = ctx ? serializeLookupContext(ctx) : null;

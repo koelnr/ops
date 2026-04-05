@@ -1,6 +1,12 @@
 import type { CreateLeadInput, UpdateLeadInput } from "../../schemas";
 import type { Lead } from "../../domain";
-import { findRowIndex, updateRowCells, appendRow, deleteRow, generateNextId } from "./helpers";
+import {
+  findRowIndex,
+  updateRowCells,
+  appendRow,
+  deleteRow,
+  generateNextId,
+} from "./helpers";
 
 // Leads column map (A=lead_id, B=lead_date, C=prospect_name, D=phone,
 // E=area_id, F=interested_service_id, G=source_id,
@@ -41,7 +47,10 @@ export async function createLead(input: CreateLeadInput): Promise<Lead> {
   };
 }
 
-export async function updateLead(id: string, patch: UpdateLeadInput): Promise<void> {
+export async function updateLead(
+  id: string,
+  patch: UpdateLeadInput,
+): Promise<void> {
   const row = await findRowIndex("leads", id);
   if (row === null) throw new Error(`Lead not found: ${id}`);
 
@@ -50,12 +59,17 @@ export async function updateLead(id: string, patch: UpdateLeadInput): Promise<vo
   if (patch.prospect_name !== undefined) cells.push(["C", patch.prospect_name]);
   if (patch.phone !== undefined) cells.push(["D", patch.phone]);
   if (patch.area_id !== undefined) cells.push(["E", patch.area_id]);
-  if (patch.interested_service_id !== undefined) cells.push(["F", patch.interested_service_id]);
+  if (patch.interested_service_id !== undefined)
+    cells.push(["F", patch.interested_service_id]);
   if (patch.source_id !== undefined) cells.push(["G", patch.source_id]);
-  if (patch.follow_up_status !== undefined) cells.push(["H", patch.follow_up_status]);
-  if (patch.conversion_status !== undefined) cells.push(["I", patch.conversion_status]);
-  if (patch.converted_customer_id !== undefined) cells.push(["J", patch.converted_customer_id]);
-  if (patch.converted_booking_id !== undefined) cells.push(["K", patch.converted_booking_id]);
+  if (patch.follow_up_status !== undefined)
+    cells.push(["H", patch.follow_up_status]);
+  if (patch.conversion_status !== undefined)
+    cells.push(["I", patch.conversion_status]);
+  if (patch.converted_customer_id !== undefined)
+    cells.push(["J", patch.converted_customer_id]);
+  if (patch.converted_booking_id !== undefined)
+    cells.push(["K", patch.converted_booking_id]);
   if (patch.notes !== undefined) cells.push(["L", patch.notes]);
 
   if (cells.length > 0) {

@@ -31,7 +31,9 @@ interface BookingColumnActions {
   bookingStatusOptions: SelectOption[];
 }
 
-export function getBookingColumns(actions: BookingColumnActions): ColumnDef<ResolvedBooking>[] {
+export function getBookingColumns(
+  actions: BookingColumnActions,
+): ColumnDef<ResolvedBooking>[] {
   const columns: ColumnDef<ResolvedBooking>[] = [
     {
       accessorKey: "booking_id",
@@ -40,7 +42,10 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
           <span className="font-mono text-xs">{row.original.booking_id}</span>
-          <Link href={`/bookings/${row.original.booking_id}`} className="text-muted-foreground hover:text-foreground">
+          <Link
+            href={`/bookings/${row.original.booking_id}`}
+            className="text-muted-foreground hover:text-foreground"
+          >
             <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
@@ -51,7 +56,9 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
       header: "Service Date",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.original.service_date)}</span>
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.service_date)}
+        </span>
       ),
     },
     {
@@ -60,8 +67,12 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
       enableSorting: true,
       cell: ({ row }) => (
         <div>
-          <div className="font-medium text-sm">{row.original.customer_name || "—"}</div>
-          <div className="text-xs text-muted-foreground">{row.original.phone}</div>
+          <div className="font-medium text-sm">
+            {row.original.customer_name || "—"}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {row.original.phone}
+          </div>
         </div>
       ),
     },
@@ -83,7 +94,9 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
       accessorKey: "area_name",
       header: "Area",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.area_name || "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.area_name || "—"}
+        </span>
       ),
     },
     {
@@ -92,7 +105,9 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
       enableSorting: true,
       cell: ({ row }) => (
         <span className="tabular-nums text-sm font-medium">
-          {row.original.final_price > 0 ? formatCurrency(row.original.final_price) : "—"}
+          {row.original.final_price > 0
+            ? formatCurrency(row.original.final_price)
+            : "—"}
         </span>
       ),
     },
@@ -100,7 +115,11 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
       accessorKey: "booking_status_name",
       header: "Status",
       cell: ({ row }) => (
-        <StatusBadge status={row.original.booking_status_name || row.original.booking_status_id} />
+        <StatusBadge
+          status={
+            row.original.booking_status_name || row.original.booking_status_id
+          }
+        />
       ),
     },
   ];
@@ -114,15 +133,24 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={actions.isPending}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={actions.isPending}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => actions.onEdit(booking)}>Edit</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => actions.onAssign(booking)}>Assign Worker</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => actions.onEdit(booking)}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => actions.onAssign(booking)}>
+                Assign Worker
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Booking Status</DropdownMenuSubTrigger>
@@ -131,7 +159,12 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Reso
                     <DropdownMenuItem
                       key={opt.value}
                       disabled={booking.booking_status_id === opt.value}
-                      onSelect={() => actions.onSetBookingStatus(booking.booking_id, opt.value)}
+                      onSelect={() =>
+                        actions.onSetBookingStatus(
+                          booking.booking_id,
+                          opt.value,
+                        )
+                      }
                     >
                       {opt.label}
                     </DropdownMenuItem>

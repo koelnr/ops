@@ -23,12 +23,16 @@ export async function PATCH(
     await updateVehicle(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update vehicle";
+    const message =
+      err instanceof Error ? err.message : "Failed to update vehicle";
     console.error("[PATCH /api/vehicles/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to update vehicle" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update vehicle" },
+      { status: 500 },
+    );
   }
 }
 
@@ -42,11 +46,15 @@ export async function DELETE(
     await deleteVehicle(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete vehicle";
+    const message =
+      err instanceof Error ? err.message : "Failed to delete vehicle";
     console.error("[DELETE /api/vehicles/[id]]", err);
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
-    return NextResponse.json({ error: "Failed to delete vehicle" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete vehicle" },
+      { status: 500 },
+    );
   }
 }

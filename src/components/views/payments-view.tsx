@@ -13,11 +13,21 @@ import { FilterSelect } from "@/components/shared/filter-select";
 import { DataTable } from "@/components/ui/data-table";
 import { getPaymentColumns } from "./payments-columns";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -63,7 +73,11 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
 
   const opts = options ?? STATIC_OPTIONS;
 
-  function resetFilters() { setSearch(""); setStatusFilter(""); setModeFilter(""); }
+  function resetFilters() {
+    setSearch("");
+    setStatusFilter("");
+    setModeFilter("");
+  }
 
   // UPI ref dialog
   const [refDialogOpen, setRefDialogOpen] = useState(false);
@@ -84,7 +98,9 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<ResolvedPayment | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ResolvedPayment | null>(
+    null,
+  );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -104,7 +120,9 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
 
   const pendingCount = useMemo(() => {
     const pendingLabels = new Set(["Pending", "Partially Paid"]);
-    return resolvedPayments.filter((p) => pendingLabels.has(p.payment_status_name)).length;
+    return resolvedPayments.filter((p) =>
+      pendingLabels.has(p.payment_status_name),
+    ).length;
   }, [resolvedPayments]);
 
   function setField(key: keyof PaymentFormData, value: string) {
@@ -118,15 +136,24 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
   }
 
   // Resolve FK helpers
-  const selectedModeLabel = opts.paymentModes.find((o) => o.value === form.payment_mode_id)?.label ?? "";
+  const selectedModeLabel =
+    opts.paymentModes.find((o) => o.value === form.payment_mode_id)?.label ??
+    "";
   const isUpi = selectedModeLabel === "UPI";
-  const selectedStatusLabel = opts.paymentStatuses.find((o) => o.value === form.payment_status_id)?.label ?? "";
-  const isSettled = selectedStatusLabel === "Paid" || selectedStatusLabel === "Partially Paid";
+  const selectedStatusLabel =
+    opts.paymentStatuses.find((o) => o.value === form.payment_status_id)
+      ?.label ?? "";
+  const isSettled =
+    selectedStatusLabel === "Paid" || selectedStatusLabel === "Partially Paid";
 
   async function handleStatusUpdate(id: string, statusId: string) {
-    const result = await mutate(`/api/payments/${id}`, { payment_status_id: statusId });
+    const result = await mutate(`/api/payments/${id}`, {
+      payment_status_id: statusId,
+    });
     if (result.ok) {
-      const label = opts.paymentStatuses.find((o) => o.value === statusId)?.label ?? statusId;
+      const label =
+        opts.paymentStatuses.find((o) => o.value === statusId)?.label ??
+        statusId;
       toast.success(`Payment marked as ${label}`);
       startTransition(() => router.refresh());
     } else {
@@ -165,7 +192,9 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
       return;
     }
     if (isSettled && !form.payment_date) {
-      toast.error("Payment date is required when payment is Paid or Partially Paid");
+      toast.error(
+        "Payment date is required when payment is Paid or Partially Paid",
+      );
       return;
     }
     if (isUpi && isSettled && !form.upi_transaction_ref.trim()) {
@@ -225,23 +254,53 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
         description={`${resolvedPayments.length} total · ${pendingCount} pending or partial`}
       />
       <div className="flex flex-wrap items-center gap-2">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search payment ID, booking ID, customer…" className="w-full sm:w-75" />
-        <FilterSelect value={statusFilter} onChange={setStatusFilter} options={opts.paymentStatuses} placeholder="All statuses" />
-        <FilterSelect value={modeFilter} onChange={setModeFilter} options={opts.paymentModes} placeholder="All modes" />
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search payment ID, booking ID, customer…"
+          className="w-full sm:w-75"
+        />
+        <FilterSelect
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={opts.paymentStatuses}
+          placeholder="All statuses"
+        />
+        <FilterSelect
+          value={modeFilter}
+          onChange={setModeFilter}
+          options={opts.paymentModes}
+          placeholder="All modes"
+        />
         {filtered.length !== resolvedPayments.length && (
           <>
-            <span className="text-xs text-muted-foreground">{filtered.length} of {resolvedPayments.length} shown</span>
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">Clear filters</Button>
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {resolvedPayments.length} shown
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="h-7 text-xs"
+            >
+              Clear filters
+            </Button>
           </>
         )}
       </div>
 
-      <DataTable columns={columns} data={filtered} emptyMessage="No payments match your filters." />
+      <DataTable
+        columns={columns}
+        data={filtered}
+        emptyMessage="No payments match your filters."
+      />
 
       {/* UPI Ref Dialog */}
       <Dialog open={refDialogOpen} onOpenChange={setRefDialogOpen}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Update UPI Reference</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Update UPI Reference</DialogTitle>
+          </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="upi-ref">UPI Transaction Reference</Label>
             <Input
@@ -253,7 +312,9 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRefDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRefDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleUpdateRef} disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save"}
             </Button>
@@ -271,23 +332,47 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Booking ID</Label>
-                <Input value={editTarget.booking_id} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
+                <Input
+                  value={editTarget.booking_id}
+                  readOnly
+                  disabled
+                  className="bg-muted cursor-not-allowed opacity-60"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Customer</Label>
-                <Input value={editTarget.customer_name} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
+                <Input
+                  value={editTarget.customer_name}
+                  readOnly
+                  disabled
+                  className="bg-muted cursor-not-allowed opacity-60"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Service Date</Label>
-                <Input value={editTarget.service_date} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
+                <Input
+                  value={editTarget.service_date}
+                  readOnly
+                  disabled
+                  className="bg-muted cursor-not-allowed opacity-60"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Payment Date{isSettled && " *"}</Label>
-                <Input type="date" value={form.payment_date} onChange={(e) => setField("payment_date", e.target.value)} />
+                <Input
+                  type="date"
+                  value={form.payment_date}
+                  onChange={(e) => setField("payment_date", e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Amount Due (₹)</Label>
-                <Input value={editTarget.final_price} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
+                <Input
+                  value={editTarget.final_price}
+                  readOnly
+                  disabled
+                  className="bg-muted cursor-not-allowed opacity-60"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Amount Received (₹)</Label>
@@ -297,16 +382,28 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
                   onChange={(e) => setField("amount_received", e.target.value)}
                   placeholder="0"
                 />
-                {amountWarning && <p className="text-xs text-destructive">Cannot exceed amount due</p>}
+                {amountWarning && (
+                  <p className="text-xs text-destructive">
+                    Cannot exceed amount due
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label>Payment Status</Label>
-                <Select value={form.payment_status_id} onChange={(e) => setField("payment_status_id", e.target.value)}>
+                <Select
+                  value={form.payment_status_id}
+                  onChange={(e) =>
+                    setField("payment_status_id", e.target.value)
+                  }
+                >
                   {opts.paymentStatuses.map((o) => (
                     <option
                       key={o.value}
                       value={o.value}
-                      disabled={o.label === "Paid" && Number(form.amount_received) !== editTarget.final_price}
+                      disabled={
+                        o.label === "Paid" &&
+                        Number(form.amount_received) !== editTarget.final_price
+                      }
                     >
                       {o.label}
                     </option>
@@ -315,8 +412,15 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
               </div>
               <div className="space-y-1.5">
                 <Label>Payment Mode</Label>
-                <Select value={form.payment_mode_id} onChange={(e) => setField("payment_mode_id", e.target.value)}>
-                  {opts.paymentModes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                <Select
+                  value={form.payment_mode_id}
+                  onChange={(e) => setField("payment_mode_id", e.target.value)}
+                >
+                  {opts.paymentModes.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </Select>
               </div>
               {isUpi && (
@@ -324,26 +428,40 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
                   <Label>UPI Transaction Ref{isSettled && " *"}</Label>
                   <Input
                     value={form.upi_transaction_ref}
-                    onChange={(e) => setField("upi_transaction_ref", e.target.value)}
+                    onChange={(e) =>
+                      setField("upi_transaction_ref", e.target.value)
+                    }
                     placeholder="e.g. UPI-123456789"
                   />
                 </div>
               )}
               <div className="space-y-1.5">
                 <Label>Follow-Up Required</Label>
-                <Select value={form.follow_up_required} onChange={(e) => setField("follow_up_required", e.target.value)}>
+                <Select
+                  value={form.follow_up_required}
+                  onChange={(e) =>
+                    setField("follow_up_required", e.target.value)
+                  }
+                >
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </Select>
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label>Notes</Label>
-                <Textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Any notes…" rows={2} />
+                <Textarea
+                  value={form.notes}
+                  onChange={(e) => setField("notes", e.target.value)}
+                  placeholder="Any notes…"
+                  rows={2}
+                />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleFormSubmit} disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save Changes"}
             </Button>
@@ -352,19 +470,27 @@ export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete payment?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove payment{" "}
-              <span className="font-mono font-medium">{deleteTarget?.payment_id}</span>{" "}
+              <span className="font-mono font-medium">
+                {deleteTarget?.payment_id}
+              </span>{" "}
               for {deleteTarget?.customer_name}. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

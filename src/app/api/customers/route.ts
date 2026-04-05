@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ customers });
   } catch (err) {
     console.error("[GET /api/customers]", err);
-    return NextResponse.json({ error: "Failed to fetch customers" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch customers" },
+      { status: 500 },
+    );
   }
 }
 
@@ -32,6 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ customer }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/customers]", err);
-    return NextResponse.json({ error: "Failed to create customer" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create customer" },
+      { status: 500 },
+    );
   }
 }

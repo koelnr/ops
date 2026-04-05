@@ -1,8 +1,12 @@
-import * as React from "react"
-import { ChevronDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function Select({ className, children, ...props }: React.ComponentProps<"select">) {
+export function Select({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"select">) {
   return (
     <div className="relative">
       <select
@@ -19,5 +23,5 @@ export function Select({ className, children, ...props }: React.ComponentProps<"
       </select>
       <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
     </div>
-  )
+  );
 }

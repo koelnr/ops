@@ -139,18 +139,17 @@ export const CreateBookingServiceSchema = z.object({
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
 
-export const CreatePaymentSchema = z
-  .object({
-    booking_id: z.string().min(1, "Booking is required"),
-    payment_date: z.string().optional().default(""),
-    amount_received: z.coerce.number().min(0),
-    payment_mode_id: z.string().min(1, "Payment mode is required"),
-    payment_status_id: z.string().min(1, "Payment status is required"),
-    upi_transaction_ref: z.string().optional().default(""),
-    collected_by_worker_id: z.string().optional().default(""),
-    follow_up_required: z.boolean().optional().default(false),
-    notes: z.string().optional().default(""),
-  });
+export const CreatePaymentSchema = z.object({
+  booking_id: z.string().min(1, "Booking is required"),
+  payment_date: z.string().optional().default(""),
+  amount_received: z.coerce.number().min(0),
+  payment_mode_id: z.string().min(1, "Payment mode is required"),
+  payment_status_id: z.string().min(1, "Payment status is required"),
+  upi_transaction_ref: z.string().optional().default(""),
+  collected_by_worker_id: z.string().optional().default(""),
+  follow_up_required: z.boolean().optional().default(false),
+  notes: z.string().optional().default(""),
+});
 
 export const UpdatePaymentSchema = z
   .object({
@@ -242,7 +241,9 @@ export type CreateWorkerInput = z.infer<typeof CreateWorkerSchema>;
 export type UpdateWorkerInput = z.infer<typeof UpdateWorkerSchema>;
 export type CreateBookingInput = z.infer<typeof CreateBookingSchema>;
 export type UpdateBookingInput = z.infer<typeof UpdateBookingSchema>;
-export type CreateBookingServiceInput = z.infer<typeof CreateBookingServiceSchema>;
+export type CreateBookingServiceInput = z.infer<
+  typeof CreateBookingServiceSchema
+>;
 export type CreatePaymentInput = z.infer<typeof CreatePaymentSchema>;
 export type UpdatePaymentInput = z.infer<typeof UpdatePaymentSchema>;
 export type CreateComplaintInput = z.infer<typeof CreateComplaintSchema>;

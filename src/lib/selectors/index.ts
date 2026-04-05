@@ -33,7 +33,10 @@ export function getBookingAmountPaid(payments: Payment[]): number {
 }
 
 /** Amount still owed for a booking. */
-export function getBookingAmountDue(booking: Booking, payments: Payment[]): number {
+export function getBookingAmountDue(
+  booking: Booking,
+  payments: Payment[],
+): number {
   const paid = getBookingAmountPaid(
     payments.filter((p) => p.booking_id === booking.booking_id),
   );
@@ -62,7 +65,12 @@ export function getCustomerSummary(
   bookings: Booking[],
   payments: Payment[],
   ctx: LookupContext,
-): { totalBookings: number; totalRevenue: number; lastVisit: string | null; isRepeat: boolean } {
+): {
+  totalBookings: number;
+  totalRevenue: number;
+  lastVisit: string | null;
+  isRepeat: boolean;
+} {
   const customerBookings = bookings.filter(
     (b) => b.customer_id === customer.customer_id,
   );
@@ -114,7 +122,8 @@ export function getWorkerSummary(
 
   return {
     assignedCount: assigned.length,
-    completionRate: assigned.length > 0 ? completed.length / assigned.length : 0,
+    completionRate:
+      assigned.length > 0 ? completed.length / assigned.length : 0,
   };
 }
 
@@ -143,13 +152,18 @@ export function getBookingResolvedView(
   bookingServices: BookingService[],
   payments: Payment[],
 ): BookingResolvedView {
-  const customer = customers.find((c) => c.customer_id === booking.customer_id) ?? null;
-  const vehicle = vehicles.find((v) => v.vehicle_id === booking.vehicle_id) ?? null;
-  const worker = workers.find((w) => w.worker_id === booking.assigned_worker_id) ?? null;
+  const customer =
+    customers.find((c) => c.customer_id === booking.customer_id) ?? null;
+  const vehicle =
+    vehicles.find((v) => v.vehicle_id === booking.vehicle_id) ?? null;
+  const worker =
+    workers.find((w) => w.worker_id === booking.assigned_worker_id) ?? null;
 
   const labels = resolveBookingLabels(booking, ctx);
 
-  const bookingPayments = payments.filter((p) => p.booking_id === booking.booking_id);
+  const bookingPayments = payments.filter(
+    (p) => p.booking_id === booking.booking_id,
+  );
   const amountPaid = getBookingAmountPaid(bookingPayments);
   const amountDue = Math.max(0, booking.final_price - amountPaid);
 
@@ -201,7 +215,10 @@ export function buildPaymentWithContext(
 
 // ─── Lead With Context ────────────────────────────────────────────────────────
 
-export function buildLeadWithContext(lead: Lead, ctx: LookupContext): LeadWithContext {
+export function buildLeadWithContext(
+  lead: Lead,
+  ctx: LookupContext,
+): LeadWithContext {
   const labels = resolveLeadLabels(lead, ctx);
   return { ...lead, ...labels };
 }
@@ -219,7 +236,9 @@ export function buildComplaintWithContext(
   const customer = booking
     ? customers.find((c) => c.customer_id === booking.customer_id)
     : undefined;
-  const worker = workers.find((w) => w.worker_id === complaint.assigned_worker_id);
+  const worker = workers.find(
+    (w) => w.worker_id === complaint.assigned_worker_id,
+  );
   const labels = resolveComplaintLabels(complaint, ctx);
 
   return {
@@ -251,12 +270,18 @@ export function buildTodayJobViews(
       return slotA.localeCompare(slotB);
     })
     .map((booking) => {
-      const customer = customers.find((c) => c.customer_id === booking.customer_id);
-      const worker = workers.find((w) => w.worker_id === booking.assigned_worker_id);
+      const customer = customers.find(
+        (c) => c.customer_id === booking.customer_id,
+      );
+      const worker = workers.find(
+        (w) => w.worker_id === booking.assigned_worker_id,
+      );
       const area = ctx.areas.get(booking.area_id);
       const timeSlot = ctx.timeSlots.get(booking.time_slot_id);
       const status = ctx.bookingStatuses.get(booking.booking_status_id);
-      const bookingPayments = payments.filter((p) => p.booking_id === booking.booking_id);
+      const bookingPayments = payments.filter(
+        (p) => p.booking_id === booking.booking_id,
+      );
       const amountPaid = getBookingAmountPaid(bookingPayments);
       const amountDue = Math.max(0, booking.final_price - amountPaid);
       const hasOpenComplaint = complaints.some(
@@ -295,12 +320,16 @@ export function buildPendingPaymentViews(
   const views: PendingPaymentView[] = [];
 
   for (const booking of bookings) {
-    const bookingPayments = payments.filter((p) => p.booking_id === booking.booking_id);
+    const bookingPayments = payments.filter(
+      (p) => p.booking_id === booking.booking_id,
+    );
     const amountPaid = getBookingAmountPaid(bookingPayments);
     const amountDue = Math.max(0, booking.final_price - amountPaid);
     if (amountDue === 0) continue;
 
-    const customer = customers.find((c) => c.customer_id === booking.customer_id);
+    const customer = customers.find(
+      (c) => c.customer_id === booking.customer_id,
+    );
     const followUpRequired = bookingPayments.some((p) => p.follow_up_required);
     const latestPayment = bookingPayments.at(-1);
     const paymentStatus = latestPayment
@@ -334,7 +363,8 @@ export function classifyFollowUpStatus(
   status: string,
 ): "pending" | "contacted" | "other" {
   const s = status.toLowerCase();
-  if (s === "new" || s.includes("follow-up") || s.includes("follow up")) return "pending";
+  if (s === "new" || s.includes("follow-up") || s.includes("follow up"))
+    return "pending";
   if (s === "contacted") return "contacted";
   return "other";
 }
