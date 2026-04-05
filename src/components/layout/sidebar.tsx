@@ -17,8 +17,10 @@ import {
   CreditCard,
   LayoutDashboard,
   Megaphone,
+  Settings,
   UserRound,
   Users,
+  Zap,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
@@ -26,12 +28,14 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/", label: "Overview", icon: LayoutDashboard, adminOnly: false },
+  { href: "/jobs/today", label: "Today's Jobs", icon: Zap, adminOnly: false },
+  { href: "/leads", label: "Leads", icon: Megaphone, adminOnly: true },
+  { href: "/customers", label: "Customers", icon: UserRound, adminOnly: true },
   { href: "/bookings", label: "Bookings", icon: CalendarDays, adminOnly: false },
   { href: "/payments", label: "Payments", icon: CreditCard, adminOnly: true },
-  { href: "/customers", label: "Customers", icon: UserRound, adminOnly: true },
-  { href: "/workers", label: "Workers", icon: Users, adminOnly: true },
-  { href: "/leads", label: "Leads", icon: Megaphone, adminOnly: true },
   { href: "/complaints", label: "Complaints", icon: AlertTriangle, adminOnly: true },
+  { href: "/workers", label: "Workers", icon: Users, adminOnly: true },
+  { href: "/settings/lookups", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
 export function AppSidebar() {
@@ -52,7 +56,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleItems.map(({ href, label, icon: Icon }) => {
-                const isActive = pathname === href;
+                const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
                 return (
                   <SidebarMenuItem key={href}>
                     <SidebarMenuButton asChild isActive={isActive}>

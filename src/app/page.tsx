@@ -1,26 +1,25 @@
-import { getBookings } from "@/lib/sheets/bookings";
-import { getComplaints } from "@/lib/sheets/complaints";
-import { getLeads } from "@/lib/sheets/leads";
-import { getPayments } from "@/lib/sheets/payments";
-import { getWorkers } from "@/lib/sheets/workers";
-import { getCustomers } from "@/lib/sheets/customers";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { BookingsTable } from "@/components/dashboard/bookings-table";
+import { PaymentsTable } from "@/components/dashboard/payments-table";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { SectionHeader } from "@/components/dashboard/section-header";
+import { serializeLookupContext } from "@/lib/domain";
 import { formatCurrency } from "@/lib/format";
 import {
-  getBookingAmountPaid,
-  buildWorkerWithSummary,
+  buildTodayJobViews,
+  buildPendingPaymentViews,
   classifyFollowUpStatus,
-  classifyConversionStatus,
 } from "@/lib/selectors";
-import { serializeLookupContext } from "@/lib/domain";
-import { BookingsTable } from "@/components/dashboard/bookings-table";
-import { ComplaintsTable } from "@/components/dashboard/complaints-table";
-import { KpiCard } from "@/components/dashboard/kpi-card";
-import { LeadsSummary } from "@/components/dashboard/leads-summary";
-import { PaymentsTable } from "@/components/dashboard/payments-table";
-import { SectionHeader } from "@/components/dashboard/section-header";
-import { WorkersSummary } from "@/components/dashboard/workers-summary";
+import { getBookings } from "@/lib/sheets/bookings";
+import { getComplaints } from "@/lib/sheets/complaints";
+import { getCustomers } from "@/lib/sheets/customers";
+import { getLeads } from "@/lib/sheets/leads";
+import { getLookupContext } from "@/lib/sheets/lookups";
+import { getPayments } from "@/lib/sheets/payments";
+import { getWorkers } from "@/lib/sheets/workers";
 import { currentUser } from "@clerk/nextjs/server";
+import { Button } from "@/components/ui/button";
 
 export default async function HomePage() {
   const today = new Date().toISOString().split("T")[0];
@@ -45,13 +44,6 @@ export default async function HomePage() {
     getLookupContext(),
   ]);
 
-  if (bookingsResult.status === "rejected") console.error("[page] bookings failed:", bookingsResult.reason);
-  if (paymentsResult.status === "rejected") console.error("[page] payments failed:", paymentsResult.reason);
-  if (workersResult.status === "rejected") console.error("[page] workers failed:", workersResult.reason);
-  if (leadsResult.status === "rejected") console.error("[page] leads failed:", leadsResult.reason);
-  if (complaintsResult.status === "rejected") console.error("[page] complaints failed:", complaintsResult.reason);
-  if (ctxResult.status === "rejected") console.error("[page] lookups failed:", ctxResult.reason);
-
   const bookings = bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
   const payments = paymentsResult.status === "fulfilled" ? paymentsResult.value : [];
   const workers = workersResult.status === "fulfilled" ? workersResult.value : [];
@@ -62,65 +54,38 @@ export default async function HomePage() {
 
   const serializedCtx = ctx ? serializeLookupContext(ctx) : null;
 
-  // KPI derivations — computed from relations
-  const confirmedBookings = ctx
-    ? bookings.filter((b) => {
-        const status = ctx.bookingStatuses.get(b.booking_status_id);
-        return status?.label.toLowerCase().includes("confirm") ?? false;
-      }).length
-    : 0;
-
-  const completedJobs = ctx
-    ? bookings.filter((b) => {
+  // Today metrics
+  const todayBookings = bookings.filter((b) => b.service_date === today);
+  const todayRevenue = todayBookings.reduce((s, b) => s + b.final_price, 0);
+  const todayCompleted = ctx
+    ? todayBookings.filter((b) => {
         const status = ctx.bookingStatuses.get(b.booking_status_id);
         return status?.label.toLowerCase().includes("complet") ?? false;
       }).length
     : 0;
 
-  const revenueCollected = ctx
-    ? payments
-        .filter((p) => {
-          const status = ctx.paymentStatuses.get(p.payment_status_id);
-          return status?.label.toLowerCase() === "paid";
-        })
-        .reduce((sum, p) => sum + p.amount_received, 0)
-    : 0;
+  const openComplaints = complaints.filter(
+    (c) =>
+      !c.resolution_status.toLowerCase().includes("resolv") &&
+      !c.resolution_status.toLowerCase().includes("closed"),
+  ).length;
 
-  const pendingPaymentsAmount = ctx
-    ? payments
-        .filter((p) => {
-          const status = ctx.paymentStatuses.get(p.payment_status_id);
-          const label = status?.label.toLowerCase() ?? "";
-          return label === "pending" || label === "partially paid";
-        })
-        .reduce((sum, p) => {
-          const booking = bookings.find((b) => b.booking_id === p.booking_id);
-          if (!booking) return sum;
-          const bookingPayments = payments.filter(
-            (bp) => bp.booking_id === p.booking_id,
-          );
-          return sum + Math.max(0, booking.final_price - getBookingAmountPaid(bookingPayments));
-        }, 0)
-    : 0;
+  const pendingPaymentViews = ctx
+    ? buildPendingPaymentViews(bookings, payments, customers, ctx)
+    : [];
+  const totalOutstanding = pendingPaymentViews.reduce((s, v) => s + v.amountDue, 0);
 
-  // Repeat customers: customers with >1 completed booking
-  const repeatCustomersCount = ctx
-    ? customers.filter((c) => {
-        const completed = bookings.filter((b) => {
-          if (b.customer_id !== c.customer_id) return false;
-          const status = ctx.bookingStatuses.get(b.booking_status_id);
-          return status?.label.toLowerCase().includes("complet") ?? false;
-        });
-        return completed.length > 1;
-      }).length
-    : 0;
+  const activeWorkers = workers.filter((w) => w.status.toLowerCase() === "active").length;
 
-  const upcomingBookings = bookings
-    .filter((b) => b.service_date >= today)
-    .sort((a, b) => a.service_date.localeCompare(b.service_date))
-    .slice(0, 15);
+  const newLeadsCount = leads.filter(
+    (l) => classifyFollowUpStatus(l.follow_up_status) === "pending",
+  ).length;
 
-  const pendingPayments = ctx
+  const todayJobsPreview = ctx
+    ? buildTodayJobViews(bookings, payments, complaints, customers, workers, ctx).slice(0, 8)
+    : [];
+
+  const pendingPaymentsForTable = ctx
     ? payments.filter((p) => {
         const status = ctx.paymentStatuses.get(p.payment_status_id);
         const label = status?.label.toLowerCase() ?? "";
@@ -128,16 +93,10 @@ export default async function HomePage() {
       })
     : [];
 
-  const workersWithSummary = ctx
-    ? workers.map((w) => buildWorkerWithSummary(w, bookings, ctx))
-    : [];
-
-  const leadsStats = {
-    pending: leads.filter((l) => classifyFollowUpStatus(l.follow_up_status) === "pending").length,
-    contacted: leads.filter((l) => classifyFollowUpStatus(l.follow_up_status) === "contacted").length,
-    converted: leads.filter((l) => classifyConversionStatus(l.conversion_status) === "converted").length,
-    lost: leads.filter((l) => classifyConversionStatus(l.conversion_status) === "not_converted").length,
-  };
+  const recentLeads = leads
+    .slice()
+    .sort((a, b) => b.lead_date.localeCompare(a.lead_date))
+    .slice(0, 5);
 
   const dateLabel = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
@@ -155,74 +114,137 @@ export default async function HomePage() {
             <h1 className="text-lg font-semibold tracking-tight">Ops Dashboard</h1>
             <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">
-              {upcomingBookings.length} upcoming booking{upcomingBookings.length !== 1 ? "s" : ""}
-            </p>
+          <div className="flex items-center gap-2">
+            <Button size="sm" asChild>
+              <Link href="/jobs/today">Today&apos;s Jobs</Link>
+            </Button>
+            {isAdmin && (
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/payments/follow-up">Follow-up Queue</Link>
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* Today KPIs */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          <KpiCard label="Confirmed" value={confirmedBookings} sublabel="bookings" />
-          <KpiCard label="Completed" value={completedJobs} sublabel="jobs" />
-          <KpiCard label="Repeat Customers" value={repeatCustomersCount} />
+          <KpiCard label="Today's Jobs" value={todayBookings.length} sublabel="scheduled" />
+          <KpiCard label="Completed" value={todayCompleted} sublabel="today" />
+          <KpiCard label="Today's Revenue" value={formatCurrency(todayRevenue)} />
           {isAdmin && (
             <>
-              <KpiCard label="Total Inquiries" value={leads.length} />
-              <KpiCard label="Revenue" value={formatCurrency(revenueCollected)} sublabel="collected" />
-              <KpiCard label="Pending" value={formatCurrency(pendingPaymentsAmount)} sublabel="payments" />
-              <KpiCard label="Complaints" value={complaints.length} />
+              <KpiCard label="Outstanding" value={formatCurrency(totalOutstanding)} sublabel="unpaid" />
+              <KpiCard
+                label="Follow-ups"
+                value={pendingPaymentViews.filter((v) => v.followUpRequired).length}
+              />
+              <KpiCard label="Open Complaints" value={openComplaints} />
+              <KpiCard label="Active Workers" value={activeWorkers} />
+              <KpiCard label="New Leads" value={newLeadsCount} sublabel="pending" />
             </>
           )}
         </div>
 
-        {/* Upcoming Bookings */}
-        <section className="space-y-3">
-          <SectionHeader
-            title="Upcoming Bookings"
-            description={`${upcomingBookings.length} upcoming`}
-          />
-          <BookingsTable
-            bookings={upcomingBookings}
-            customers={customers}
-            serializedCtx={serializedCtx}
-          />
-        </section>
+        {/* Today's Jobs snapshot */}
+        {todayJobsPreview.length > 0 && (
+          <section className="space-y-3">
+            <SectionHeader
+              title="Today's Jobs"
+              description={`${todayBookings.length} scheduled`}
+              action={
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/jobs/today" className="flex items-center gap-1">
+                    View all <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              }
+            />
+            <BookingsTable
+              bookings={todayJobsPreview.map((j) => j.booking)}
+              customers={customers}
+              serializedCtx={serializedCtx}
+            />
+          </section>
+        )}
 
-        {/* Admin-only sections */}
+        {/* Upcoming (non-today) */}
         {isAdmin && (
-          <>
-            <section className="space-y-3">
-              <SectionHeader title="Pending Payments" description={`${pendingPayments.length} unpaid or partial`} />
-              <PaymentsTable
-                payments={pendingPayments}
-                bookings={bookings}
-                customers={customers}
-                serializedCtx={serializedCtx}
-              />
-            </section>
+          <section className="space-y-3">
+            <SectionHeader
+              title="Upcoming"
+              description="Next bookings after today"
+            />
+            <BookingsTable
+              bookings={bookings
+                .filter((b) => b.service_date > today)
+                .sort((a, b) => a.service_date.localeCompare(b.service_date))
+                .slice(0, 10)}
+              customers={customers}
+              serializedCtx={serializedCtx}
+            />
+          </section>
+        )}
 
-            <section className="space-y-3">
-              <SectionHeader title="Worker Performance" description="Computed from booking history" />
-              <WorkersSummary workers={workersWithSummary} />
-            </section>
+        {/* Payment follow-up preview */}
+        {isAdmin && pendingPaymentsForTable.length > 0 && (
+          <section className="space-y-3">
+            <SectionHeader
+              title="Pending Payments"
+              description={`${pendingPaymentViews.length} bookings · ${formatCurrency(totalOutstanding)} outstanding`}
+              action={
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/payments/follow-up" className="flex items-center gap-1">
+                    Full queue <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              }
+            />
+            <PaymentsTable
+              payments={pendingPaymentsForTable.slice(0, 5)}
+              bookings={bookings}
+              customers={customers}
+              serializedCtx={serializedCtx}
+            />
+          </section>
+        )}
 
-            <section className="space-y-3">
-              <SectionHeader title="Leads Funnel" description={`${leads.length} total leads`} />
-              <LeadsSummary stats={leadsStats} total={leads.length} />
-            </section>
-
-            <section className="space-y-3">
-              <SectionHeader title="Complaints" description={`${complaints.length} total`} />
-              <ComplaintsTable
-                complaints={complaints.slice(0, 10)}
-                bookings={bookings}
-                customers={customers}
-                serializedCtx={serializedCtx}
-              />
-            </section>
-          </>
+        {/* Recent leads */}
+        {isAdmin && recentLeads.length > 0 && (
+          <section className="space-y-3">
+            <SectionHeader
+              title="Recent Leads"
+              description={`${newLeadsCount} pending follow-up`}
+              action={
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/leads" className="flex items-center gap-1">
+                    All leads <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              }
+            />
+            <div className="rounded-md border divide-y">
+              {recentLeads.map((l) => {
+                const area = ctx?.areas.get(l.area_id);
+                const service = ctx?.services.get(l.interested_service_id);
+                return (
+                  <div key={l.lead_id} className="flex items-center justify-between px-3 py-2.5">
+                    <div>
+                      <Link
+                        href={`/leads/${l.lead_id}`}
+                        className="text-sm font-medium hover:underline"
+                      >
+                        {l.prospect_name}
+                      </Link>
+                      <div className="text-xs text-muted-foreground">
+                        {[l.phone, area?.name, service?.name].filter(Boolean).join(" · ")}
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{l.follow_up_status}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
       </div>
     </div>
