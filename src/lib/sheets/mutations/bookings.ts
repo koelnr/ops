@@ -4,16 +4,16 @@ import { findRowIndex, updateRowCells, deleteRow, generateNextId, appendRow } fr
 
 // Bookings column map (A=booking_id, B=customer_id, C=vehicle_id,
 // D=service_date, E=time_slot_id, F=booking_status_id, G=source_id,
-// H=created_at, I=scheduled_start_at, J=scheduled_end_at,
-// K=actual_start_at, L=actual_end_at, M=assigned_worker_id,
-// N=area_id, O=base_price, P=discount_amount, Q=addon_total,
-// R=final_price, S=notes)
+// H=created_at, I=scheduled_start_at, J=actual_start_at,
+// K=actual_end_at, L=assigned_worker_id, M=area_id,
+// N=base_price, O=discount_amount, P=addon_total,
+// Q=final_price, R=notes)
 
 export async function createBooking(input: CreateBookingInput): Promise<Booking> {
-  const booking_id = await generateNextId("Bookings", "BKG");
+  const booking_id = await generateNextId("bookings", "BKG");
   const created_at = new Date().toISOString();
 
-  await appendRow("Bookings", [
+  await appendRow("bookings", [
     booking_id,
     input.customer_id,
     input.vehicle_id,
@@ -23,7 +23,6 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
     input.source_id ?? "",
     created_at,
     input.scheduled_start_at ?? "",
-    input.scheduled_end_at ?? "",
     "", // actual_start_at
     "", // actual_end_at
     input.assigned_worker_id ?? "",
@@ -45,7 +44,6 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
     source_id: input.source_id ?? "",
     created_at,
     scheduled_start_at: input.scheduled_start_at ?? "",
-    scheduled_end_at: input.scheduled_end_at ?? "",
     actual_start_at: "",
     actual_end_at: "",
     assigned_worker_id: input.assigned_worker_id ?? "",
@@ -59,7 +57,7 @@ export async function createBooking(input: CreateBookingInput): Promise<Booking>
 }
 
 export async function updateBooking(id: string, patch: UpdateBookingInput): Promise<void> {
-  const row = await findRowIndex("Bookings", id);
+  const row = await findRowIndex("bookings", id);
   if (row === null) throw new Error(`Booking not found: ${id}`);
 
   const cells: [string, string][] = [];
@@ -70,24 +68,23 @@ export async function updateBooking(id: string, patch: UpdateBookingInput): Prom
   if (patch.booking_status_id !== undefined) cells.push(["F", patch.booking_status_id]);
   if (patch.source_id !== undefined) cells.push(["G", patch.source_id]);
   if (patch.scheduled_start_at !== undefined) cells.push(["I", patch.scheduled_start_at]);
-  if (patch.scheduled_end_at !== undefined) cells.push(["J", patch.scheduled_end_at]);
-  if (patch.actual_start_at !== undefined) cells.push(["K", patch.actual_start_at]);
-  if (patch.actual_end_at !== undefined) cells.push(["L", patch.actual_end_at]);
-  if (patch.assigned_worker_id !== undefined) cells.push(["M", patch.assigned_worker_id]);
-  if (patch.area_id !== undefined) cells.push(["N", patch.area_id]);
-  if (patch.base_price !== undefined) cells.push(["O", String(patch.base_price)]);
-  if (patch.discount_amount !== undefined) cells.push(["P", String(patch.discount_amount)]);
-  if (patch.addon_total !== undefined) cells.push(["Q", String(patch.addon_total)]);
-  if (patch.final_price !== undefined) cells.push(["R", String(patch.final_price)]);
-  if (patch.notes !== undefined) cells.push(["S", patch.notes]);
+  if (patch.actual_start_at !== undefined) cells.push(["J", patch.actual_start_at]);
+  if (patch.actual_end_at !== undefined) cells.push(["K", patch.actual_end_at]);
+  if (patch.assigned_worker_id !== undefined) cells.push(["L", patch.assigned_worker_id]);
+  if (patch.area_id !== undefined) cells.push(["M", patch.area_id]);
+  if (patch.base_price !== undefined) cells.push(["N", String(patch.base_price)]);
+  if (patch.discount_amount !== undefined) cells.push(["O", String(patch.discount_amount)]);
+  if (patch.addon_total !== undefined) cells.push(["P", String(patch.addon_total)]);
+  if (patch.final_price !== undefined) cells.push(["Q", String(patch.final_price)]);
+  if (patch.notes !== undefined) cells.push(["R", patch.notes]);
 
   if (cells.length > 0) {
-    await updateRowCells("Bookings", row, cells);
+    await updateRowCells("bookings", row, cells);
   }
 }
 
 export async function deleteBooking(id: string): Promise<void> {
-  const row = await findRowIndex("Bookings", id);
+  const row = await findRowIndex("bookings", id);
   if (row === null) throw new Error(`Booking not found: ${id}`);
-  await deleteRow("Bookings", row);
+  await deleteRow("bookings", row);
 }

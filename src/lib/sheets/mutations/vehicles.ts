@@ -7,10 +7,10 @@ import { findRowIndex, updateRowCells, generateNextId, appendRow, deleteRow } fr
 // H=parking_notes, I=is_primary_vehicle, J=created_at)
 
 export async function createVehicle(input: CreateVehicleInput): Promise<Vehicle> {
-  const vehicle_id = await generateNextId("Vehicles", "VHC");
+  const vehicle_id = await generateNextId("vehicles", "VHC");
   const created_at = new Date().toISOString();
 
-  await appendRow("Vehicles", [
+  await appendRow("vehicles", [
     vehicle_id,
     input.customer_id,
     input.registration_number ?? "",
@@ -38,7 +38,7 @@ export async function createVehicle(input: CreateVehicleInput): Promise<Vehicle>
 }
 
 export async function updateVehicle(id: string, patch: UpdateVehicleInput): Promise<void> {
-  const row = await findRowIndex("Vehicles", id);
+  const row = await findRowIndex("vehicles", id);
   if (row === null) throw new Error(`Vehicle not found: ${id}`);
 
   const cells: [string, string][] = [];
@@ -51,12 +51,12 @@ export async function updateVehicle(id: string, patch: UpdateVehicleInput): Prom
   if (patch.is_primary_vehicle !== undefined) cells.push(["I", String(patch.is_primary_vehicle)]);
 
   if (cells.length > 0) {
-    await updateRowCells("Vehicles", row, cells);
+    await updateRowCells("vehicles", row, cells);
   }
 }
 
 export async function deleteVehicle(id: string): Promise<void> {
-  const row = await findRowIndex("Vehicles", id);
+  const row = await findRowIndex("vehicles", id);
   if (row === null) throw new Error(`Vehicle not found: ${id}`);
-  await deleteRow("Vehicles", row);
+  await deleteRow("vehicles", row);
 }

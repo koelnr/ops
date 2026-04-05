@@ -8,9 +8,9 @@ import { findRowIndex, updateRowCells, appendRow, deleteRow, generateNextId } fr
 // I=follow_up_required, J=notes)
 
 export async function createPayment(input: CreatePaymentInput): Promise<Payment> {
-  const payment_id = await generateNextId("Payments", "PAY");
+  const payment_id = await generateNextId("payments", "PAY");
 
-  await appendRow("Payments", [
+  await appendRow("payments", [
     payment_id,
     input.booking_id,
     input.payment_date ?? "",
@@ -38,7 +38,7 @@ export async function createPayment(input: CreatePaymentInput): Promise<Payment>
 }
 
 export async function updatePayment(id: string, patch: UpdatePaymentInput): Promise<void> {
-  const row = await findRowIndex("Payments", id);
+  const row = await findRowIndex("payments", id);
   if (row === null) throw new Error(`Payment not found: ${id}`);
 
   const cells: [string, string][] = [];
@@ -52,12 +52,12 @@ export async function updatePayment(id: string, patch: UpdatePaymentInput): Prom
   if (patch.notes !== undefined) cells.push(["J", patch.notes]);
 
   if (cells.length > 0) {
-    await updateRowCells("Payments", row, cells);
+    await updateRowCells("payments", row, cells);
   }
 }
 
 export async function deletePayment(id: string): Promise<void> {
-  const row = await findRowIndex("Payments", id);
+  const row = await findRowIndex("payments", id);
   if (row === null) throw new Error(`Payment not found: ${id}`);
-  await deleteRow("Payments", row);
+  await deleteRow("payments", row);
 }

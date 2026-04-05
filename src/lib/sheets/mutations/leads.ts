@@ -5,12 +5,12 @@ import { findRowIndex, updateRowCells, appendRow, deleteRow, generateNextId } fr
 // Leads column map (A=lead_id, B=lead_date, C=prospect_name, D=phone,
 // E=area_id, F=interested_service_id, G=source_id,
 // H=follow_up_status, I=conversion_status,
-// J=converted_customer_id, K=notes)
+// J=converted_customer_id, K=converted_booking_id, L=notes)
 
 export async function createLead(input: CreateLeadInput): Promise<Lead> {
-  const lead_id = await generateNextId("Leads", "LED");
+  const lead_id = await generateNextId("leads", "LED");
 
-  await appendRow("Leads", [
+  await appendRow("leads", [
     lead_id,
     input.lead_date,
     input.prospect_name,
@@ -21,6 +21,7 @@ export async function createLead(input: CreateLeadInput): Promise<Lead> {
     input.follow_up_status ?? "New",
     input.conversion_status ?? "Not Converted",
     input.converted_customer_id ?? "",
+    input.converted_booking_id ?? "",
     input.notes ?? "",
   ]);
 
@@ -35,12 +36,13 @@ export async function createLead(input: CreateLeadInput): Promise<Lead> {
     follow_up_status: input.follow_up_status ?? "New",
     conversion_status: input.conversion_status ?? "Not Converted",
     converted_customer_id: input.converted_customer_id ?? "",
+    converted_booking_id: input.converted_booking_id ?? "",
     notes: input.notes ?? "",
   };
 }
 
 export async function updateLead(id: string, patch: UpdateLeadInput): Promise<void> {
-  const row = await findRowIndex("Leads", id);
+  const row = await findRowIndex("leads", id);
   if (row === null) throw new Error(`Lead not found: ${id}`);
 
   const cells: [string, string][] = [];
@@ -53,15 +55,16 @@ export async function updateLead(id: string, patch: UpdateLeadInput): Promise<vo
   if (patch.follow_up_status !== undefined) cells.push(["H", patch.follow_up_status]);
   if (patch.conversion_status !== undefined) cells.push(["I", patch.conversion_status]);
   if (patch.converted_customer_id !== undefined) cells.push(["J", patch.converted_customer_id]);
-  if (patch.notes !== undefined) cells.push(["K", patch.notes]);
+  if (patch.converted_booking_id !== undefined) cells.push(["K", patch.converted_booking_id]);
+  if (patch.notes !== undefined) cells.push(["L", patch.notes]);
 
   if (cells.length > 0) {
-    await updateRowCells("Leads", row, cells);
+    await updateRowCells("leads", row, cells);
   }
 }
 
 export async function deleteLead(id: string): Promise<void> {
-  const row = await findRowIndex("Leads", id);
+  const row = await findRowIndex("leads", id);
   if (row === null) throw new Error(`Lead not found: ${id}`);
-  await deleteRow("Leads", row);
+  await deleteRow("leads", row);
 }

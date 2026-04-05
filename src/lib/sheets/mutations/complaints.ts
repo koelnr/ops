@@ -8,10 +8,10 @@ import { findRowIndex, updateRowCells, appendRow, deleteRow, generateNextId } fr
 // J=follow_up_complete, K=root_cause, L=created_at)
 
 export async function createComplaint(input: CreateComplaintInput): Promise<Complaint> {
-  const complaint_id = await generateNextId("Complaints", "CMP");
+  const complaint_id = await generateNextId("complaints", "CMP");
   const created_at = new Date().toISOString();
 
-  await appendRow("Complaints", [
+  await appendRow("complaints", [
     complaint_id,
     input.booking_id,
     input.complaint_date,
@@ -43,7 +43,7 @@ export async function createComplaint(input: CreateComplaintInput): Promise<Comp
 }
 
 export async function updateComplaint(id: string, patch: UpdateComplaintInput): Promise<void> {
-  const row = await findRowIndex("Complaints", id);
+  const row = await findRowIndex("complaints", id);
   if (row === null) throw new Error(`Complaint not found: ${id}`);
 
   const cells: [string, string][] = [];
@@ -58,12 +58,12 @@ export async function updateComplaint(id: string, patch: UpdateComplaintInput): 
   if (patch.root_cause !== undefined) cells.push(["K", patch.root_cause]);
 
   if (cells.length > 0) {
-    await updateRowCells("Complaints", row, cells);
+    await updateRowCells("complaints", row, cells);
   }
 }
 
 export async function deleteComplaint(id: string): Promise<void> {
-  const row = await findRowIndex("Complaints", id);
+  const row = await findRowIndex("complaints", id);
   if (row === null) throw new Error(`Complaint not found: ${id}`);
-  await deleteRow("Complaints", row);
+  await deleteRow("complaints", row);
 }

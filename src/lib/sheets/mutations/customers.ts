@@ -7,10 +7,10 @@ import { findRowIndex, updateRowCells, generateNextId, appendRow, deleteRow } fr
 // H=landmark, I=created_at, J=acquisition_source_id, K=notes)
 
 export async function createCustomer(input: CreateCustomerInput): Promise<Customer> {
-  const customer_id = await generateNextId("Customers", "CST");
+  const customer_id = await generateNextId("customers", "CST");
   const created_at = new Date().toISOString();
 
-  await appendRow("Customers", [
+  await appendRow("customers", [
     customer_id,
     input.full_name,
     input.phone,
@@ -40,7 +40,7 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Custom
 }
 
 export async function updateCustomer(id: string, patch: UpdateCustomerInput): Promise<void> {
-  const row = await findRowIndex("Customers", id);
+  const row = await findRowIndex("customers", id);
   if (row === null) throw new Error(`Customer not found: ${id}`);
 
   const cells: [string, string][] = [];
@@ -55,12 +55,12 @@ export async function updateCustomer(id: string, patch: UpdateCustomerInput): Pr
   if (patch.notes !== undefined) cells.push(["K", patch.notes]);
 
   if (cells.length > 0) {
-    await updateRowCells("Customers", row, cells);
+    await updateRowCells("customers", row, cells);
   }
 }
 
 export async function deleteCustomer(id: string): Promise<void> {
-  const row = await findRowIndex("Customers", id);
+  const row = await findRowIndex("customers", id);
   if (row === null) throw new Error(`Customer not found: ${id}`);
-  await deleteRow("Customers", row);
+  await deleteRow("customers", row);
 }

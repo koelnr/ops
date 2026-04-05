@@ -7,9 +7,9 @@ import { findRowIndex, updateRowCells, generateNextId, appendRow, deleteRow } fr
 // G=default_payout_type, H=default_payout_rate, I=notes)
 
 export async function createWorker(input: CreateWorkerInput): Promise<Worker> {
-  const worker_id = await generateNextId("Workers", "WRK");
+  const worker_id = await generateNextId("workers", "WRK");
 
-  await appendRow("Workers", [
+  await appendRow("workers", [
     worker_id,
     input.worker_name,
     input.phone ?? "",
@@ -35,7 +35,7 @@ export async function createWorker(input: CreateWorkerInput): Promise<Worker> {
 }
 
 export async function updateWorker(id: string, patch: UpdateWorkerInput): Promise<void> {
-  const row = await findRowIndex("Workers", id);
+  const row = await findRowIndex("workers", id);
   if (row === null) throw new Error(`Worker not found: ${id}`);
 
   const cells: [string, string][] = [];
@@ -49,12 +49,12 @@ export async function updateWorker(id: string, patch: UpdateWorkerInput): Promis
   if (patch.notes !== undefined) cells.push(["I", patch.notes]);
 
   if (cells.length > 0) {
-    await updateRowCells("Workers", row, cells);
+    await updateRowCells("workers", row, cells);
   }
 }
 
 export async function deleteWorker(id: string): Promise<void> {
-  const row = await findRowIndex("Workers", id);
+  const row = await findRowIndex("workers", id);
   if (row === null) throw new Error(`Worker not found: ${id}`);
-  await deleteRow("Workers", row);
+  await deleteRow("workers", row);
 }

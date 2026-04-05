@@ -8,9 +8,9 @@ import { findRowIndex, generateNextId, appendRow, deleteRow } from "./helpers";
 export async function createBookingService(
   input: CreateBookingServiceInput,
 ): Promise<BookingService> {
-  const booking_service_id = await generateNextId("BookingServices", "BSV");
+  const booking_service_id = await generateNextId("booking_services", "BSV");
 
-  await appendRow("BookingServices", [
+  await appendRow("booking_services", [
     booking_service_id,
     input.booking_id,
     input.service_id,
@@ -30,7 +30,7 @@ export async function createBookingService(
 }
 
 export async function deleteBookingService(id: string): Promise<void> {
-  const row = await findRowIndex("BookingServices", id);
+  const row = await findRowIndex("booking_services", id);
   if (row === null) throw new Error(`BookingService not found: ${id}`);
-  await deleteRow("BookingServices", row);
+  await deleteRow("booking_services", row);
 }

@@ -14,37 +14,42 @@ export const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? (() =>
 })();
 
 export const RANGES = {
-  bookings: "Bookings!A:Z",
-  customers: "Customers!A:Z",
-  vehicles: "Vehicles!A:Z",
-  workers: "Workers!A:Z",
-  bookingServices: "BookingServices!A:Z",
-  payments: "Payments!A:Z",
-  complaints: "Complaints!A:Z",
-  leads: "Leads!A:Z",
+  bookings: "bookings!A:Z",
+  customers: "customers!A:Z",
+  vehicles: "vehicles!A:Z",
+  workers: "workers!A:Z",
+  bookingServices: "booking_services!A:Z",
+  payments: "payments!A:Z",
+  complaints: "complaints!A:Z",
+  leads: "leads!A:Z",
+  // Resolved read-model tabs — used for list/detail display only
+  resolvedBookings: "bookings_resolved!A:Z",
+  resolvedCustomers: "customers_resolved!A:Z",
+  resolvedPayments: "payments_resolved!A:Z",
+  resolvedComplaints: "complaints_resolved!A:Z",
 } as const;
 
 // Lookup ranges — fetched in a single batchGet call via getLookupContext()
 export const LOOKUP_RANGES = [
-  "Areas!A:Z",
-  "Services!A:Z",
-  "VehicleTypes!A:Z",
-  "TimeSlots!A:Z",
-  "BookingStatuses!A:Z",
-  "PaymentStatuses!A:Z",
-  "PaymentModes!A:Z",
-  "LeadSources!A:Z",
-  "ComplaintTypes!A:Z",
+  "areas!A:Z",
+  "services!A:Z",
+  "vehicle_types!A:Z",
+  "time_slots!A:Z",
+  "booking_statuses!A:Z",
+  "payment_statuses!A:Z",
+  "payment_modes!A:Z",
+  "lead_sources!A:Z",
+  "complaint_types!A:Z",
 ] as const;
 
 // Sheet names used by mutations
 export const SHEET_NAMES = {
-  bookings: "Bookings",
-  customers: "Customers",
-  vehicles: "Vehicles",
-  workers: "Workers",
-  bookingServices: "BookingServices",
-  payments: "Payments",
-  complaints: "Complaints",
-  leads: "Leads",
+  bookings: "bookings",
+  customers: "customers",
+  vehicles: "vehicles",
+  workers: "workers",
+  bookingServices: "booking_services",
+  payments: "payments",
+  complaints: "complaints",
+  leads: "leads",
 } as const;
