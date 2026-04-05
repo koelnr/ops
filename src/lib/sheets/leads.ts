@@ -5,7 +5,8 @@ import { rowsToObjects } from "./utils";
 
 // Column order (row 1 headers must match exactly):
 // lead_id, lead_date, prospect_name, phone, area_id, interested_service_id,
-// source_id, follow_up_status, conversion_status, converted_customer_id, notes
+// source_id, follow_up_status, conversion_status, converted_customer_id,
+// converted_booking_id, notes
 
 export async function getLeads(): Promise<Lead[]> {
   const sheets = await getSheetsClient();
@@ -28,6 +29,7 @@ export async function getLeads(): Promise<Lead[]> {
         follow_up_status: row.follow_up_status ?? "",
         conversion_status: row.conversion_status ?? "",
         converted_customer_id: row.converted_customer_id ?? "",
+        converted_booking_id: row.converted_booking_id ?? "",
         notes: row.notes ?? "",
       }),
     )

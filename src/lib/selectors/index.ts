@@ -14,6 +14,8 @@ import type {
   ComplaintWithContext,
   LookupContext,
   ResolvedBookingService,
+  TodayJobView,
+  PendingPaymentView,
 } from "../domain";
 import {
   resolveBookingLabels,
@@ -227,6 +229,103 @@ export function buildComplaintWithContext(
     workerName: worker?.worker_name ?? "",
     bookingServiceDate: booking?.service_date ?? "",
   };
+}
+
+// ─── Today Jobs ───────────────────────────────────────────────────────────────
+
+export function buildTodayJobViews(
+  bookings: Booking[],
+  payments: Payment[],
+  complaints: Complaint[],
+  customers: Customer[],
+  workers: Worker[],
+  ctx: LookupContext,
+): TodayJobView[] {
+  const today = new Date().toISOString().split("T")[0];
+  const todayBookings = bookings.filter((b) => b.service_date === today);
+
+  return todayBookings
+    .sort((a, b) => {
+      const slotA = ctx.timeSlots.get(a.time_slot_id)?.start_time ?? "";
+      const slotB = ctx.timeSlots.get(b.time_slot_id)?.start_time ?? "";
+      return slotA.localeCompare(slotB);
+    })
+    .map((booking) => {
+      const customer = customers.find((c) => c.customer_id === booking.customer_id);
+      const worker = workers.find((w) => w.worker_id === booking.assigned_worker_id);
+      const area = ctx.areas.get(booking.area_id);
+      const timeSlot = ctx.timeSlots.get(booking.time_slot_id);
+      const status = ctx.bookingStatuses.get(booking.booking_status_id);
+      const bookingPayments = payments.filter((p) => p.booking_id === booking.booking_id);
+      const amountPaid = getBookingAmountPaid(bookingPayments);
+      const amountDue = Math.max(0, booking.final_price - amountPaid);
+      const hasOpenComplaint = complaints.some(
+        (c) =>
+          c.booking_id === booking.booking_id &&
+          !c.resolution_status.toLowerCase().includes("resolv") &&
+          !c.resolution_status.toLowerCase().includes("closed"),
+      );
+
+      return {
+        booking,
+        customerName: customer?.full_name ?? "",
+        customerPhone: customer?.phone ?? "",
+        areaName: area?.name ?? booking.area_id,
+        timeSlotLabel: timeSlot?.label ?? booking.time_slot_id,
+        workerName: worker?.worker_name ?? "",
+        bookingStatusLabel: status?.label ?? booking.booking_status_id,
+        bookingStatusColor: status?.color ?? "",
+        finalPrice: booking.final_price,
+        amountPaid,
+        amountDue,
+        hasOpenComplaint,
+      };
+    });
+}
+
+// ─── Pending Payments ─────────────────────────────────────────────────────────
+
+export function buildPendingPaymentViews(
+  bookings: Booking[],
+  payments: Payment[],
+  customers: Customer[],
+  ctx: LookupContext,
+  filter?: "all" | "follow-up" | "partial",
+): PendingPaymentView[] {
+  const views: PendingPaymentView[] = [];
+
+  for (const booking of bookings) {
+    const bookingPayments = payments.filter((p) => p.booking_id === booking.booking_id);
+    const amountPaid = getBookingAmountPaid(bookingPayments);
+    const amountDue = Math.max(0, booking.final_price - amountPaid);
+    if (amountDue === 0) continue;
+
+    const customer = customers.find((c) => c.customer_id === booking.customer_id);
+    const followUpRequired = bookingPayments.some((p) => p.follow_up_required);
+    const latestPayment = bookingPayments.at(-1);
+    const paymentStatus = latestPayment
+      ? ctx.paymentStatuses.get(latestPayment.payment_status_id)
+      : undefined;
+
+    const view: PendingPaymentView = {
+      booking,
+      customerName: customer?.full_name ?? "",
+      customerPhone: customer?.phone ?? "",
+      serviceDate: booking.service_date,
+      finalPrice: booking.final_price,
+      amountPaid,
+      amountDue,
+      followUpRequired,
+      paymentStatusLabel: paymentStatus?.label ?? "",
+    };
+
+    if (filter === "follow-up" && !followUpRequired) continue;
+    if (filter === "partial" && amountPaid === 0) continue;
+
+    views.push(view);
+  }
+
+  return views.sort((a, b) => b.serviceDate.localeCompare(a.serviceDate));
 }
 
 // ─── Lead utils (replaces src/lib/lead-utils.ts) ─────────────────────────────

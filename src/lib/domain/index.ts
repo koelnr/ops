@@ -49,7 +49,6 @@ export interface Booking {
   source_id: string;
   created_at: string;
   scheduled_start_at: string;
-  scheduled_end_at: string;
   actual_start_at: string;
   actual_end_at: string;
   assigned_worker_id: string;
@@ -109,6 +108,7 @@ export interface Lead {
   follow_up_status: string;
   conversion_status: string;
   converted_customer_id: string;
+  converted_booking_id: string;
   notes: string;
 }
 
@@ -193,7 +193,9 @@ export type SerializedLookupContext = {
   complaintTypes: ComplaintType[];
 };
 
-export function serializeLookupContext(ctx: LookupContext): SerializedLookupContext {
+export function serializeLookupContext(
+  ctx: LookupContext,
+): SerializedLookupContext {
   return {
     areas: [...ctx.areas.values()],
     services: [...ctx.services.values()],
@@ -207,17 +209,25 @@ export function serializeLookupContext(ctx: LookupContext): SerializedLookupCont
   };
 }
 
-export function deserializeLookupContext(s: SerializedLookupContext): LookupContext {
+export function deserializeLookupContext(
+  s: SerializedLookupContext,
+): LookupContext {
   return {
     areas: new Map(s.areas.map((a) => [a.area_id, a])),
     services: new Map(s.services.map((sv) => [sv.service_id, sv])),
     vehicleTypes: new Map(s.vehicleTypes.map((vt) => [vt.vehicle_type_id, vt])),
     timeSlots: new Map(s.timeSlots.map((ts) => [ts.time_slot_id, ts])),
-    bookingStatuses: new Map(s.bookingStatuses.map((bs) => [bs.booking_status_id, bs])),
-    paymentStatuses: new Map(s.paymentStatuses.map((ps) => [ps.payment_status_id, ps])),
+    bookingStatuses: new Map(
+      s.bookingStatuses.map((bs) => [bs.booking_status_id, bs]),
+    ),
+    paymentStatuses: new Map(
+      s.paymentStatuses.map((ps) => [ps.payment_status_id, ps]),
+    ),
     paymentModes: new Map(s.paymentModes.map((pm) => [pm.payment_mode_id, pm])),
     leadSources: new Map(s.leadSources.map((ls) => [ls.source_id, ls])),
-    complaintTypes: new Map(s.complaintTypes.map((ct) => [ct.complaint_type_id, ct])),
+    complaintTypes: new Map(
+      s.complaintTypes.map((ct) => [ct.complaint_type_id, ct]),
+    ),
   };
 }
 
@@ -276,6 +286,127 @@ export interface ComplaintWithContext extends Complaint {
   customerName: string;
   workerName: string;
   bookingServiceDate: string;
+}
+
+export interface TodayJobView {
+  booking: Booking;
+  customerName: string;
+  customerPhone: string;
+  areaName: string;
+  timeSlotLabel: string;
+  workerName: string;
+  bookingStatusLabel: string;
+  bookingStatusColor: string;
+  finalPrice: number;
+  amountPaid: number;
+  amountDue: number;
+  hasOpenComplaint: boolean;
+}
+
+export interface PendingPaymentView {
+  booking: Booking;
+  customerName: string;
+  customerPhone: string;
+  serviceDate: string;
+  finalPrice: number;
+  amountPaid: number;
+  amountDue: number;
+  followUpRequired: boolean;
+  paymentStatusLabel: string;
+}
+
+// ─── Resolved Read Models ─────────────────────────────────────────────────────
+// Fetched from pre-resolved Sheets tabs (bookings_resolved, etc.).
+// Used for list/detail display only. Never written back to Sheets.
+
+/** Row from bookings_resolved. Includes raw IDs (for edit forms) + resolved labels (for display). */
+export interface ResolvedBooking {
+  booking_id: string;
+  service_date: string;
+  customer_id: string;
+  customer_name: string;
+  phone: string;
+  vehicle_id: string;
+  worker_id: string; // = assigned_worker_id in raw Bookings sheet
+  worker_name: string;
+  area_id: string;
+  area_name: string;
+  time_slot_id: string; // raw — needed for edit form dropdown
+  time_slot_label: string;
+  booking_status_id: string;
+  booking_status_name: string;
+  source_id: string; // raw — needed for edit form dropdown
+  source_name: string;
+  base_price: number;
+  discount_amount: number;
+  addon_total: number;
+  final_price: number;
+  amount_paid: number;
+  amount_due: number;
+  complaint_count: number;
+  notes: string;
+}
+
+/** Row from customers_resolved. */
+export interface ResolvedCustomer {
+  customer_id: string;
+  full_name: string;
+  phone: string;
+  secondary_phone: string;
+  area_id: string;
+  area_name: string;
+  full_address: string;
+  google_maps_link: string;
+  landmark: string;
+  created_at: string;
+  acquisition_source_id: string;
+  acquisition_source_label: string;
+  notes: string;
+  total_bookings: number;
+  total_revenue: number;
+  last_visit: string;
+  is_repeat: boolean;
+}
+
+/** Row from payments_resolved. */
+export interface ResolvedPayment {
+  payment_id: string;
+  booking_id: string;
+  payment_date: string;
+  amount_received: number;
+  payment_mode_id: string;
+  payment_mode_name: string;
+  payment_status_id: string;
+  payment_status_name: string;
+  payment_status_color: string;
+  upi_transaction_ref: string;
+  collected_by_worker_id: string;
+  worker_name: string;
+  follow_up_required: boolean;
+  customer_name: string;
+  service_date: string;
+  final_price: number;
+  notes: string;
+}
+
+/** Row from complaints_resolved. */
+export interface ResolvedComplaint {
+  complaint_id: string;
+  booking_id: string;
+  complaint_date: string;
+  complaint_type_id: string;
+  complaint_type_name: string;
+  details: string;
+  assigned_worker_id: string;
+  worker_name: string;
+  resolution_type: string;
+  resolution_notes: string;
+  resolution_status: string;
+  follow_up_complete: boolean;
+  root_cause: string;
+  created_at: string;
+  customer_name: string;
+  booking_service_date: string;
 }
 
 // ─── Shared select option type ────────────────────────────────────────────────

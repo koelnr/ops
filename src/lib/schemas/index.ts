@@ -95,7 +95,6 @@ export const CreateBookingSchema = z.object({
   booking_status_id: z.string().min(1, "Status is required"),
   source_id: z.string().optional().default(""),
   scheduled_start_at: z.string().optional().default(""),
-  scheduled_end_at: z.string().optional().default(""),
   assigned_worker_id: z.string().optional().default(""),
   area_id: z.string().optional().default(""),
   base_price: z.coerce.number().min(0),
@@ -114,7 +113,6 @@ export const UpdateBookingSchema = z
     booking_status_id: z.string().optional(),
     source_id: z.string().optional(),
     scheduled_start_at: z.string().optional(),
-    scheduled_end_at: z.string().optional(),
     actual_start_at: z.string().optional(),
     actual_end_at: z.string().optional(),
     assigned_worker_id: z.string().optional(),
@@ -212,6 +210,7 @@ export const CreateLeadSchema = z.object({
   follow_up_status: z.string().optional().default("New"),
   conversion_status: z.string().optional().default("Not Converted"),
   converted_customer_id: z.string().optional().default(""),
+  converted_booking_id: z.string().optional().default(""),
   notes: z.string().optional().default(""),
 });
 
@@ -226,6 +225,7 @@ export const UpdateLeadSchema = z
     follow_up_status: z.string().optional(),
     conversion_status: z.string().optional(),
     converted_customer_id: z.string().optional(),
+    converted_booking_id: z.string().optional(),
     notes: z.string().optional(),
   })
   .refine((d) => Object.values(d).some((v) => v !== undefined), {
