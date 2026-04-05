@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getLookupContext } from "@/lib/db/adapters";
 import { serializeLookupContext } from "@/lib/domain";
 import { requireSignedIn } from "@/lib/auth";
 

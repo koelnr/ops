@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustomers } from "@/lib/sheets/customers";
-import { createCustomer } from "@/lib/sheets/mutations/customers";
+import { getCustomers } from "@/lib/db/adapters";
+import { createCustomerFromInput } from "@/lib/db/modules/customers";
 import { CreateCustomerSchema } from "@/lib/schemas";
 import { requireSignedIn } from "@/lib/auth";
 
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const customer = await createCustomer(parsed.data);
-    return NextResponse.json({ customer }, { status: 201 });
+    const id = await createCustomerFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/customers]", err);
     return NextResponse.json(

@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSignedIn } from "@/lib/auth";
-import { createCustomer } from "@/lib/sheets/mutations/customers";
-import { createVehicle } from "@/lib/sheets/mutations/vehicles";
-import { createBooking } from "@/lib/sheets/mutations/bookings";
-import { updateLead } from "@/lib/sheets/mutations/leads";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { createCustomerFromInput } from "@/lib/db/modules/customers";
+import { createVehicleFromInput } from "@/lib/db/modules/vehicles";
+import { createBookingFromInput } from "@/lib/db/modules/bookings";
+import { updateLeadFromInput } from "@/lib/db/modules/leads";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -69,7 +68,7 @@ export async function POST(req: NextRequest, { params }: Props) {
           { status: 400 },
         );
       }
-      const created = await createCustomer({
+      customerId = await createCustomerFromInput({
         full_name: customer.full_name,
         phone: customer.phone,
         area_id: customer.area_id ?? "",
@@ -80,7 +79,6 @@ export async function POST(req: NextRequest, { params }: Props) {
         acquisition_source_id: "",
         notes: "",
       });
-      customerId = created.customer_id;
     }
 
     // 2. Optionally resolve or create vehicle
@@ -89,7 +87,7 @@ export async function POST(req: NextRequest, { params }: Props) {
       if (vehicle.existing_vehicle_id) {
         vehicleId = vehicle.existing_vehicle_id;
       } else if (vehicle.car_model && vehicle.vehicle_type_id) {
-        const created = await createVehicle({
+        vehicleId = await createVehicleFromInput({
           customer_id: customerId,
           car_model: vehicle.car_model,
           brand: vehicle.brand ?? "",
@@ -99,7 +97,6 @@ export async function POST(req: NextRequest, { params }: Props) {
           parking_notes: "",
           is_primary_vehicle: false,
         });
-        vehicleId = created.vehicle_id;
       }
     }
 
@@ -109,37 +106,29 @@ export async function POST(req: NextRequest, { params }: Props) {
       booking &&
       booking.service_date &&
       booking.time_slot_id &&
-      booking.booking_status_id
+      booking.booking_status_id &&
+      vehicleId
     ) {
-      // Need a vehicleId to create booking — use a placeholder if not provided
-      const ctx = await getLookupContext().catch(() => null);
-      const effectiveVehicleId = vehicleId || "";
-      if (!effectiveVehicleId) {
-        // Booking requires vehicle — skip silently if none
-      } else {
-        const created = await createBooking({
-          customer_id: customerId,
-          vehicle_id: effectiveVehicleId,
-          service_date: booking.service_date,
-          time_slot_id: booking.time_slot_id,
-          booking_status_id: booking.booking_status_id,
-          assigned_worker_id: booking.assigned_worker_id ?? "",
-          area_id: booking.area_id ?? "",
-          base_price: booking.base_price ?? 0,
-          final_price: booking.final_price ?? booking.base_price ?? 0,
-          source_id: "",
-          scheduled_start_at: "",
-          discount_amount: 0,
-          addon_total: 0,
-          notes: "",
-        });
-        bookingId = created.booking_id;
-        void ctx; // suppress unused warning
-      }
+      bookingId = await createBookingFromInput({
+        customer_id: customerId,
+        vehicle_id: vehicleId,
+        service_date: booking.service_date,
+        time_slot_id: booking.time_slot_id,
+        booking_status_id: booking.booking_status_id,
+        assigned_worker_id: booking.assigned_worker_id ?? "",
+        area_id: booking.area_id ?? "",
+        base_price: booking.base_price ?? 0,
+        final_price: booking.final_price ?? booking.base_price ?? 0,
+        source_id: "",
+        scheduled_start_at: "",
+        discount_amount: 0,
+        addon_total: 0,
+        notes: "",
+      });
     }
 
     // 4. Update lead with conversion info
-    await updateLead(id, {
+    await updateLeadFromInput(id, {
       conversion_status: "Converted",
       follow_up_status: "Converted",
       converted_customer_id: customerId,

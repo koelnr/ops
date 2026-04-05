@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBookings } from "@/lib/sheets/bookings";
-import { createBooking } from "@/lib/sheets/mutations/bookings";
-import { createPayment } from "@/lib/sheets/mutations/payments";
+import { getBookings } from "@/lib/db/adapters";
+import { createBookingFromInput } from "@/lib/db/modules/bookings";
 import { CreateBookingSchema } from "@/lib/schemas";
 import { requireSignedIn } from "@/lib/auth";
 
@@ -32,26 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const booking = await createBooking(parsed.data);
-
-    // Best-effort initial payment record — does not fail booking creation
-    try {
-      await createPayment({
-        booking_id: booking.booking_id,
-        payment_date: "",
-        amount_received: 0,
-        payment_mode_id: "",
-        payment_status_id: "",
-        upi_transaction_ref: "",
-        collected_by_worker_id: "",
-        follow_up_required: false,
-        notes: "",
-      });
-    } catch (err) {
-      console.error("[POST /api/bookings] Payment creation failed:", err);
-    }
-
-    return NextResponse.json({ booking }, { status: 201 });
+    const id = await createBookingFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/bookings]", err);
     return NextResponse.json(

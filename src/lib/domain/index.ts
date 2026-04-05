@@ -116,7 +116,7 @@ export interface Lead {
 
 export interface Area {
   area_id: string;
-  area_name: string;
+  name: string;
 }
 
 export interface Service {
@@ -213,7 +213,7 @@ export function deserializeLookupContext(
   s: SerializedLookupContext,
 ): LookupContext {
   return {
-    areas: new Map(s.areas.map((a) => [a.area_id, a])),
+    areas: new Map(s.areas.map((a) => [a.area_id, a as Area])),
     services: new Map(s.services.map((sv) => [sv.service_id, sv])),
     vehicleTypes: new Map(s.vehicleTypes.map((vt) => [vt.vehicle_type_id, vt])),
     timeSlots: new Map(s.timeSlots.map((ts) => [ts.time_slot_id, ts])),

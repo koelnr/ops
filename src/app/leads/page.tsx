@@ -1,5 +1,4 @@
-import { getLeads } from "@/lib/sheets/leads";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getLeads, getLookupContext } from "@/lib/db/adapters";
 import { buildLeadWithContext } from "@/lib/selectors";
 import { serializeLookupContext } from "@/lib/domain";
 import { buildSelectOptions } from "@/lib/options";

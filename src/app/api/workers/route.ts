@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { getWorkers } from "@/lib/sheets/workers";
-import { createWorker } from "@/lib/sheets/mutations/workers";
+import { getWorkers } from "@/lib/db/adapters";
+import { createWorkerFromInput } from "@/lib/db/modules/workers";
 import { CreateWorkerSchema } from "@/lib/schemas";
 
 export async function GET() {
@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const worker = await createWorker(parsed.data);
-    return NextResponse.json({ worker }, { status: 201 });
+    const id = await createWorkerFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/workers]", err);
     return NextResponse.json(

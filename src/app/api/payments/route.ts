@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPayments } from "@/lib/sheets/payments";
+import { getPayments } from "@/lib/db/adapters";
+import { createPaymentFromInput } from "@/lib/db/modules/payments";
 import { CreatePaymentSchema } from "@/lib/schemas";
-import { createPayment } from "@/lib/sheets/mutations/payments";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function GET() {
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const payment = await createPayment(parsed.data);
-    return NextResponse.json({ payment }, { status: 201 });
+    const id = await createPaymentFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/payments]", err);
     return NextResponse.json(

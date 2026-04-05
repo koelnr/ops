@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getVehicles } from "@/lib/sheets/vehicles";
-import { createVehicle } from "@/lib/sheets/mutations/vehicles";
+import { getVehicles } from "@/lib/db/adapters";
+import { createVehicleFromInput } from "@/lib/db/modules/vehicles";
 import { CreateVehicleSchema } from "@/lib/schemas";
 import { requireSignedIn } from "@/lib/auth";
 
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const vehicle = await createVehicle(parsed.data);
-    return NextResponse.json({ vehicle }, { status: 201 });
+    const id = await createVehicleFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/vehicles]", err);
     return NextResponse.json(

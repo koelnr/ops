@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateLeadSchema } from "@/lib/schemas";
-import { updateLead, deleteLead } from "@/lib/sheets/mutations/leads";
+import { updateLeadFromInput, deleteLead } from "@/lib/db/modules/leads";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -20,7 +20,7 @@ export async function PATCH(
       );
     }
 
-    await updateLead(id, parsed.data);
+    await updateLeadFromInput(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message =

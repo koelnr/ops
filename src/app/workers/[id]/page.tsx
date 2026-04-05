@@ -13,12 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getWorkers } from "@/lib/sheets/workers";
-import { getBookings } from "@/lib/sheets/bookings";
-import { getComplaints } from "@/lib/sheets/complaints";
-import { getPayments } from "@/lib/sheets/payments";
-import { getCustomers } from "@/lib/sheets/customers";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getWorkers, getBookings, getComplaints, getPayments, getCustomers, getLookupContext } from "@/lib/db/adapters";
 import { getBookingAmountPaid, buildWorkerWithSummary } from "@/lib/selectors";
 import { formatCurrency, formatDate } from "@/lib/format";
 

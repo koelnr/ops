@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLeads } from "@/lib/sheets/leads";
+import { getLeads } from "@/lib/db/adapters";
+import { createLeadFromInput } from "@/lib/db/modules/leads";
 import { CreateLeadSchema } from "@/lib/schemas";
-import { createLead } from "@/lib/sheets/mutations/leads";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function GET() {
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const lead = await createLead(parsed.data);
-    return NextResponse.json({ lead }, { status: 201 });
+    const id = await createLeadFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/leads]", err);
     return NextResponse.json(

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateComplaintSchema } from "@/lib/schemas";
-import {
-  updateComplaint,
-  deleteComplaint,
-} from "@/lib/sheets/mutations/complaints";
+import { updateComplaintFromInput, deleteComplaint } from "@/lib/db/modules/complaints";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -23,7 +20,7 @@ export async function PATCH(
       );
     }
 
-    await updateComplaint(id, parsed.data);
+    await updateComplaintFromInput(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message =

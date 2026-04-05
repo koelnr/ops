@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBookingServices } from "@/lib/sheets/booking-services";
-import { createBookingService } from "@/lib/sheets/mutations/booking-services";
+import { getBookingServices } from "@/lib/db/adapters";
+import { createBookingServiceFromInput } from "@/lib/db/modules/booking-services";
 import { CreateBookingServiceSchema } from "@/lib/schemas";
 import { requireSignedIn } from "@/lib/auth";
 
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const bookingService = await createBookingService(parsed.data);
-    return NextResponse.json({ bookingService }, { status: 201 });
+    const id = await createBookingServiceFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/booking-services]", err);
     return NextResponse.json(

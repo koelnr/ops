@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
-import { getBookings } from "@/lib/sheets/bookings";
-import { getBookingServices } from "@/lib/sheets/booking-services";
-import { getPayments } from "@/lib/sheets/payments";
-import { getComplaints } from "@/lib/sheets/complaints";
-import { getWorkers } from "@/lib/sheets/workers";
-import { getVehicles } from "@/lib/sheets/vehicles";
-import { getCustomers } from "@/lib/sheets/customers";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import {
+  getBookings,
+  getBookingServices,
+  getPayments,
+  getComplaints,
+  getWorkers,
+  getVehicles,
+  getCustomers,
+  getLookupContext,
+} from "@/lib/db/adapters";
 import { getBookingResolvedView } from "@/lib/selectors";
 import { BookingDetailView } from "@/components/details/booking-detail-view";
 

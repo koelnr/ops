@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteBookingService } from "@/lib/sheets/mutations/booking-services";
+import { deleteBookingService } from "@/lib/db/modules/booking-services";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function DELETE(

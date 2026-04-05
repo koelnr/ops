@@ -14,18 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCustomers } from "@/lib/sheets/customers";
-import { getVehicles } from "@/lib/sheets/vehicles";
-import { getBookings } from "@/lib/sheets/bookings";
-import { getPayments } from "@/lib/sheets/payments";
-import { getComplaints } from "@/lib/sheets/complaints";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getCustomers, getVehicles, getBookings, getPayments, getComplaints, getLookupContext, getWorkers } from "@/lib/db/adapters";
 import {
   getBookingAmountPaid,
   buildCustomerWithSummary,
   getBookingResolvedView,
 } from "@/lib/selectors";
-import { getWorkers } from "@/lib/sheets/workers";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 interface Props {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { UpdateWorkerSchema } from "@/lib/schemas";
-import { updateWorker, deleteWorker } from "@/lib/sheets/mutations/workers";
+import { updateWorkerFromInput, deleteWorker } from "@/lib/db/modules/workers";
 
 export async function PATCH(
   req: NextRequest,
@@ -22,7 +22,7 @@ export async function PATCH(
       );
     }
 
-    await updateWorker(id, parsed.data);
+    await updateWorkerFromInput(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message =

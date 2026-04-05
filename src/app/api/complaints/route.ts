@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getComplaints } from "@/lib/sheets/complaints";
+import { getComplaints } from "@/lib/db/adapters";
+import { createComplaintFromInput } from "@/lib/db/modules/complaints";
 import { CreateComplaintSchema } from "@/lib/schemas";
-import { createComplaint } from "@/lib/sheets/mutations/complaints";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function GET() {
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const complaint = await createComplaint(parsed.data);
-    return NextResponse.json({ complaint }, { status: 201 });
+    const id = await createComplaintFromInput(parsed.data);
+    return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/complaints]", err);
     return NextResponse.json(

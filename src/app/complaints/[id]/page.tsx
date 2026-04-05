@@ -4,11 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { getComplaints } from "@/lib/sheets/complaints";
-import { getBookings } from "@/lib/sheets/bookings";
-import { getCustomers } from "@/lib/sheets/customers";
-import { getWorkers } from "@/lib/sheets/workers";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getComplaints, getBookings, getCustomers, getWorkers, getLookupContext } from "@/lib/db/adapters";
 import { formatDate } from "@/lib/format";
 import { ComplaintActions } from "@/components/actions/complaint-actions";
 

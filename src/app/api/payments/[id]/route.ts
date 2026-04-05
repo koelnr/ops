@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdatePaymentSchema } from "@/lib/schemas";
-import { updatePayment, deletePayment } from "@/lib/sheets/mutations/payments";
+import { updatePaymentFromInput, deletePayment } from "@/lib/db/modules/payments";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -20,7 +20,7 @@ export async function PATCH(
       );
     }
 
-    await updatePayment(id, parsed.data);
+    await updatePaymentFromInput(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message =

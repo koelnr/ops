@@ -1,5 +1,4 @@
-import { getPaymentsResolved } from "@/lib/sheets/payments";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getPaymentsResolved, getLookupContext } from "@/lib/db/adapters";
 import { serializeLookupContext } from "@/lib/domain";
 import { buildSelectOptions } from "@/lib/options";
 import { PaymentsView } from "@/components/views/payments-view";

@@ -1,5 +1,4 @@
-import { getCustomersResolved } from "@/lib/sheets/customers";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getCustomersResolved, getLookupContext } from "@/lib/db/adapters";
 import { serializeLookupContext } from "@/lib/domain";
 import { buildSelectOptions } from "@/lib/options";
 import { CustomersView } from "@/components/views/customers-view";

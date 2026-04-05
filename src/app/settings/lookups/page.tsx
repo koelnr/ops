@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getLookupContext } from "@/lib/sheets/lookups";
+import { getLookupContext } from "@/lib/db/adapters";
 
 export default async function LookupsPage() {
   const ctx = await getLookupContext().catch(() => null);
@@ -89,7 +89,7 @@ export default async function LookupsPage() {
       <div>
         <h1 className="text-lg font-semibold">Lookup Tables</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Read-only view. Edit values directly in the Google Sheet.
+          Read-only view. Edit values directly in Firestore.
         </p>
       </div>
 

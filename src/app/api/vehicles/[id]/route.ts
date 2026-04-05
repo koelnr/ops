@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateVehicleSchema } from "@/lib/schemas";
-import { updateVehicle, deleteVehicle } from "@/lib/sheets/mutations/vehicles";
+import { updateVehicleFromInput, deleteVehicle } from "@/lib/db/modules/vehicles";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -20,7 +20,7 @@ export async function PATCH(
       );
     }
 
-    await updateVehicle(id, parsed.data);
+    await updateVehicleFromInput(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message =

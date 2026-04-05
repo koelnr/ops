@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateBookingSchema } from "@/lib/schemas";
-import { updateBooking, deleteBooking } from "@/lib/sheets/mutations/bookings";
+import { updateBookingFromInput, deleteBooking } from "@/lib/db/modules/bookings";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(
@@ -20,7 +20,7 @@ export async function PATCH(
       );
     }
 
-    await updateBooking(id, parsed.data);
+    await updateBookingFromInput(id, parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message =
