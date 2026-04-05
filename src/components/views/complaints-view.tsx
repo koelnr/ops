@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { ComplaintWithContext, Worker, SerializedLookupContext } from "@/lib/domain";
+import type { ResolvedComplaint, Worker, SerializedLookupContext } from "@/lib/domain";
 import type { SelectOptions } from "@/lib/options";
 import { mutate, create, remove } from "@/lib/mutate";
 import { STATIC_OPTIONS, RESOLUTION_STATUS_OPTIONS } from "@/lib/options";
@@ -52,7 +52,7 @@ const emptyForm: ComplaintFormData = {
   root_cause: "",
 };
 
-function complaintToForm(c: ComplaintWithContext): ComplaintFormData {
+function complaintToForm(c: ResolvedComplaint): ComplaintFormData {
   return {
     booking_id: c.booking_id,
     complaint_date: c.complaint_date,
@@ -68,13 +68,13 @@ function complaintToForm(c: ComplaintWithContext): ComplaintFormData {
 }
 
 interface ComplaintsViewProps {
-  complaints: ComplaintWithContext[];
+  resolvedComplaints: ResolvedComplaint[];
   workers: Worker[];
   serializedCtx: SerializedLookupContext | null;
   options: SelectOptions | null;
 }
 
-export function ComplaintsView({ complaints, workers, options }: ComplaintsViewProps) {
+export function ComplaintsView({ resolvedComplaints, workers, options }: ComplaintsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -86,31 +86,31 @@ export function ComplaintsView({ complaints, workers, options }: ComplaintsViewP
   function resetFilters() { setSearch(""); setStatusFilter(""); setTypeFilter(""); }
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<ComplaintWithContext | null>(null);
+  const [editTarget, setEditTarget] = useState<ResolvedComplaint | null>(null);
   const [form, setForm] = useState<ComplaintFormData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<ComplaintWithContext | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ResolvedComplaint | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return complaints.filter((c) => {
+    return resolvedComplaints.filter((c) => {
       if (statusFilter && c.resolution_status !== statusFilter) return false;
       if (typeFilter && c.complaint_type_id !== typeFilter) return false;
       if (q) {
         return (
           c.details.toLowerCase().includes(q) ||
           c.complaint_id.toLowerCase().includes(q) ||
-          c.customerName.toLowerCase().includes(q) ||
+          c.customer_name.toLowerCase().includes(q) ||
           c.booking_id.toLowerCase().includes(q) ||
-          c.workerName.toLowerCase().includes(q)
+          c.worker_name.toLowerCase().includes(q)
         );
       }
       return true;
     });
-  }, [complaints, search, statusFilter, typeFilter]);
+  }, [resolvedComplaints, search, statusFilter, typeFilter]);
 
-  const unresolvedCount = complaints.filter(
+  const unresolvedCount = resolvedComplaints.filter(
     (c) =>
       !c.resolution_status ||
       c.resolution_status.toLowerCase().includes("open") ||
@@ -128,9 +128,9 @@ export function ComplaintsView({ complaints, workers, options }: ComplaintsViewP
   }
 
   function openCreate() { setEditTarget(null); setForm(emptyForm); setFormOpen(true); }
-  function openEdit(complaint: ComplaintWithContext) { setEditTarget(complaint); setForm(complaintToForm(complaint)); setFormOpen(true); }
+  function openEdit(complaint: ResolvedComplaint) { setEditTarget(complaint); setForm(complaintToForm(complaint)); setFormOpen(true); }
 
-  async function handleUpdate(complaint: ComplaintWithContext, body: Record<string, string>, msg: string) {
+  async function handleUpdate(complaint: ResolvedComplaint, body: Record<string, string>, msg: string) {
     const result = await mutate(`/api/complaints/${complaint.complaint_id}`, body);
     if (result.ok) {
       toast.success(msg);
@@ -178,7 +178,7 @@ export function ComplaintsView({ complaints, workers, options }: ComplaintsViewP
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Complaints"
-        description={`${complaints.length} total · ${unresolvedCount} unresolved`}
+        description={`${resolvedComplaints.length} total · ${unresolvedCount} unresolved`}
         action={
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1" />
@@ -190,9 +190,9 @@ export function ComplaintsView({ complaints, workers, options }: ComplaintsViewP
         <SearchInput value={search} onChange={setSearch} placeholder="Search details, ID, customer, worker…" className="w-70" />
         <FilterSelect value={statusFilter} onChange={setStatusFilter} options={RESOLUTION_STATUS_OPTIONS} placeholder="Resolution status" />
         <FilterSelect value={typeFilter} onChange={setTypeFilter} options={opts.complaintTypes} placeholder="Complaint type" />
-        {filtered.length !== complaints.length && (
+        {filtered.length !== resolvedComplaints.length && (
           <>
-            <span className="text-xs text-muted-foreground">{filtered.length} of {complaints.length} shown</span>
+            <span className="text-xs text-muted-foreground">{filtered.length} of {resolvedComplaints.length} shown</span>
             <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">Clear filters</Button>
           </>
         )}

@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { PaymentWithContext, SerializedLookupContext } from "@/lib/domain";
+import type { ResolvedPayment, SerializedLookupContext } from "@/lib/domain";
 import type { SelectOptions } from "@/lib/options";
 import { mutate, remove } from "@/lib/mutate";
 import { STATIC_OPTIONS } from "@/lib/options";
@@ -35,7 +35,7 @@ type PaymentFormData = {
   notes: string;
 };
 
-function paymentToForm(p: PaymentWithContext): PaymentFormData {
+function paymentToForm(p: ResolvedPayment): PaymentFormData {
   const today = new Date().toISOString().split("T")[0];
   return {
     amount_received: String(p.amount_received),
@@ -49,12 +49,12 @@ function paymentToForm(p: PaymentWithContext): PaymentFormData {
 }
 
 interface PaymentsViewProps {
-  payments: PaymentWithContext[];
+  resolvedPayments: ResolvedPayment[];
   serializedCtx: SerializedLookupContext | null;
   options: SelectOptions | null;
 }
 
-export function PaymentsView({ payments, options }: PaymentsViewProps) {
+export function PaymentsView({ resolvedPayments, options }: PaymentsViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -67,12 +67,12 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
 
   // UPI ref dialog
   const [refDialogOpen, setRefDialogOpen] = useState(false);
-  const [refTarget, setRefTarget] = useState<PaymentWithContext | null>(null);
+  const [refTarget, setRefTarget] = useState<ResolvedPayment | null>(null);
   const [upiRef, setUpiRef] = useState("");
 
   // Edit dialog
   const [formOpen, setFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<PaymentWithContext | null>(null);
+  const [editTarget, setEditTarget] = useState<ResolvedPayment | null>(null);
   const [form, setForm] = useState<PaymentFormData>({
     amount_received: "0",
     payment_status_id: "",
@@ -84,34 +84,34 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<PaymentWithContext | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ResolvedPayment | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return payments.filter((p) => {
+    return resolvedPayments.filter((p) => {
       if (statusFilter && p.payment_status_id !== statusFilter) return false;
       if (modeFilter && p.payment_mode_id !== modeFilter) return false;
       if (q) {
         return (
           p.payment_id.toLowerCase().includes(q) ||
           p.booking_id.toLowerCase().includes(q) ||
-          p.customerName.toLowerCase().includes(q)
+          p.customer_name.toLowerCase().includes(q)
         );
       }
       return true;
     });
-  }, [payments, search, statusFilter, modeFilter]);
+  }, [resolvedPayments, search, statusFilter, modeFilter]);
 
   const pendingCount = useMemo(() => {
     const pendingLabels = new Set(["Pending", "Partially Paid"]);
-    return payments.filter((p) => pendingLabels.has(p.paymentStatusLabel)).length;
-  }, [payments]);
+    return resolvedPayments.filter((p) => pendingLabels.has(p.payment_status_name)).length;
+  }, [resolvedPayments]);
 
   function setField(key: keyof PaymentFormData, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function openEdit(payment: PaymentWithContext) {
+  function openEdit(payment: ResolvedPayment) {
     setEditTarget(payment);
     setForm(paymentToForm(payment));
     setFormOpen(true);
@@ -156,11 +156,11 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
   async function handleFormSubmit() {
     if (!editTarget) return;
     const received = Number(form.amount_received) || 0;
-    if (received > editTarget.finalPrice) {
+    if (received > editTarget.final_price) {
       toast.error("Amount received cannot exceed amount due");
       return;
     }
-    if (selectedStatusLabel === "Paid" && received !== editTarget.finalPrice) {
+    if (selectedStatusLabel === "Paid" && received !== editTarget.final_price) {
       toast.error("Amount received must equal amount due to mark as Paid");
       return;
     }
@@ -203,7 +203,7 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
   const amountWarning =
     form.amount_received &&
     editTarget &&
-    Number(form.amount_received) > editTarget.finalPrice;
+    Number(form.amount_received) > editTarget.final_price;
 
   const columns = getPaymentColumns({
     onEdit: openEdit,
@@ -222,15 +222,15 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Payments"
-        description={`${payments.length} total · ${pendingCount} pending or partial`}
+        description={`${resolvedPayments.length} total · ${pendingCount} pending or partial`}
       />
       <div className="flex flex-wrap items-center gap-2">
         <SearchInput value={search} onChange={setSearch} placeholder="Search payment ID, booking ID, customer…" className="w-full sm:w-75" />
         <FilterSelect value={statusFilter} onChange={setStatusFilter} options={opts.paymentStatuses} placeholder="All statuses" />
         <FilterSelect value={modeFilter} onChange={setModeFilter} options={opts.paymentModes} placeholder="All modes" />
-        {filtered.length !== payments.length && (
+        {filtered.length !== resolvedPayments.length && (
           <>
-            <span className="text-xs text-muted-foreground">{filtered.length} of {payments.length} shown</span>
+            <span className="text-xs text-muted-foreground">{filtered.length} of {resolvedPayments.length} shown</span>
             <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">Clear filters</Button>
           </>
         )}
@@ -275,11 +275,11 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
               </div>
               <div className="space-y-1.5">
                 <Label>Customer</Label>
-                <Input value={editTarget.customerName} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
+                <Input value={editTarget.customer_name} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
               </div>
               <div className="space-y-1.5">
                 <Label>Service Date</Label>
-                <Input value={editTarget.serviceDate} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
+                <Input value={editTarget.service_date} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
               </div>
               <div className="space-y-1.5">
                 <Label>Payment Date{isSettled && " *"}</Label>
@@ -287,7 +287,7 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
               </div>
               <div className="space-y-1.5">
                 <Label>Amount Due (₹)</Label>
-                <Input value={editTarget.finalPrice} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
+                <Input value={editTarget.final_price} readOnly disabled className="bg-muted cursor-not-allowed opacity-60" />
               </div>
               <div className="space-y-1.5">
                 <Label>Amount Received (₹)</Label>
@@ -306,7 +306,7 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
                     <option
                       key={o.value}
                       value={o.value}
-                      disabled={o.label === "Paid" && Number(form.amount_received) !== editTarget.finalPrice}
+                      disabled={o.label === "Paid" && Number(form.amount_received) !== editTarget.final_price}
                     >
                       {o.label}
                     </option>
@@ -359,7 +359,7 @@ export function PaymentsView({ payments, options }: PaymentsViewProps) {
             <AlertDialogDescription>
               This will permanently remove payment{" "}
               <span className="font-mono font-medium">{deleteTarget?.payment_id}</span>{" "}
-              for {deleteTarget?.customerName}. This cannot be undone.
+              for {deleteTarget?.customer_name}. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

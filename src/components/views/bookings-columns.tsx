@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Booking, Customer, Worker, BookingStatus } from "@/lib/domain";
+import type { ResolvedBooking } from "@/lib/domain";
 import type { SelectOption } from "@/lib/domain";
 import { formatDate, formatCurrency } from "@/lib/format";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -22,24 +22,17 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 
 interface BookingColumnActions {
-  onEdit: (booking: Booking) => void;
-  onAssign: (booking: Booking) => void;
+  onEdit: (booking: ResolvedBooking) => void;
+  onAssign: (booking: ResolvedBooking) => void;
   onSetBookingStatus: (id: string, statusId: string) => void;
-  onDelete: (booking: Booking) => void;
+  onDelete: (booking: ResolvedBooking) => void;
   isPending: boolean;
   isAdmin: boolean;
-  customerMap: Map<string, Customer>;
-  workerMap: Map<string, Worker>;
-  ctxMaps: {
-    statuses: Map<string, BookingStatus>;
-    timeSlots: Map<string, { label: string }>;
-    areas: Map<string, { name: string }>;
-  } | null;
   bookingStatusOptions: SelectOption[];
 }
 
-export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Booking>[] {
-  const columns: ColumnDef<Booking>[] = [
+export function getBookingColumns(actions: BookingColumnActions): ColumnDef<ResolvedBooking>[] {
+  const columns: ColumnDef<ResolvedBooking>[] = [
     {
       accessorKey: "booking_id",
       header: "Booking ID",
@@ -62,42 +55,36 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Book
       ),
     },
     {
-      accessorKey: "customer_id",
+      accessorKey: "customer_name",
       header: "Customer",
       enableSorting: true,
-      cell: ({ row }) => {
-        const customer = actions.customerMap.get(row.original.customer_id);
-        return (
-          <div>
-            <div className="font-medium text-sm">{customer?.full_name ?? row.original.customer_id}</div>
-            <div className="text-xs text-muted-foreground">{customer?.phone ?? ""}</div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div>
+          <div className="font-medium text-sm">{row.original.customer_name || "—"}</div>
+          <div className="text-xs text-muted-foreground">{row.original.phone}</div>
+        </div>
+      ),
     },
     {
-      accessorKey: "time_slot_id",
+      accessorKey: "time_slot_label",
       header: "Time Slot",
-      cell: ({ row }) => {
-        const label = actions.ctxMaps?.timeSlots.get(row.original.time_slot_id)?.label ?? row.original.time_slot_id;
-        return <span className="text-sm">{label || "—"}</span>;
-      },
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.time_slot_label || "—"}</span>
+      ),
     },
     {
-      accessorKey: "assigned_worker_id",
+      accessorKey: "worker_name",
       header: "Worker",
-      cell: ({ row }) => {
-        const worker = actions.workerMap.get(row.original.assigned_worker_id);
-        return <span className="text-sm">{worker?.worker_name ?? "—"}</span>;
-      },
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.worker_name || "—"}</span>
+      ),
     },
     {
-      accessorKey: "area_id",
+      accessorKey: "area_name",
       header: "Area",
-      cell: ({ row }) => {
-        const area = actions.ctxMaps?.areas.get(row.original.area_id);
-        return <span className="text-sm text-muted-foreground">{area?.name ?? (row.original.area_id || "—")}</span>;
-      },
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">{row.original.area_name || "—"}</span>
+      ),
     },
     {
       accessorKey: "final_price",
@@ -110,12 +97,11 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Book
       ),
     },
     {
-      accessorKey: "booking_status_id",
+      accessorKey: "booking_status_name",
       header: "Status",
-      cell: ({ row }) => {
-        const status = actions.ctxMaps?.statuses.get(row.original.booking_status_id);
-        return <StatusBadge status={status?.label ?? row.original.booking_status_id} />;
-      },
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.booking_status_name || row.original.booking_status_id} />
+      ),
     },
   ];
 
@@ -125,7 +111,6 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Book
       size: 48,
       cell: ({ row }) => {
         const booking = row.original;
-        const currentStatusLabel = actions.ctxMaps?.statuses.get(booking.booking_status_id)?.label;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -145,7 +130,7 @@ export function getBookingColumns(actions: BookingColumnActions): ColumnDef<Book
                   {actions.bookingStatusOptions.map((opt) => (
                     <DropdownMenuItem
                       key={opt.value}
-                      disabled={booking.booking_status_id === opt.value || currentStatusLabel === opt.label}
+                      disabled={booking.booking_status_id === opt.value}
                       onSelect={() => actions.onSetBookingStatus(booking.booking_id, opt.value)}
                     >
                       {opt.label}

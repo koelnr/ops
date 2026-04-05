@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { PaymentWithContext } from "@/lib/domain";
+import type { ResolvedPayment } from "@/lib/domain";
 import type { SelectOption } from "@/lib/domain";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -20,15 +20,15 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 
 interface PaymentColumnActions {
-  onEdit: (payment: PaymentWithContext) => void;
+  onEdit: (payment: ResolvedPayment) => void;
   onSetPaymentStatus: (id: string, statusId: string) => void;
-  onUpdateRef: (payment: PaymentWithContext) => void;
-  onDelete: (payment: PaymentWithContext) => void;
+  onUpdateRef: (payment: ResolvedPayment) => void;
+  onDelete: (payment: ResolvedPayment) => void;
   isPending: boolean;
   paymentStatusOptions: SelectOption[];
 }
 
-export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<PaymentWithContext>[] {
+export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<ResolvedPayment>[] {
   return [
     {
       accessorKey: "payment_id",
@@ -46,20 +46,20 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Paym
       ),
     },
     {
-      accessorKey: "customerName",
+      accessorKey: "customer_name",
       header: "Customer",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.customerName || "—"}</span>
+        <span className="text-sm">{row.original.customer_name || "—"}</span>
       ),
     },
     {
-      accessorKey: "finalPrice",
+      accessorKey: "final_price",
       header: "Amount Due",
       enableSorting: true,
       cell: ({ row }) => (
         <span className="text-right font-medium text-sm tabular-nums block">
-          {formatCurrency(row.original.finalPrice)}
+          {formatCurrency(row.original.final_price)}
         </span>
       ),
     },
@@ -73,16 +73,16 @@ export function getPaymentColumns(actions: PaymentColumnActions): ColumnDef<Paym
       ),
     },
     {
-      accessorKey: "paymentModeLabel",
+      accessorKey: "payment_mode_name",
       header: "Mode",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.paymentModeLabel || "—"}</span>
+        <span className="text-sm">{row.original.payment_mode_name || "—"}</span>
       ),
     },
     {
-      accessorKey: "paymentStatusLabel",
+      accessorKey: "payment_status_name",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.paymentStatusLabel} />,
+      cell: ({ row }) => <StatusBadge status={row.original.payment_status_name} />,
     },
     {
       accessorKey: "payment_date",

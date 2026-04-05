@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { ComplaintWithContext } from "@/lib/domain";
+import type { ResolvedComplaint } from "@/lib/domain";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { formatDate } from "@/lib/format";
 import {
@@ -16,15 +16,15 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 
 interface ComplaintColumnActions {
-  onEdit: (complaint: ComplaintWithContext) => void;
-  onMarkResolved: (complaint: ComplaintWithContext) => void;
-  onEscalate: (complaint: ComplaintWithContext) => void;
-  onScheduleRewash: (complaint: ComplaintWithContext) => void;
-  onDelete: (complaint: ComplaintWithContext) => void;
+  onEdit: (complaint: ResolvedComplaint) => void;
+  onMarkResolved: (complaint: ResolvedComplaint) => void;
+  onEscalate: (complaint: ResolvedComplaint) => void;
+  onScheduleRewash: (complaint: ResolvedComplaint) => void;
+  onDelete: (complaint: ResolvedComplaint) => void;
   isPending: boolean;
 }
 
-export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<ComplaintWithContext>[] {
+export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<ResolvedComplaint>[] {
   return [
     {
       accessorKey: "complaint_id",
@@ -35,11 +35,11 @@ export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<
       ),
     },
     {
-      accessorKey: "customerName",
+      accessorKey: "customer_name",
       header: "Customer",
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="font-medium text-sm">{row.original.customerName || "—"}</span>
+        <span className="font-medium text-sm">{row.original.customer_name || "—"}</span>
       ),
     },
     {
@@ -50,17 +50,17 @@ export function getComplaintColumns(actions: ComplaintColumnActions): ColumnDef<
       ),
     },
     {
-      accessorKey: "workerName",
+      accessorKey: "worker_name",
       header: "Worker",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.workerName || "—"}</span>
+        <span className="text-sm text-muted-foreground">{row.original.worker_name || "—"}</span>
       ),
     },
     {
-      accessorKey: "complaintTypeLabel",
+      accessorKey: "complaint_type_name",
       header: "Type",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.complaintTypeLabel || "—"}</span>
+        <span className="text-sm">{row.original.complaint_type_name || "—"}</span>
       ),
     },
     {

@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Booking, Customer, Vehicle, Worker, SerializedLookupContext } from "@/lib/domain";
+import type { ResolvedBooking, Customer, Vehicle, Worker, SerializedLookupContext } from "@/lib/domain";
 import type { SelectOptions } from "@/lib/options";
 import { mutate, create, remove } from "@/lib/mutate";
 import { STATIC_OPTIONS } from "@/lib/options";
@@ -59,7 +59,7 @@ const emptyForm: BookingFormData = {
   notes: "",
 };
 
-function bookingToForm(b: Booking): BookingFormData {
+function resolvedBookingToForm(b: ResolvedBooking): BookingFormData {
   return {
     customer_id: b.customer_id,
     vehicle_id: b.vehicle_id,
@@ -67,7 +67,7 @@ function bookingToForm(b: Booking): BookingFormData {
     time_slot_id: b.time_slot_id,
     booking_status_id: b.booking_status_id,
     source_id: b.source_id,
-    assigned_worker_id: b.assigned_worker_id,
+    assigned_worker_id: b.worker_id,
     area_id: b.area_id,
     base_price: String(b.base_price),
     discount_amount: String(b.discount_amount),
@@ -78,7 +78,7 @@ function bookingToForm(b: Booking): BookingFormData {
 }
 
 interface BookingsViewProps {
-  bookings: Booking[];
+  resolvedBookings: ResolvedBooking[];
   workers: Worker[];
   vehicles: Vehicle[];
   customers: Customer[];
@@ -87,7 +87,7 @@ interface BookingsViewProps {
 }
 
 export function BookingsView({
-  bookings, workers, vehicles, customers, serializedCtx, options,
+  resolvedBookings, workers, vehicles, customers, options,
 }: BookingsViewProps) {
   const router = useRouter();
   const { user } = useUser();
@@ -102,54 +102,39 @@ export function BookingsView({
   function resetFilters() { setSearch(""); setStatusFilter(""); setAreaFilter(""); }
 
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [assignTarget, setAssignTarget] = useState<Booking | null>(null);
+  const [assignTarget, setAssignTarget] = useState<ResolvedBooking | null>(null);
   const [assignWorkerId, setAssignWorkerId] = useState("");
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Booking | null>(null);
+  const [editTarget, setEditTarget] = useState<ResolvedBooking | null>(null);
   const [form, setForm] = useState<BookingFormData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<Booking | null>(null);
-
-  // Build lookup maps for display
-  const customerMap = useMemo(() => new Map(customers.map((c) => [c.customer_id, c])), [customers]);
-  const workerMap = useMemo(() => new Map(workers.map((w) => [w.worker_id, w])), [workers]);
-  const ctxMaps = useMemo(() => {
-    if (!serializedCtx) return null;
-    return {
-      statuses: new Map(serializedCtx.bookingStatuses.map((s) => [s.booking_status_id, s])),
-      timeSlots: new Map(serializedCtx.timeSlots.map((t) => [t.time_slot_id, t])),
-      areas: new Map(serializedCtx.areas.map((a) => [a.area_id, a])),
-    };
-  }, [serializedCtx]);
+  const [deleteTarget, setDeleteTarget] = useState<ResolvedBooking | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return bookings.filter((b) => {
+    return resolvedBookings.filter((b) => {
       if (statusFilter && b.booking_status_id !== statusFilter) return false;
       if (areaFilter && b.area_id !== areaFilter) return false;
       if (q) {
-        const customer = customerMap.get(b.customer_id);
-        const worker = workerMap.get(b.assigned_worker_id);
         return (
           b.booking_id.toLowerCase().includes(q) ||
-          customer?.full_name.toLowerCase().includes(q) ||
-          customer?.phone.toLowerCase().includes(q) ||
-          worker?.worker_name.toLowerCase().includes(q) ||
-          false
+          b.customer_name.toLowerCase().includes(q) ||
+          b.phone.toLowerCase().includes(q) ||
+          b.worker_name.toLowerCase().includes(q)
         );
       }
       return true;
     });
-  }, [bookings, search, statusFilter, areaFilter, customerMap, workerMap]);
+  }, [resolvedBookings, search, statusFilter, areaFilter]);
 
   function setField(key: keyof BookingFormData, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   function openCreate() { setEditTarget(null); setForm(emptyForm); setFormOpen(true); }
-  function openEdit(booking: Booking) { setEditTarget(booking); setForm(bookingToForm(booking)); setFormOpen(true); }
+  function openEdit(booking: ResolvedBooking) { setEditTarget(booking); setForm(resolvedBookingToForm(booking)); setFormOpen(true); }
 
   async function handleMutate(id: string, body: Record<string, unknown>, msg: string) {
     const result = await mutate(`/api/bookings/${id}`, body);
@@ -223,7 +208,7 @@ export function BookingsView({
     onEdit: openEdit,
     onAssign: (booking) => {
       setAssignTarget(booking);
-      setAssignWorkerId(booking.assigned_worker_id);
+      setAssignWorkerId(booking.worker_id);
       setAssignDialogOpen(true);
     },
     onSetBookingStatus: (id, statusId) =>
@@ -231,9 +216,6 @@ export function BookingsView({
     onDelete: setDeleteTarget,
     isPending,
     isAdmin,
-    customerMap,
-    workerMap,
-    ctxMaps,
     bookingStatusOptions: opts.bookingStatuses,
   });
 
@@ -241,7 +223,7 @@ export function BookingsView({
     <div className="mx-auto max-w-350 px-4 py-6 space-y-4">
       <PageHeader
         title="Bookings"
-        description={`${bookings.length} total bookings`}
+        description={`${resolvedBookings.length} total bookings`}
         action={
           isAdmin ? (
             <Button size="sm" onClick={openCreate}>
@@ -255,9 +237,9 @@ export function BookingsView({
         <SearchInput value={search} onChange={setSearch} placeholder="Search ID, customer, phone…" className="w-70" />
         <FilterSelect value={statusFilter} onChange={setStatusFilter} options={opts.bookingStatuses} placeholder="All statuses" />
         <FilterSelect value={areaFilter} onChange={setAreaFilter} options={opts.areas} placeholder="All areas" />
-        {filtered.length !== bookings.length && (
+        {filtered.length !== resolvedBookings.length && (
           <>
-            <span className="text-xs text-muted-foreground">{filtered.length} of {bookings.length} shown</span>
+            <span className="text-xs text-muted-foreground">{filtered.length} of {resolvedBookings.length} shown</span>
             <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 text-xs">Clear filters</Button>
           </>
         )}
