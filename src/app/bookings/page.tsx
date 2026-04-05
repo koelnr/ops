@@ -1,4 +1,4 @@
-import { getBookings } from "@/lib/sheets/bookings";
+import { getBookingsResolved } from "@/lib/sheets/bookings";
 import { getWorkers } from "@/lib/sheets/workers";
 import { getVehicles } from "@/lib/sheets/vehicles";
 import { getCustomers } from "@/lib/sheets/customers";
@@ -8,8 +8,8 @@ import { buildSelectOptions } from "@/lib/options";
 import { BookingsView } from "@/components/views/bookings-view";
 
 export default async function BookingsPage() {
-  const [bookings, workers, vehicles, customers, ctx] = await Promise.all([
-    getBookings().catch((err) => { console.error("[bookings page]", err); return []; }),
+  const [resolvedBookings, workers, vehicles, customers, ctx] = await Promise.all([
+    getBookingsResolved().catch((err) => { console.error("[bookings page]", err); return []; }),
     getWorkers().catch((err) => { console.error("[bookings page] workers", err); return []; }),
     getVehicles().catch((err) => { console.error("[bookings page] vehicles", err); return []; }),
     getCustomers().catch((err) => { console.error("[bookings page] customers", err); return []; }),
@@ -21,7 +21,7 @@ export default async function BookingsPage() {
 
   return (
     <BookingsView
-      bookings={bookings}
+      resolvedBookings={resolvedBookings}
       workers={workers}
       vehicles={vehicles}
       customers={customers}
