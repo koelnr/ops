@@ -27,7 +27,7 @@ export function resolveBookingLabels(
   const source = ctx.leadSources.get(booking.source_id);
 
   return {
-    areaName: area?.name ?? booking.area_id,
+    areaName: area?.area_name ?? booking.area_id,
     timeSlotLabel: slot?.label ?? booking.time_slot_id,
     bookingStatusLabel: status?.label ?? booking.booking_status_id,
     bookingStatusColor: status?.color ?? "",
@@ -50,7 +50,7 @@ export function resolveCustomerLabels(
   const source = ctx.leadSources.get(customer.acquisition_source_id);
 
   return {
-    areaName: area?.name ?? customer.area_id,
+    areaName: area?.area_name ?? customer.area_id,
     acquisitionSourceLabel: source?.label ?? customer.acquisition_source_id,
   };
 }
@@ -85,7 +85,7 @@ export function resolveLeadLabels(lead: Lead, ctx: LookupContext): LeadLabels {
   const source = ctx.leadSources.get(lead.source_id);
 
   return {
-    areaName: area?.name ?? lead.area_id,
+    areaName: area?.area_name ?? lead.area_id,
     interestedServiceName: service?.name ?? lead.interested_service_id,
     sourceLabel: source?.label ?? lead.source_id,
   };

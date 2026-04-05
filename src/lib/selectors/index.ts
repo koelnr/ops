@@ -137,7 +137,7 @@ export function buildWorkerWithSummary(
   return {
     ...worker,
     ...summary,
-    areaName: area?.name ?? worker.primary_area_id,
+    areaName: area?.area_name ?? worker.primary_area_id,
   };
 }
 
@@ -295,7 +295,7 @@ export function buildTodayJobViews(
         booking,
         customerName: customer?.full_name ?? "",
         customerPhone: customer?.phone ?? "",
-        areaName: area?.name ?? booking.area_id,
+        areaName: area?.area_name ?? booking.area_id,
         timeSlotLabel: timeSlot?.label ?? booking.time_slot_id,
         workerName: worker?.worker_name ?? "",
         bookingStatusLabel: status?.label ?? booking.booking_status_id,

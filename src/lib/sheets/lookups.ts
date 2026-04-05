@@ -25,7 +25,10 @@ export async function getLookupContext(): Promise<LookupContext> {
   const areas = new Map<string, Area>(
     results[0]
       .filter((r) => r.area_id)
-      .map((r) => [r.area_id, { area_id: r.area_id, name: r.name ?? "" }]),
+      .map((r) => [
+        r.area_id,
+        { area_id: r.area_id, area_name: r.area_name ?? "" },
+      ]),
   );
 
   const services = new Map<string, Service>(

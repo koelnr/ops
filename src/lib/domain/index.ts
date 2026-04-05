@@ -116,7 +116,7 @@ export interface Lead {
 
 export interface Area {
   area_id: string;
-  name: string;
+  area_name: string;
 }
 
 export interface Service {
