@@ -38,7 +38,7 @@ export async function getLookupContext(): Promise<LookupContext> {
         r.service_id,
         {
           service_id: r.service_id,
-          name: r.name ?? "",
+          name: r.service_name ?? "",
           base_price: parseNumber(r.base_price),
           category: r.category ?? "",
         },
@@ -108,7 +108,7 @@ export async function getLookupContext(): Promise<LookupContext> {
       .filter((r) => r.source_id)
       .map((r) => [
         r.source_id,
-        { source_id: r.source_id, label: r.label ?? "" },
+        { source_id: r.source_id, label: r.source_name ?? "" },
       ]),
   );
 
