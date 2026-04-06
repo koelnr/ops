@@ -38,6 +38,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { SearchInput } from "@/components/shared/search-input";
 
 // ─── Collection config ────────────────────────────────────────────────────────
 
@@ -447,6 +448,7 @@ export function LookupsAdminView({ data }: LookupsAdminViewProps) {
   const { user } = useUser();
   const isAdmin = user?.publicMetadata?.role === "admin";
   const [, startTransition] = useTransition();
+  const [search, setSearch] = useState("");
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -546,13 +548,37 @@ export function LookupsAdminView({ data }: LookupsAdminViewProps) {
         </div>
       </div>
 
+      <div className="flex items-center gap-3">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search across all lookup tables…"
+          className="max-w-sm"
+        />
+        {search && (
+          <span className="text-xs text-muted-foreground">
+            Searching across all tables
+          </span>
+        )}
+      </div>
+
       <Separator />
 
       {/* Collections grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {COLLECTION_ORDER.map((key) => {
           const config = CONFIGS[key];
-          const entries = data[key];
+          const q = search.trim().toLowerCase();
+          const entries = q
+            ? data[key].filter((e) => {
+                const name = String(e[config.nameField] ?? "").toLowerCase();
+                const sub = config.subInfo?.(e)?.toLowerCase() ?? "";
+                return name.includes(q) || sub.includes(q);
+              })
+            : data[key];
+
+          if (q && entries.length === 0) return null;
+
           const activeCount = entries.filter((e) => e.isActive).length;
 
           return (
@@ -600,19 +626,23 @@ export function LookupsAdminView({ data }: LookupsAdminViewProps) {
                   </p>
                 ) : (
                   <div className="mx-0">
-                    {[...entries].sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1)).map((entry) => (
-                      <EntryRow
-                        key={entry.id}
-                        entry={entry}
-                        collectionKey={key}
-                        isAdmin={isAdmin}
-                        onToggle={() => handleToggle(key, entry)}
-                        onEdit={() => openEdit(key, entry)}
-                        onDelete={() =>
-                          setDeleteTarget({ collection: key, entry })
-                        }
-                      />
-                    ))}
+                    {[...entries]
+                      .sort((a, b) =>
+                        a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1,
+                      )
+                      .map((entry) => (
+                        <EntryRow
+                          key={entry.id}
+                          entry={entry}
+                          collectionKey={key}
+                          isAdmin={isAdmin}
+                          onToggle={() => handleToggle(key, entry)}
+                          onEdit={() => openEdit(key, entry)}
+                          onDelete={() =>
+                            setDeleteTarget({ collection: key, entry })
+                          }
+                        />
+                      ))}
                   </div>
                 )}
               </CardContent>
