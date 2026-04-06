@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { PWARegister } from "@/components/providers/pwa-register";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -46,6 +47,7 @@ export default function RootLayout({
               </div>
             </SidebarProvider>
             <Toaster richColors position="bottom-right" />
+            <PWARegister />
           </ClerkProvider>
         </ThemeProvider>
       </body>
