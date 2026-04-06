@@ -303,7 +303,7 @@ export function CustomersView({
                 placeholder="Near landmark"
               />
             </div>
-            <div className="col-span-2 space-y-1.5">
+            <div className="col-span-full space-y-1.5">
               <Label>Full Address</Label>
               <Input
                 value={form.full_address}
@@ -311,7 +311,7 @@ export function CustomersView({
                 placeholder="Complete address"
               />
             </div>
-            <div className="col-span-2 space-y-1.5">
+            <div className="col-span-full space-y-1.5">
               <Label>Notes</Label>
               <Textarea
                 value={form.notes}

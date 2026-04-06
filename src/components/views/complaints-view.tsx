@@ -380,7 +380,7 @@ export function ComplaintsView({
                 <option value="Discount">Discount</option>
               </Select>
             </div>
-            <div className="col-span-2 space-y-1.5">
+            <div className="col-span-full space-y-1.5">
               <Label>Complaint Details *</Label>
               <Textarea
                 value={form.details}
@@ -389,7 +389,7 @@ export function ComplaintsView({
                 rows={2}
               />
             </div>
-            <div className="col-span-2 space-y-1.5">
+            <div className="col-span-full space-y-1.5">
               <Label>Resolution Notes</Label>
               <Textarea
                 value={form.resolution_notes}

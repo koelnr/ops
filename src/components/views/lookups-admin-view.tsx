@@ -396,7 +396,7 @@ function EntryRow({
                 <Button
                   size="icon-xs"
                   variant="ghost"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="lg:opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={onEdit}
                 >
                   <Pencil />
@@ -412,7 +412,7 @@ function EntryRow({
                 <Button
                   size="icon-xs"
                   variant="ghost"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                  className="lg:opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
                   onClick={onDelete}
                 >
                   <Trash2 />

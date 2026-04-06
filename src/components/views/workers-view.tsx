@@ -328,7 +328,7 @@ export function WorkersView({ workers, options }: WorkersViewProps) {
                 placeholder="0"
               />
             </div>
-            <div className="col-span-2 space-y-1.5">
+            <div className="col-span-full space-y-1.5">
               <Label>Notes</Label>
               <Textarea
                 value={form.notes}
