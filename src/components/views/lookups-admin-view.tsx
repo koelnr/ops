@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { SearchInput } from "@/components/shared/search-input";
+import { useDebounce } from "@/lib/hooks/use-debounce";
 
 // ─── Collection config ────────────────────────────────────────────────────────
 
@@ -449,6 +450,7 @@ export function LookupsAdminView({ data }: LookupsAdminViewProps) {
   const isAdmin = user?.publicMetadata?.role === "admin";
   const [, startTransition] = useTransition();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 250);
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -568,7 +570,7 @@ export function LookupsAdminView({ data }: LookupsAdminViewProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {COLLECTION_ORDER.map((key) => {
           const config = CONFIGS[key];
-          const q = search.trim().toLowerCase();
+          const q = debouncedSearch.trim().toLowerCase();
           const entries = q
             ? data[key].filter((e) => {
                 const name = String(e[config.nameField] ?? "").toLowerCase();
