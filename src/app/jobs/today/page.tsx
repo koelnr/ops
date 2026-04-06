@@ -2,7 +2,14 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TodayJobsTable } from "@/components/tables/today-jobs-table";
-import { getBookings, getPayments, getComplaints, getCustomers, getWorkers, getLookupContext } from "@/lib/db/adapters";
+import {
+  getBookings,
+  getPayments,
+  getComplaints,
+  getCustomers,
+  getWorkers,
+  getLookupContext,
+} from "@/lib/db/adapters";
 import { serializeLookupContext } from "@/lib/domain";
 import { buildTodayJobViews } from "@/lib/selectors";
 import { buildSelectOptions } from "@/lib/options";

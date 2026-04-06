@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateVehicleSchema } from "@/lib/schemas";
-import { updateVehicleFromInput, deleteVehicle } from "@/lib/db/modules/vehicles";
+import {
+  updateVehicleFromInput,
+  deleteVehicle,
+} from "@/lib/db/modules/vehicles";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(

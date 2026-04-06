@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { LeadConvertStepper } from "@/components/forms/lead-convert-stepper";
-import { getLeads, getCustomers, getBookings, getWorkers, getLookupContext } from "@/lib/db/adapters";
+import {
+  getLeads,
+  getCustomers,
+  getBookings,
+  getWorkers,
+  getLookupContext,
+} from "@/lib/db/adapters";
 import { serializeLookupContext } from "@/lib/domain";
 import { buildSelectOptions } from "@/lib/options";
 import { formatDate } from "@/lib/format";

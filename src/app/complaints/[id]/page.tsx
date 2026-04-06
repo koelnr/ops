@@ -4,7 +4,13 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { getComplaints, getBookings, getCustomers, getWorkers, getLookupContext } from "@/lib/db/adapters";
+import {
+  getComplaints,
+  getBookings,
+  getCustomers,
+  getWorkers,
+  getLookupContext,
+} from "@/lib/db/adapters";
 import { formatDate } from "@/lib/format";
 import { ComplaintActions } from "@/components/actions/complaint-actions";
 

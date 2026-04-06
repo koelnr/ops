@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateCustomerSchema } from "@/lib/schemas";
-import { updateCustomerFromInput, deleteCustomer } from "@/lib/db/modules/customers";
+import {
+  updateCustomerFromInput,
+  deleteCustomer,
+} from "@/lib/db/modules/customers";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(

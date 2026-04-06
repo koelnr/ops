@@ -1,4 +1,8 @@
-import { getComplaintsResolved, getWorkers, getLookupContext } from "@/lib/db/adapters";
+import {
+  getComplaintsResolved,
+  getWorkers,
+  getLookupContext,
+} from "@/lib/db/adapters";
 import { serializeLookupContext } from "@/lib/domain";
 import { buildSelectOptions } from "@/lib/options";
 import { ComplaintsView } from "@/components/views/complaints-view";

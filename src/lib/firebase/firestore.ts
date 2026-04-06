@@ -1,4 +1,4 @@
-import { getFirestore } from 'firebase-admin/firestore'
-import { adminApp } from './admin'
+import { getFirestore } from "firebase-admin/firestore";
+import { adminApp } from "./admin";
 
-export const db = getFirestore(adminApp)
+export const db = getFirestore(adminApp);

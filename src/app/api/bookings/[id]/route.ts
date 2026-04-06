@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateBookingSchema } from "@/lib/schemas";
-import { updateBookingFromInput, deleteBooking } from "@/lib/db/modules/bookings";
+import {
+  updateBookingFromInput,
+  deleteBooking,
+} from "@/lib/db/modules/bookings";
 import { requireSignedIn } from "@/lib/auth";
 
 export async function PATCH(

@@ -14,7 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCustomers, getVehicles, getBookings, getPayments, getComplaints, getLookupContext, getWorkers } from "@/lib/db/adapters";
+import {
+  getCustomers,
+  getVehicles,
+  getBookings,
+  getPayments,
+  getComplaints,
+  getLookupContext,
+  getWorkers,
+} from "@/lib/db/adapters";
 import {
   getBookingAmountPaid,
   buildCustomerWithSummary,

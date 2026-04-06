@@ -2,7 +2,12 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PaymentFollowupTable } from "@/components/tables/payment-followup-table";
-import { getBookings, getPayments, getCustomers, getLookupContext } from "@/lib/db/adapters";
+import {
+  getBookings,
+  getPayments,
+  getCustomers,
+  getLookupContext,
+} from "@/lib/db/adapters";
 import { serializeLookupContext } from "@/lib/domain";
 import { buildPendingPaymentViews } from "@/lib/selectors";
 import type { Payment } from "@/lib/domain";

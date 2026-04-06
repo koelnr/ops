@@ -13,7 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getWorkers, getBookings, getComplaints, getPayments, getCustomers, getLookupContext } from "@/lib/db/adapters";
+import {
+  getWorkers,
+  getBookings,
+  getComplaints,
+  getPayments,
+  getCustomers,
+  getLookupContext,
+} from "@/lib/db/adapters";
 import { getBookingAmountPaid, buildWorkerWithSummary } from "@/lib/selectors";
 import { formatCurrency, formatDate } from "@/lib/format";
 
